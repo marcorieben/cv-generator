@@ -1,0 +1,41 @@
+{
+  "heading1": {
+    "font": "Aptos",
+    "size": 16,
+    "bold": true,
+    "color": [255, 121, 0]
+  },
+  "heading2": {
+    "font": "Aptos",
+    "size": 11,
+    "bold": true,
+    "color": [68, 68, 68],
+    "space_before": 18,
+    "space_after": 6
+  },
+  "text": {
+    "font": "Aptos",
+    "bold": false,
+    "size": 11,
+    "color": [0, 0, 0]
+  },
+  "bullet": {
+    "font": "Aptos",
+    "size": 11,
+    "symbol_size": 9,
+    "color": [255, 121, 0],
+    "indent": 12,
+    "line_spacing": 1.0,
+    "space_before": 0,
+    "space_after": 0
+  },
+  "header": {
+    "logo_path": "../templates/logo.png",
+    "logo_width_cm": 4.0,
+    "logo_height_cm": 1.5,
+    "text": "digital.orange-business.com",
+    "text_font": "Aptos",
+    "text_size": 10,
+    "text_color": [255, 121, 0]
+  }
+}

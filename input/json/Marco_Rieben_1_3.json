@@ -1,0 +1,162 @@
+{
+  "Vorname": "Marco",
+  "Nachname": "Rieben",
+  "Hauptrolle": {
+    "Titel": "Hauptrolle",
+    "Beschreibung": "Projektleiter und Product Owner Analytics"
+  },
+  "Nationalität": "Schweiz",
+  "Hauptausbildung": "Bachelor of Business Administration – Economics and International Business",
+  "Kurzprofil": "Erfahrener Projektleiter und Product Owner für digitale Produkte, Daten- und Transformationsinitiativen. Langjährige Erfahrung in der End-to-End-Umsetzung von Analytics- und BI-Projekten – von der Anforderungserhebung über Architektur und Entwicklung bis zum produktiven Betrieb. Starker Fokus auf Qualität, Nutzerfokus, nachhaltigen Business-Mehrwert sowie Führung internationaler Near- und Offshore-Teams.",
+  "Expertise": {
+    "Fachwissen_und_Schwerpunkte": [
+      {
+        "Kategorie": "Projekt- & Produktmanagement",
+        "BulletList": [
+          "Projektleitung und Product Ownership",
+          "Stakeholder-Management und Anforderungserhebung",
+          "Agile Methoden (Scrum, SAFe, HERMES)"
+        ]
+      },
+      {
+        "Kategorie": "Analytics & Datenplattformen",
+        "BulletList": [
+          "Data Warehouse und BI-Architekturen",
+          "Datenmodernisierung und Analytics-Plattformen",
+          "End-to-End Analytics-Lösungen"
+        ]
+      },
+      {
+        "Kategorie": "Führung & Organisation",
+        "BulletList": [
+          "Führung internationaler Entwicklerteams",
+          "Near- und Offshore-Setup",
+          "Qualitäts-, Budget- und Lieferverantwortung"
+        ]
+      }
+    ]
+  },
+  "Aus_und_Weiterbildung": [
+    {
+      "Zeitraum": "2018 - 2019",
+      "Institution": "Microsoft",
+      "Abschluss": "Professional Program in Data Science"
+    },
+    {
+      "Zeitraum": "2017 - 2018",
+      "Institution": "ETH Zürich",
+      "Abschluss": "Projektmanagement – Agile Software Development"
+    },
+    {
+      "Zeitraum": "2011",
+      "Institution": "Fachhochschule Nordwestschweiz FHNW",
+      "Abschluss": "CAS Kostenmanagement und Controlling"
+    },
+    {
+      "Zeitraum": "2003 - 2006",
+      "Institution": "University of Texas at San Antonio",
+      "Abschluss": "Bachelor of Business Administration – Economics and International Business"
+    }
+  ],
+  "Trainings_und_Zertifizierungen": [
+    {
+      "Zeitraum": "! fehlt – bitte prüfen!",
+      "Institution": "IREB",
+      "Titel": "Requirements Engineering / Business Analysis"
+    },
+    {
+      "Zeitraum": "! fehlt – bitte prüfen!",
+      "Institution": "Microsoft",
+      "Titel": "AI Foundations"
+    }
+  ],
+  "Sprachen": [
+    {
+      "Sprache": "Deutsch",
+      "Level": 5
+    },
+    {
+      "Sprache": "Englisch",
+      "Level": 5
+    },
+    {
+      "Sprache": "Italienisch",
+      "Level": 4
+    },
+    {
+      "Sprache": "Spanisch",
+      "Level": 3
+    },
+    {
+      "Sprache": "Französisch",
+      "Level": 2
+    }
+  ],
+  "Ausgewählte_Referenzprojekte": [
+    {
+      "Zeitraum": "01/2019 - 12/2025",
+      "Rolle": "Projektleiter / Product Owner",
+      "Kunde": "Siemens Smart Infrastructure (via Randstad)",
+      "Tätigkeiten": [
+        "Leitung internationaler Digitalisierungs- und Datenprojekte",
+        "Datenmodernisierung mit Analytics- und ML-Anwendungsfällen",
+        "Führung von Near- und Offshore-Teams (5–10 Entwickler)",
+        "Stakeholder- und Budgetverantwortung",
+        "Einführung und Anwendung agiler Methoden"
+      ],
+      "Technologien": "Kafka, Snowflake, Qlik, Power BI, Microsoft Power Platform",
+      "Methodik": "SAFe, Scrum, Agile"
+    },
+    {
+      "Zeitraum": "01/2016 - 12/2019",
+      "Rolle": "Head of Business Intelligence / Projektleiter",
+      "Kunde": "Swisscom Directories AG",
+      "Tätigkeiten": [
+        "Entwicklung einer unternehmensweiten BI-Strategie",
+        "Führung eines BI-Teams (Entwickler und Analysten)",
+        "End-to-End BI- und Planungsprojekte",
+        "Standardisierung und Automatisierung von Controlling-Prozessen"
+      ],
+      "Technologien": "MS SQL Server, Qlik Sense, Tableau",
+      "Methodik": "Projektmanagement, Agile"
+    },
+    {
+      "Zeitraum": "01/2012 - 12/2016",
+      "Rolle": "Projektleiter / Business Analyst",
+      "Kunde": "Zurich Financial Services",
+      "Tätigkeiten": [
+        "Einführung eines EMEA-weiten Policy- & Claims-Reporting-Systems",
+        "Steuerung von BI-Aktivitäten",
+        "Stakeholder-Management in Finance und Aktuariat",
+        "Aufbau einer globalen BI-Enterprise-Architektur"
+      ],
+      "Technologien": "SAS, Qlik, SAP BW, SAP BO, SAP BPC",
+      "Methodik": "Scrum, Projektmanagement"
+    },
+    {
+      "Zeitraum": "01/2012 - 12/2014",
+      "Rolle": "Senior Consultant / Head of BI (Qlik Practice)",
+      "Kunde": "Capgemini",
+      "Tätigkeiten": [
+        "Aufbau einer QlikView-Abteilung",
+        "Etablierung eines BI-Offshore-Competence-Centers",
+        "Leitung von RFP- und Presales-Aktivitäten",
+        "Umsetzung von Enterprise-BI-Projekten"
+      ],
+      "Technologien": "QlikView",
+      "Methodik": "Projektmanagement"
+    },
+    {
+      "Zeitraum": "01/2008 - 12/2012",
+      "Rolle": "Business Intelligence Consultant",
+      "Kunde": "Business & Decision",
+      "Tätigkeiten": [
+        "BI- und Analytics-Beratung",
+        "Kundenworkshops und Presales",
+        "Lösungsdesign für Reporting und Planung"
+      ],
+      "Technologien": "MS SQL Server, Qlik",
+      "Methodik": "Beratung, Projektmanagement"
+    }
+  ]
+}

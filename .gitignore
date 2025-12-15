@@ -1,0 +1,39 @@
+# Output files
+output/word/*.docx
+output/pdf/*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Logs
+*.log
+
+# Keep directory structure but ignore contents
+output/word/.gitkeep
+output/pdf/.gitkeep
+
+# Backups
+templates/*_original.png

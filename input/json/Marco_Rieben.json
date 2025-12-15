@@ -1,0 +1,158 @@
+{
+  "Vorname": "Marco",
+  "Nachname": "Rieben",
+  "Hauptrolle": {
+    "Titel": "Hauptrolle",
+    "Beschreibung": "Senior Projektleiter | Business Analyst"
+  },
+  "Nationalität": "Schweiz, wohnhaft in Bern",
+  "Hauptausbildung": "Betriebswirtschaft, University of Texas at San Antonio",
+
+  "Kurzprofil": "Erfahrener Projektleiter und Business Analyst mit Schwerpunkt auf modernen Daten- und Analytics-Architekturen sowie End-to-End-Umsetzung von der Anforderungserhebung bis zur Implementierung. Erfahrung in digitalen Transformationsprojekten, Führung global verteilter Teams und Einsatz agiler Methoden. Stark in Stakeholder-Management, Strukturierung komplexer Anforderungen und Förderung konstruktiver Zusammenarbeit. Technologische Schwerpunkte umfassen Snowflake, dbt, SQL, ETL/DWH, Qlik, Power BI, Tableau sowie Event-Streaming und Low-Code-Ansätze. Spricht Deutsch, Englisch, Italienisch fliessend sowie Spanisch und Französisch auf Konversationsniveau.",
+
+  "Fachwissen_und_Schwerpunkte": [
+    {
+      "Kategorie": "Projektleitung & Analyse",
+      "Inhalt": [
+        "Führung und End-to-End-Verantwortung für datengetriebene Projekte",
+        "Requirements Engineering, UML/BPMN, Prozess- und Use-Case-Modellierung",
+        "Stakeholder-Management & Erwartungssteuerung",
+        "Workshops, Anforderungsanalyse, fachliche & technische Spezifikation",
+        "Product Ownership: Backlog, Priorisierung, User Stories & Akzeptanzkriterien",
+        "Aufbau von Governance-Strukturen inkl. Data-Mesh-Prinzipien"
+      ]
+    },
+    {
+      "Kategorie": "Analytics & Technologie",
+      "Inhalt": [
+        "Datenintegration (SQL Server, Azure Data Factory, Snowflake, SQL, Python)",
+        "Data Warehousing, BI-Architekturen, ETL & DWH Best Practices",
+        "Frontend-Analytics (Qlik, Tableau, Power BI)",
+        "Qualitäts- und Testmanagement"
+      ]
+    },
+    {
+      "Kategorie": "Methodik",
+      "Inhalt": [
+        "SCRUM – Agile / SAFe",
+        "HERMES",
+        "IREB – Requirements Engineering"
+      ]
+    },
+    {
+      "Kategorie": "Collaboration",
+      "Inhalt": [
+        "Jira / Confluence"
+      ]
+    }
+  ],
+
+  "Aus_und_Weiterbildung": [
+    {
+      "Zeitraum": "2018–2019",
+      "Institution": "Microsoft",
+      "Ausbildung_Titel": "Professional Program in Data Science"
+    },
+    {
+      "Zeitraum": "2017–2018",
+      "Institution": "ETH Zürich",
+      "Ausbildung_Titel": "Project Management – Agile Software Development"
+    },
+    {
+      "Zeitraum": "2011",
+      "Institution": "Fachhochschule Nordwestschweiz FHNW",
+      "Ausbildung_Titel": "CAS-Kostenmanagement und Controlling"
+    },
+    {
+      "Zeitraum": "2003–2006",
+      "Institution": "University of Texas at San Antonio",
+      "Ausbildung_Titel": "Bachelor of Business Administration – Economics and International Business"
+    },
+    {
+      "Zeitraum": "1998–2001",
+      "Institution": "Liceo Linguistico P.M. Vermigli",
+      "Ausbildung_Titel": "Italienisches Gymnasium"
+    }
+  ],
+
+  "Trainings_und_Zertifizierungen": [
+    { "Zeitraum": "2025", "Institution": "REVIEW", "Titel": "UML and Object-Oriented Design Foundations" },
+    { "Zeitraum": "2025", "Institution": "IREB", "Titel": "Requirements Engineering" },
+    { "Zeitraum": "2025", "Institution": "Microsoft", "Titel": "Azure AI Fundamentals – Build and Deploy AI" },
+    { "Zeitraum": "2025", "Institution": "Microsoft", "Titel": "Prompt Engineering for Microsoft Copilot" },
+    { "Zeitraum": "2025", "Institution": "Microsoft", "Titel": "Microsoft Fabric – The Complete Guide" },
+    { "Zeitraum": "2023", "Institution": "Snowflake", "Titel": "The Complete Masterclass" },
+    { "Zeitraum": "2022", "Institution": "Microsoft", "Titel": "Complete Guide to Microsoft PowerApps" },
+    { "Zeitraum": "2021", "Institution": "Jedox", "Titel": "Praxiskurs" },
+    { "Zeitraum": "2019", "Institution": "Microsoft", "Titel": "Professional Program in Data Science" },
+    { "Zeitraum": "2018", "Institution": "Microsoft", "Titel": "PowerBI" },
+    { "Zeitraum": "2018", "Institution": "Microsoft", "Titel": "Introduction to Data Science" },
+    { "Zeitraum": "2018", "Institution": "Tableau", "Titel": "Tableau for Data Science – Advanced" },
+    { "Zeitraum": "2018", "Institution": "ETH Zürich", "Titel": "Project Management – Agile Software Development" },
+    { "Zeitraum": "2015", "Institution": "IREB", "Titel": "Requirements Engineering" },
+    { "Zeitraum": "2015", "Institution": "Scrum", "Titel": "Scrum Essentials" },
+    { "Zeitraum": "2010", "Institution": "Qlik", "Titel": "Professional" }
+  ],
+
+  "Sprachen": [
+    { "Sprache": "Deutsch", "Level": "Muttersprache" },
+    { "Sprache": "Englisch", "Level": "Fliessend" },
+    { "Sprache": "Italienisch", "Level": "Fliessend" },
+    { "Sprache": "Spanisch", "Level": "Gute Kenntnisse" },
+    { "Sprache": "Französisch", "Level": "Grundkenntnisse" }
+  ],
+
+  "Referenzprojekte": [
+    {
+      "Zeitraum": "08/2019–10/2025",
+      "Rolle": "Projektleiter / Product Owner",
+      "Kunde": "Siemens Smart Infrastructure",
+      "Tätigkeiten": [
+        "Projektleitung Factory Digitalization inkl. Budget, Priorisierung, Roadmap, Story Writing",
+        "Product Owner für Low-Code Shopfloor-Lösung auf MS Power Platform",
+        "Product Owner & BA für Jedox-basierte Projektplanung",
+        "Einführung KI-gestützter Lösung EthonAI",
+        "Aufbau Governance-Frameworks nach Data-Mesh-Prinzipien",
+        "Aufbau & Führung eines Nearshore-Teams in Lissabon",
+        "Technologien: Qlik, PowerBI, Snowflake, dbt Cloud, Azure Data Factory, MS Power Platform, Jedox",
+        "Methodik: Scrum, SAFe, DevOps"
+      ]
+    },
+    {
+      "Zeitraum": "06/2016–03/2019",
+      "Rolle": "Head of Business Intelligence & Data Warehousing / Projektleiter",
+      "Kunde": "Swisscom Directories AG",
+      "Tätigkeiten": [
+        "Entwicklung einer unternehmensweiten BI-Strategie nach IBCS",
+        "Führung eines BI-Teams (10 Personen)",
+        "End-to-End BI- und Planungsprojekte zur Automatisierung von Controlling",
+        "Etablierung einer datenorientierten Unternehmenskultur",
+        "Technologien: Qlik, Tableau, MS SQL Server",
+        "Methodik: Scrum"
+      ]
+    },
+    {
+      "Zeitraum": "06/2012–07/2016",
+      "Rolle": "Projektleiter und Business Analyst",
+      "Kunde": "Zurich Financial Services",
+      "Tätigkeiten": [
+        "Einführung eines EMEA-weiten Policy- & Claims-Reporting-Systems",
+        "Steuerung BI-Aktivitäten inkl. Scrum-Setup",
+        "Stakeholder-Management für Finanzen, Aktuariat und Schaden",
+        "Aufbau globaler BI-Enterprise-Architektur",
+        "Technologien: Qlik, Tableau, MS SQL Server",
+        "Methodik: Scrum, SAFe, DevOps"
+      ]
+    },
+    {
+      "Zeitraum": "07/2012–05/2012",
+      "Rolle": "Business Intelligence Consultant",
+      "Kunde": "Business & Decision",
+      "Tätigkeiten": [
+        "BI-Beratung in Finanzen, HR, Vertrieb, Planung & Konsolidierung",
+        "Pre-Sales-Aktivitäten & Kundenworkshops",
+        "Technologien: Qlik, SAP BPC, SAP BO, SAP BW"
+      ]
+    }
+  ]
+}
