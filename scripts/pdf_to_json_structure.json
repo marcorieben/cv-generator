@@ -5,7 +5,7 @@
   "description": "Extraktionsschema für CVs gemäss PDF_TO_JSON_V1.3. Es dürfen ausschliesslich Felder verwendet werden, die in diesem Schema definiert sind.",
   "rules": {
     "no_invention": true,
-    "mark_missing": "! fehlt – bitte prüfen!",
+    "mark_missing": "! fehlt - bitte prüfen !",
     "max_reference_project_bullets": 5,
     "language_levels": {
       "5": "Muttersprache",
@@ -60,7 +60,7 @@
     },
     "Kurzprofil": {
       "type": "string",
-      "description": "Zusammenfassender Langtext"
+      "description": "Professionelle Zusammenfassung des Kandidaten in 3. Person Singular (z.B. 'Er verfügt über...', 'Sie bringt mit...'). Soll das Wichtigste kompakt zusammenfassen. Zwischen 50 und 100 Wörter. Nicht zu kurz, aber auch nicht zu lang."
     },
     "Fachwissen_und_Schwerpunkte": {
       "type": "array",
@@ -187,6 +187,7 @@
     },
     "Ausgewählte_Referenzprojekte": {
       "type": "array",
+      "description": "WICHTIG: ALLE Referenzprojekte im CV müssen vollständig und inhaltlich detailliert erfasst werden, nicht nur die ersten 3. Jedes Projekt muss alle erforderlichen Felder enthalten.",
       "items": {
         "type": "object",
         "required": [
@@ -200,28 +201,31 @@
         "properties": {
           "Zeitraum": {
             "type": "string",
-            "description": "MM/YYYY - MM/YYYY oder MM/YYYY - Heute"
+            "description": "Projektlaufzeit von Start bis Ende im Format MM/YYYY - MM/YYYY (z.B. '01/2023 - 12/2024'). Bei laufenden Projekten: MM/YYYY - Heute. Bei fehlenden Informationen: '! fehlt – bitte prüfen!'"
           },
           "Rolle": {
-            "type": "string"
+            "type": "string",
+            "description": "Spezifische Rolle oder Funktion des Kandidaten im Projekt (z.B. 'Projektleiter', 'Senior Developer', 'Scrum Master', 'Product Owner', 'Technischer Architekt'). Bei fehlenden Informationen: '! fehlt – bitte prüfen!'"
           },
           "Kunde": {
-            "type": "string"
+            "type": "string",
+            "description": "Name des Auftraggebers, Unternehmens oder der Organisation für die das Projekt durchgeführt wurde. Bei fehlenden Informationen: '! fehlt – bitte prüfen!'"
           },
           "Tätigkeiten": {
             "type": "array",
             "maxItems": 5,
             "items": {
               "type": "string"
-            }
+            },
+            "description": "Maximal 5 konkrete Tätigkeiten oder Verantwortlichkeiten im Projekt. Fokus auf Ergebnisse und Impact. Bei fehlenden Informationen: ['! fehlt – bitte prüfen!']"
           },
           "Technologien": {
             "type": "string",
-            "description": "Kommagetrennte Liste der verwendeten Technologien, Tools und Plattformen"
+            "description": "Kommagetrennte Liste ALLER im Projekt eingesetzten Technologien, Tools, Programmiersprachen und Plattformen (z.B. 'Java, Spring Boot, PostgreSQL, Docker, Kubernetes, Jenkins'). Bei fehlenden Informationen: '! fehlt – bitte prüfen!'"
           },
           "Methodik": {
             "type": "string",
-            "description": "Spezifische Projektmethodiken kommagetrennt (z.B. Scrum, SAFe, Kanban, HERMES, Waterfall, Agile). Keine generischen Begriffe wie 'Projektmanagement' oder 'Beratung'."
+            "description": "Spezifische Projektmethodik(en), die im Projekt angewendet wurde(n), kommagetrennt (z.B. 'Scrum', 'SAFe', 'Kanban', 'HERMES', 'Waterfall', 'Agile'). Keine generischen Begriffe wie 'Projektmanagement' oder 'Beratung'. Bei fehlenden Informationen: '! fehlt – bitte prüfen!'"
           }
         }
       }

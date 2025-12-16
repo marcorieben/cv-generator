@@ -4,7 +4,8 @@
 !.env.example
 
 # Output files
-output/word/*.docx
+output/word/
+!output/word/.gitkeep
 output/pdf/*.pdf
 
 # Python

@@ -22,9 +22,11 @@
   "bullet": {
     "font": "Aptos",
     "size": 11,
+    "symbol": "■",
     "symbol_size": 9,
     "color": [255, 121, 0],
-    "indent": 12,
+    "indent": 0,
+    "hanging_indent": 12,
     "line_spacing": 1.0,
     "space_before": 0,
     "space_after": 0

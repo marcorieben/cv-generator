@@ -72,14 +72,21 @@ def run_pipeline(pdf_path):
         print("SCHRITT 1: PDF → JSON Konvertierung")
         print("="*60)
         
-        # Temporärer JSON-Pfad im input/json Verzeichnis
+        # OpenAI API Konvertierung (JSON wird dort gespeichert)
+        json_data = pdf_to_json(pdf_path, output_path=None)
+        
+        # Erstelle JSON-Dateinamen mit Vorname_Nachname_Timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
-        json_filename = f"{pdf_basename}_{timestamp}.json"
+        vorname = json_data.get("Vorname", "Unbekannt")
+        nachname = json_data.get("Nachname", "Unbekannt")
+        json_filename = f"{vorname}_{nachname}_{timestamp}.json"
         json_path = os.path.join(base_dir, "input", "json", json_filename)
         
-        # OpenAI API Konvertierung
-        json_data = pdf_to_json(pdf_path, output_path=json_path)
+        # Speichere JSON mit neuem Namen
+        os.makedirs(os.path.dirname(json_path), exist_ok=True)
+        import json
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(json_data, f, ensure_ascii=False, indent=2)
         
         # Schritt 2: JSON Validierung
         print("\n" + "="*60)

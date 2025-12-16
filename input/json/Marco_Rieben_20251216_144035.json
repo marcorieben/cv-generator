@@ -5,7 +5,7 @@
   "description": "Extraktionsschema für CVs gemäss PDF_TO_JSON_V1.3. Es dürfen ausschliesslich Felder verwendet werden, die in diesem Schema definiert sind.",
   "rules": {
     "no_invention": true,
-    "mark_missing": "! fehlt – bitte prüfen!",
+    "mark_missing": "! fehlt - bitte prüfen !",
     "max_reference_project_bullets": 5,
     "language_levels": {
       "5": "Muttersprache",
@@ -21,9 +21,9 @@
     "Titel": "Hauptrolle",
     "Beschreibung": "Projektleiter | Product Owner | Data & Transformation"
   },
-  "Nationalität": "! fehlt – bitte prüfen!",
+  "Nationalität": "! fehlt – bitte prüfen !",
   "Hauptausbildung": "Bachelor of Business Administration – Economics and International Business",
-  "Kurzprofil": "Als erfahrener Product Owner und Projektleiter für digitale Produkte und Transformationsinitiativen kombiniere ich analytisches Denken mit einem teamorientierten Führungsstil. Ich begleite Projekte von der Anforderung bis zur Umsetzung und lege Wert auf Qualität, Nutzerfokus und nachhaltigen Mehrwert für die Organisation.",
+  "Kurzprofil": "Er ist ein erfahrener Product Owner und Projektleiter für digitale Produkte und Transformationsinitiativen, der analytisches Denken mit einem teamorientierten Führungsstil kombiniert. Er begleitet Projekte von der Anforderung bis zur Umsetzung und legt Wert auf Qualität, Nutzerfokus und nachhaltigen Mehrwert für die Organisation.",
   "Fachwissen_und_Schwerpunkte": [
     {
       "Kategorie": "Projektmethodik",
@@ -38,8 +38,8 @@
       "Kategorie": "Tech Stack",
       "Inhalt": [
         "Qlik",
-        "Power BI",
         "Tableau",
+        "Power BI",
         "MS SQL Server",
         "dbt",
         "Snowflake",
@@ -94,27 +94,27 @@
   ],
   "Trainings_und_Zertifizierungen": [
     {
-      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Zeitraum": "! fehlt - bitte prüfen !",
       "Institution": "Qlik",
       "Titel": "Zertifikat"
     },
     {
-      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Zeitraum": "! fehlt - bitte prüfen !",
       "Institution": "Power BI",
       "Titel": "Zertifikat"
     },
     {
-      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Zeitraum": "! fehlt - bitte prüfen !",
       "Institution": "Tableau",
       "Titel": "Zertifikat"
     },
     {
-      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Zeitraum": "! fehlt - bitte prüfen !",
       "Institution": "IREB",
       "Titel": "Req. Engineering / Business Analysis"
     },
     {
-      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Zeitraum": "! fehlt - bitte prüfen !",
       "Institution": "Microsoft",
       "Titel": "AI Foundations"
     }
@@ -151,7 +151,7 @@
         "Führung von 5 –10 Entwicklern an Nearshore- und Offshore-Standorten.",
         "Enge Abstimmung mit Fachbereichen und Stakeholder Management.",
         "Projektleiter der Datenmodernisierung mit Kafka, Snowflake, Qlik und Power BI.",
-        "Aufbau und Leitung eines Nearshore-Teams in Lissabon für den Analytics Plattformbetrieb."
+        "Verantwortung für die Factory Data Cloud über neun Werke mit Analytics- und ML-Anwendungsfällen."
       ],
       "Technologien": "Kafka, Snowflake, Qlik, Power BI",
       "Methodik": "SAFe, SCRUM"
@@ -159,15 +159,15 @@
     {
       "Zeitraum": "01/2016 - 12/2019",
       "Rolle": "Head of Business Intelligence / Projektleiter",
-      "Kunde": "SWISSCO M DIRECTORIES AG",
+      "Kunde": "SWISSCOM DIRECTORIES AG",
       "Tätigkeiten": [
         "Entwicklung und Umsetzung einer unternehmensweiten BI-Strategie nach IBCS-Standards.",
-        "Führung eines Teams von 10 BI-Entwicklern und -Analysten.",
+        "Führung eines Teams von 10 BI-Entwicklern und -Analysten (MS SQL Server, Qlik Sense, Tableau).",
         "Verantwortung für End-to-End BI- und Planungsprojekte zur Standardisierung und Automatisierung von Controlling-Prozessen.",
         "Etablierung einer datenorientierten Unternehmenskultur."
       ],
       "Technologien": "MS SQL Server, Qlik Sense, Tableau",
-      "Methodik": "! fehlt – bitte prüfen!"
+      "Methodik": "! fehlt – bitte prüfen !"
     },
     {
       "Zeitraum": "01/2012 - 12/2016",
@@ -179,8 +179,8 @@
         "Stakeholder-Management für Finanzen, Aktuariat und Schaden.",
         "Aufbau der globalen BI-Enterprise-Architektur inkl. Integration der russischen Gesellschaft ins Reporting."
       ],
-      "Technologien": "! fehlt – bitte prüfen!",
-      "Methodik": "! fehlt – bitte prüfen!"
+      "Technologien": "! fehlt – bitte prüfen !",
+      "Methodik": "! fehlt – bitte prüfen !"
     },
     {
       "Zeitraum": "01/2012 - 12/2014",
@@ -190,8 +190,8 @@
         "Aufbau der QlikView-Abteilung sowie Etablierung eines BI Offshore Competence Centers.",
         "Leitung von Projektakquisitionen, RFP-Prozessen und Enterprise-BI-Projekten bei Key Accounts."
       ],
-      "Technologien": "! fehlt – bitte prüfen!",
-      "Methodik": "! fehlt – bitte prüfen!"
+      "Technologien": "! fehlt – bitte prüfen !",
+      "Methodik": "! fehlt – bitte prüfen !"
     },
     {
       "Zeitraum": "01/2008 - 12/2012",
@@ -201,8 +201,8 @@
         "Beratung in BI-/Analytics-Themen in den Bereichen Finanzen, HR, Vertrieb, Planung und Konsolidierung.",
         "Leitung von Pre-Sales und Durchführung von Kundenworkshops zur Erarbeitung von BI-Lösungen."
       ],
-      "Technologien": "! fehlt – bitte prüfen!",
-      "Methodik": "! fehlt – bitte prüfen!"
+      "Technologien": "! fehlt – bitte prüfen !",
+      "Methodik": "! fehlt – bitte prüfen !"
     }
   ]
 }

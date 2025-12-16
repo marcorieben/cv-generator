@@ -201,7 +201,7 @@ def extract_text_from_pdf(pdf_path):
         raise Exception(f"Fehler beim Lesen der PDF: {str(e)}")
 
 
-def load_schema(schema_path="scripts/pdf_to_json_structure_V1.3.json"):
+def load_schema(schema_path="scripts/pdf_to_json_structure.json"):
     """
     Lädt das JSON-Schema für die CV-Struktur
     
@@ -222,7 +222,7 @@ def load_schema(schema_path="scripts/pdf_to_json_structure_V1.3.json"):
         return json.load(f)
 
 
-def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_structure_V1.3.json"):
+def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_structure.json"):
     """
     Konvertiert eine PDF-CV zu strukturiertem JSON via OpenAI API
     

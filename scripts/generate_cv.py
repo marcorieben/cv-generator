@@ -6,6 +6,8 @@ from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from tkinter import Tk, filedialog, Toplevel, Label, Button, CENTER
 
+# Globale Konstante für fehlende Daten
+MISSING_DATA_MARKER = "! fehlt - bitte prüfen !"
 
 # -------------------------------------
 # Hilfsfunktion: Absoluten Pfad bilden
@@ -203,54 +205,164 @@ def add_normal_text(doc, text):
 
 
 def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, bold=False):
-    """Helper function to add text with yellow highlight for missing data marker"""
+    """Helper function to add text (highlighting wird am Ende global durchgeführt)"""
+    run = paragraph.add_run(text)
+    run.font.name = font_name
+    run.font.size = Pt(font_size)
+    run.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
+    if bold:
+        run.font.bold = True
+
+
+def highlight_missing_data_in_document(doc):
+    """
+    Durchsucht das gesamte Dokument nach verschiedenen Varianten des Fehlenden-Daten-Markers,
+    normalisiert sie auf die einheitliche Version und hebt alle Vorkommen gelb hervor.
+    """
     from docx.enum.text import WD_COLOR_INDEX
-    marker = "! fehlt – bitte prüfen!"
     
-    if marker in text:
-        # Split text and highlight the marker
-        parts = text.split(marker)
-        for i, part in enumerate(parts):
-            if part:
-                run = paragraph.add_run(part)
-                run.font.name = font_name
-                run.font.size = Pt(font_size)
-                run.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
-                if bold:
-                    run.font.bold = True
-            if i < len(parts) - 1:  # Add marker with highlight
-                run_marker = paragraph.add_run(marker)
-                run_marker.font.name = font_name
-                run_marker.font.size = Pt(font_size)
-                run_marker.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
-                run_marker.font.highlight_color = WD_COLOR_INDEX.YELLOW
-                if bold:
-                    run_marker.font.bold = True
-    else:
-        run = paragraph.add_run(text)
-        run.font.name = font_name
-        run.font.size = Pt(font_size)
-        run.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
-        if bold:
-            run.font.bold = True
+    # Alle möglichen Varianten des Markers (OpenAI verwendet oft andere Bindestriche/Leerzeichen)
+    marker_variants = [
+        "! fehlt – bitte prüfen!",   # Gedankenstrich ohne Leerzeichen vor !
+        "! fehlt – bitte prüfen !",  # Gedankenstrich mit Leerzeichen vor !
+        "! fehlt - bitte prüfen!",   # Normaler Bindestrich ohne Leerzeichen vor !
+        "! fehlt - bitte prüfen !",  # Normaler Bindestrich mit Leerzeichen vor ! (unser Standard)
+        "! fehlt — bitte prüfen!",   # Em-Dash ohne Leerzeichen vor !
+        "! fehlt — bitte prüfen !",  # Em-Dash mit Leerzeichen vor !
+    ]
+    
+    # Durchsuche alle Paragraphen im Hauptdokument
+    for paragraph in doc.paragraphs:
+        for run in paragraph.runs:
+            # Prüfe alle Varianten
+            found_variant = None
+            for variant in marker_variants:
+                if variant in run.text:
+                    found_variant = variant
+                    break
+            
+            if found_variant:
+                # Split den Run-Text am gefundenen Marker
+                parts = run.text.split(found_variant)
+                
+                # Lösche den aktuellen Run-Text
+                run.text = ""
+                
+                # Füge Teile und normalisierte Marker hinzu
+                for i, part in enumerate(parts):
+                    if i > 0:
+                        # Füge neuen Run mit normalisiertem Marker und Highlighting hinzu
+                        new_run = paragraph.add_run(MISSING_DATA_MARKER)
+                        new_run.font.name = run.font.name
+                        new_run.font.size = run.font.size
+                        new_run.font.color.rgb = run.font.color.rgb
+                        new_run.font.bold = run.font.bold
+                        new_run.font.highlight_color = WD_COLOR_INDEX.YELLOW
+                    
+                    if part:
+                        # Füge Text-Teil hinzu
+                        text_run = paragraph.add_run(part)
+                        text_run.font.name = run.font.name
+                        text_run.font.size = run.font.size
+                        text_run.font.color.rgb = run.font.color.rgb
+                        text_run.font.bold = run.font.bold
+    
+    # Durchsuche auch Tabellen
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        # Prüfe alle Varianten
+                        found_variant = None
+                        for variant in marker_variants:
+                            if variant in run.text:
+                                found_variant = variant
+                                break
+                        
+                        if found_variant:
+                            parts = run.text.split(found_variant)
+                            run.text = ""
+                            
+                            for i, part in enumerate(parts):
+                                if i > 0:
+                                    new_run = paragraph.add_run(MISSING_DATA_MARKER)
+                                    new_run.font.name = run.font.name
+                                    new_run.font.size = run.font.size
+                                    new_run.font.color.rgb = run.font.color.rgb
+                                    new_run.font.bold = run.font.bold
+                                    new_run.font.highlight_color = WD_COLOR_INDEX.YELLOW
+                                
+                                if part:
+                                    text_run = paragraph.add_run(part)
+                                    text_run.font.name = run.font.name
+                                    text_run.font.size = run.font.size
+                                    text_run.font.color.rgb = run.font.color.rgb
+                                    text_run.font.bold = run.font.bold
+
+                                    text_run.font.bold = run.font.bold
 
 
 def add_bullet_item(doc, text):
-    p = doc.add_paragraph()
     s = styles["bullet"]
     s_text = styles["text"]
+    
+    # Erstelle Absatz mit List Bullet Style
+    p = doc.add_paragraph(style='List Bullet')
+    
+    # Wende Formatierung aus styles.json an
     p.paragraph_format.left_indent = Pt(s["indent"])
     p.paragraph_format.space_before = Pt(s["space_before"])
     p.paragraph_format.space_after = Pt(s["space_after"])
     p.paragraph_format.line_spacing = s["line_spacing"]
-
-    bullet = p.add_run("■ ")
-    bullet.font.name = s["font"]
-    bullet.font.size = Pt(s.get("symbol_size", s["size"]))  # Use symbol_size or fallback to size
-    c = s["color"]
-    bullet.font.color.rgb = RGBColor(c[0], c[1], c[2])
-
+    
+    # Hanging indent: Text-Zeilen rücken ein, erste Zeile (mit Symbol) nicht
+    if "hanging_indent" in s:
+        hanging = s["hanging_indent"]
+        p.paragraph_format.left_indent = Pt(hanging)
+        p.paragraph_format.first_line_indent = Pt(-hanging)
+    
+    # Konfiguriere das Bullet-Zeichen auf "■" mit Farbe aus styles.json
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    
+    pPr = p._element.get_or_add_pPr()
+    
+    # Numbering-Eigenschaften für custom bullet
+    numPr = pPr.find(qn('w:numPr'))
+    if numPr is None:
+        numPr = OxmlElement('w:numPr')
+        pPr.append(numPr)
+        
+        # Level setzen (0 = erste Ebene)
+        ilvl = OxmlElement('w:ilvl')
+        ilvl.set(qn('w:val'), '0')
+        numPr.append(ilvl)
+    
+    # Run-Properties für das Bullet-Symbol erstellen
+    rPr = OxmlElement('w:rPr')
+    
+    # Font für Bullet-Symbol
+    rFonts = OxmlElement('w:rFonts')
+    rFonts.set(qn('w:ascii'), s["font"])
+    rFonts.set(qn('w:hAnsi'), s["font"])
+    rPr.append(rFonts)
+    
+    # Farbe für Bullet-Symbol aus styles.json
+    color = OxmlElement('w:color')
+    bullet_color = s["color"]
+    color_hex = '%02x%02x%02x' % (bullet_color[0], bullet_color[1], bullet_color[2])
+    color.set(qn('w:val'), color_hex.upper())
+    rPr.append(color)
+    
+    # Größe für Bullet-Symbol
+    sz = OxmlElement('w:sz')
+    sz.set(qn('w:val'), str(s.get("symbol_size", s["size"]) * 2))  # Word verwendet halbe Punkte
+    rPr.append(sz)
+    
+    # Text mit Highlighting hinzufügen
     add_text_with_highlight(p, text, s_text["font"], s_text["size"], s_text["color"])
+    
     return p
 
 
@@ -267,9 +379,9 @@ def get_available_width(doc):
 def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     """
     Render basic info as a 3-column borderless table with white background.
-    Column 1 (10%): Labels (bold)
+    Column 1 (20%): Labels (bold)
     Column 2 (60%): Values
-    Column 3 (30%): Image placeholder (merged across all 3 rows)
+    Column 3 (20%): Image placeholder (merged across all 3 rows)
     """
     from docx.shared import Inches
     from docx.oxml import parse_xml, OxmlElement
@@ -295,9 +407,9 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
         tblPr.remove(existing_borders)
     tblPr.append(tblBorders)
 
-    # Set column widths: 10%, 60%, 30%
+    # Set column widths: 20%, 60%, 20%
     available_width = get_available_width(doc)
-    widths = [available_width * 0.10, available_width * 0.60, available_width * 0.30]
+    widths = [available_width * 0.20, available_width * 0.50, available_width * 0.30]
     for row in table.rows:
         for idx, width in enumerate(widths):
             row.cells[idx].width = width
@@ -330,6 +442,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     cell_image.text = ""
     
     p_label = cell_label.paragraphs[0]
+    p_label.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     run_label = p_label.add_run("Hauptrolle:")
     run_label.font.name = s["font"]
     run_label.font.size = Pt(s["size"])
@@ -337,6 +450,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     run_label.font.color.rgb = RGBColor(*s["color"])
     
     p_value = cell_value.paragraphs[0]
+    p_value.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     add_text_with_highlight(p_value, hauptrolle_desc, s["font"], s["size"], s["color"])
     
     # Row 2: Nationalität
@@ -353,6 +467,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     cell_image2.text = ""
     
     p_label2 = cell_label2.paragraphs[0]
+    p_label2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     run_label2 = p_label2.add_run("Nationalität:")
     run_label2.font.name = s["font"]
     run_label2.font.size = Pt(s["size"])
@@ -360,6 +475,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     run_label2.font.color.rgb = RGBColor(*s["color"])
     
     p_value2 = cell_value2.paragraphs[0]
+    p_value2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     add_text_with_highlight(p_value2, nationalität, s["font"], s["size"], s["color"])
     
     # Row 3: Hauptausbildung
@@ -376,6 +492,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     cell_image3.text = ""
     
     p_label3 = cell_label3.paragraphs[0]
+    p_label3.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     run_label3 = p_label3.add_run("Hauptausbildung:")
     run_label3.font.name = s["font"]
     run_label3.font.size = Pt(s["size"])
@@ -383,6 +500,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     run_label3.font.color.rgb = RGBColor(*s["color"])
     
     p_value3 = cell_value3.paragraphs[0]
+    p_value3.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     add_text_with_highlight(p_value3, ausbildung, s["font"], s["size"], s["color"])
     
     # Merge image cells vertically across all 3 rows and add placeholder
@@ -408,6 +526,9 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
 
 
 def add_bullet_table(doc, items, max_items_per_column=4):
+    # Calculate number of columns based on item count
+    num_cols = max(1, (len(items) + max_items_per_column - 1) // max_items_per_column)
+    
     if num_cols == 1:
         # Single column: just use regular bullet items
         for item in items:
@@ -477,10 +598,18 @@ def add_bullet_table(doc, items, max_items_per_column=4):
         p.paragraph_format.space_before = Pt(s.get("space_before", 0))
         p.paragraph_format.space_after = Pt(s.get("space_after", 0))
         p.paragraph_format.line_spacing = s.get("line_spacing", 1.0)
+        
+        # Hanging indent: Text-Zeilen rücken ein, erste Zeile (mit Symbol) nicht
+        if "hanging_indent" in s:
+            hanging = s["hanging_indent"]
+            p.paragraph_format.left_indent = Pt(hanging)
+            p.paragraph_format.first_line_indent = Pt(-hanging)
 
-        bullet = p.add_run("■ ")
+        # Bullet-Symbol aus styles.json
+        bullet_symbol = s.get("symbol", "■") + " "
+        bullet = p.add_run(bullet_symbol)
         bullet.font.name = s["font"]
-        bullet.font.size = Pt(s["size"])
+        bullet.font.size = Pt(s.get("symbol_size", s["size"]))
         c = s["color"]
         bullet.font.color.rgb = RGBColor(c[0], c[1], c[2])
 
@@ -660,11 +789,13 @@ def add_education_table(doc, education_data):
         # Column 1: Time Range
         cell_time.text = ""
         p_time = cell_time.paragraphs[0]
+        p_time.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         add_text_with_highlight(p_time, zeitraum, s_text["font"], s_text["size"], s_text["color"])
         
         # Column 2: Institution and Title in one paragraph separated by soft line break
         cell_info.text = ""
         p_info = cell_info.paragraphs[0]
+        p_info.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         # Institution (bold)
         add_text_with_highlight(p_info, institution, s_text["font"], s_text["size"], s_text["color"], bold=True)
 
@@ -910,6 +1041,13 @@ def generate_cv(json_path):
     # JSON-Struktur validieren
     critical, info = validate_json_structure(data)
     if critical or info:
+        # Erstelle Liste aller Validierungsfehler für Fallback
+        validation_errors = []
+        if critical:
+            validation_errors.extend(["Kritische Fehler:"] + critical)
+        if info:
+            validation_errors.extend(["Info (nicht kritisch):"] + info)
+        
         error_message = "Warnung: Die JSON-Datei hat mögliche Strukturprobleme:\n\n"
         if critical:
             error_message += "Kritische Fehler:\n" + "\n".join(critical) + "\n\n"
@@ -931,19 +1069,24 @@ def generate_cv(json_path):
             if user_input.lower() not in ['j', 'ja', 'y', 'yes']:
                 return None
 
-    doc = Document()
-    
-    # Set page margins: 1.5 cm all sides
-    from docx.shared import Cm
-    sections = doc.sections
-    for section in sections:
-        section.top_margin = Cm(1.5)
-        section.bottom_margin = Cm(1.5)
-        section.left_margin = Cm(1.5)
-        section.right_margin = Cm(1.5)
-    
-    # Add header with logo
-    add_header_with_logo(doc)
+    # Lade Template-Datei mit Header/Footer oder erstelle leeres Dokument
+    template_path = abs_path("../templates/cv_template.docx")
+    if os.path.exists(template_path):
+        doc = Document(template_path)
+        # Template bringt bereits Header, Footer und Seitenränder mit
+    else:
+        print(f"Warnung: Template nicht gefunden ({template_path}). Erstelle leeres Dokument.")
+        doc = Document()
+        # Set page margins: 1.5 cm all sides
+        from docx.shared import Cm
+        sections = doc.sections
+        for section in sections:
+            section.top_margin = Cm(1.5)
+            section.bottom_margin = Cm(1.5)
+            section.left_margin = Cm(1.5)
+            section.right_margin = Cm(1.5)
+        # Add header with logo
+        add_header_with_logo(doc)
 
     firstname = str(data.get("Vorname", "Unbekannt"))
     lastname = str(data.get("Nachname", "Unbekannt"))
@@ -1014,6 +1157,9 @@ def generate_cv(json_path):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_docx = abs_path(f"../output/word/{firstname}_{lastname}_{timestamp}.docx")
 
+    # Vor dem Speichern: Highlight alle fehlenden Daten im gesamten Dokument
+    highlight_missing_data_in_document(doc)
+    
     doc.save(out_docx)
     print(f"✅ Word-Datei erstellt: {out_docx}")
     return out_docx
@@ -1302,22 +1448,29 @@ def add_referenzprojekt_section(doc, projekt):
         row3_cell._element.clear_content()
         
         s_bullet = styles["bullet"]
-        symbol_size = styles.get("symbol_size", 9)
         
         for taetigkeit in taetigkeiten:
             if taetigkeit.strip():
                 p = row3_cell.add_paragraph()
                 
-                # Add bullet symbol with smaller size
-                symbol_run = p.add_run('■ ')
+                # Add bullet symbol from styles.json
+                bullet_symbol = s_bullet.get("symbol", "■") + " "
+                symbol_run = p.add_run(bullet_symbol)
                 symbol_run.font.name = s_bullet["font"]
-                symbol_run.font.size = Pt(symbol_size)
+                symbol_run.font.size = Pt(s_bullet.get("symbol_size", s_bullet["size"]))
                 symbol_run.font.color.rgb = RGBColor(*s_bullet["color"])
                 
                 # Add text with normal size
                 add_text_with_highlight(p, taetigkeit, s_text["font"], s_text["size"], s_text["color"])
                 
-                p.paragraph_format.left_indent = Cm(0.5)
+                # Hanging indent aus styles.json
+                if "hanging_indent" in s_bullet:
+                    hanging = s_bullet["hanging_indent"]
+                    p.paragraph_format.left_indent = Pt(hanging)
+                    p.paragraph_format.first_line_indent = Pt(-hanging)
+                else:
+                    p.paragraph_format.left_indent = Cm(0.5)
+                
                 p.paragraph_format.space_before = Pt(0)
                 p.paragraph_format.space_after = Pt(3)
     
