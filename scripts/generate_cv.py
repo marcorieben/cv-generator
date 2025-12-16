@@ -552,7 +552,7 @@ def add_fachwissen_table(doc, skills_data):
     # Fill rows
     for row_idx, item in enumerate(skills_data):
         kategorie = item.get("Kategorie", "")
-        inhalt = item.get("BulletList", [])
+        inhalt = item.get("Inhalt", item.get("BulletList", []))  # Support both formats
         
         cell_cat = table.rows[row_idx].cells[0]
         cell_list = table.rows[row_idx].cells[1]
@@ -569,30 +569,21 @@ def add_fachwissen_table(doc, skills_data):
         run_cat.font.bold = True
         run_cat.font.color.rgb = RGBColor(*s_text["color"])
         
-        # Clear and populate bullet list cell
+        # Clear and populate content cell with comma-separated list
         cell_list.text = ""
+        p = cell_list.paragraphs[0]
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.line_spacing = s_text.get("line_spacing", 1.0)
         
-        # Add bullet items to the cell
-        for idx, inhalt_item in enumerate(inhalt):
-            if idx > 0:
-                # For subsequent items, add a new paragraph
-                p = cell_list.add_paragraph()
-            else:
-                # Use the first paragraph
-                p = cell_list.paragraphs[0]
-            
-            p.paragraph_format.left_indent = Pt(s_bullet.get("indent", 12))
-            p.paragraph_format.space_before = Pt(s_bullet.get("space_before", 0))
-            p.paragraph_format.space_after = Pt(s_bullet.get("space_after", 0))
-            p.paragraph_format.line_spacing = s_bullet.get("line_spacing", 1.0)
-            
-            bullet = p.add_run("■ ")
-            bullet.font.name = s_bullet["font"]
-            bullet.font.size = Pt(s_bullet.get("symbol_size", s_bullet["size"]))  # Use symbol_size or fallback to size
-            c = s_bullet["color"]
-            bullet.font.color.rgb = RGBColor(c[0], c[1], c[2])
-            
-            add_text_with_highlight(p, inhalt_item, s_text["font"], s_text["size"], s_text["color"])
+        # Join all items with comma and space
+        comma_separated = ", ".join(inhalt)
+        
+        # Add as single run
+        run = p.add_run(comma_separated)
+        run.font.name = s_text["font"]
+        run.font.size = Pt(s_text["size"])
+        run.font.color.rgb = RGBColor(*s_text["color"])
 
 
 def add_education_table(doc, education_data):
@@ -979,11 +970,11 @@ def generate_cv(json_path):
     add_normal_text(doc, str(data.get("Kurzprofil", "")))
 
     # -----------------------------
-    # Fachwissen
+    # Expertise & Fachwissen
     # -----------------------------
+    add_heading_1(doc, "Expertise")
     add_heading_2(doc, "Fachwissen & Schwerpunkte")
-    expertise = data.get("Expertise", {})
-    skills = expertise.get("Fachwissen_und_Schwerpunkte", [])
+    skills = data.get("Fachwissen_und_Schwerpunkte", [])
     add_fachwissen_table(doc, skills)
 
     # -----------------------------

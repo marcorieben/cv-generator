@@ -1,3 +1,8 @@
+# Environment & Secrets - NEVER COMMIT!
+.env
+*.env
+!.env.example
+
 # Output files
 output/word/*.docx
 output/pdf/*.pdf

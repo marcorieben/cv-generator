@@ -20,8 +20,10 @@
     "Vorname",
     "Nachname",
     "Hauptrolle",
+    "Nationalität",
+    "Hauptausbildung",
     "Kurzprofil",
-    "Expertise",
+    "Fachwissen_und_Schwerpunkte",
     "Aus_und_Weiterbildung",
     "Trainings_und_Zertifizierungen",
     "Sprachen",
@@ -60,70 +62,108 @@
       "type": "string",
       "description": "Zusammenfassender Langtext"
     },
-    "Expertise": {
-      "type": "object",
-      "required": ["Fachwissen_und_Schwerpunkte"],
-      "properties": {
-        "Fachwissen_und_Schwerpunkte": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["Kategorie", "BulletList"],
-            "properties": {
-              "Kategorie": {
-                "type": "string",
-                "enum": [
-                  "Projektmethodik",
-                  "Tech Stack & Tools",
-                  "Weitere Skills"
-                ],
-                "description": "Verwende nur diese vordefinierten Kategorien"
+    "Fachwissen_und_Schwerpunkte": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "IMMER genau 3 Kategorien in dieser Reihenfolge: 1) Projektmethodik, 2) Tech Stack, 3) Weitere Fähigkeiten / Skills",
+      "items": [
+        {
+          "type": "object",
+          "required": ["Kategorie", "Inhalt"],
+          "properties": {
+            "Kategorie": {
+              "type": "string",
+              "const": "Projektmethodik",
+              "description": "Erste Kategorie: Projektmethodik (z.B. Scrum, SAFe, HERMES, Agile, Waterfall, Kanban)"
+            },
+            "Inhalt": {
+              "type": "array",
+              "items": {
+                "type": "string"
               },
-              "BulletList": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
+              "description": "Liste der Projektmethodiken. Bei fehlenden Informationen: ['! fehlt – bitte prüfen!']"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["Kategorie", "Inhalt"],
+          "properties": {
+            "Kategorie": {
+              "type": "string",
+              "const": "Tech Stack",
+              "description": "Zweite Kategorie: Tech Stack (Technologien, Tools, Programmiersprachen, Plattformen)"
+            },
+            "Inhalt": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Liste der Technologien und Tools. Bei fehlenden Informationen: ['! fehlt – bitte prüfen!']"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["Kategorie", "Inhalt"],
+          "properties": {
+            "Kategorie": {
+              "type": "string",
+              "const": "Weitere Fähigkeiten / Skills",
+              "description": "Dritte Kategorie: Weitere Fähigkeiten / Skills (alles andere: Soft Skills, Domain-Wissen, etc.)"
+            },
+            "Inhalt": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Liste weiterer Skills. Bei fehlenden Informationen: ['! fehlt – bitte prüfen!']"
             }
           }
         }
-      }
+      ]
     },
     "Aus_und_Weiterbildung": {
       "type": "array",
+      "description": "NUR akademische und formale Abschlüsse: Bachelor, Master, PhD, CAS, DAS, MAS, Diplome von Universitäten/Fachhochschulen",
       "items": {
         "type": "object",
         "required": ["Zeitraum", "Institution", "Abschluss"],
         "properties": {
           "Zeitraum": {
             "type": "string",
-            "description": "YYYY - YYYY oder YYYY"
+            "description": "Format: MM/YYYY - MM/YYYY oder MM/YYYY. Bei fehlenden Informationen: ! fehlt – bitte prüfen!"
           },
           "Institution": {
-            "type": "string"
+            "type": "string",
+            "description": "Name der Bildungsinstitution"
           },
           "Abschluss": {
-            "type": "string"
+            "type": "string",
+            "description": "Abschlussbezeichnung oder Studiengang"
           }
         }
       }
     },
     "Trainings_und_Zertifizierungen": {
       "type": "array",
+      "description": "Kurse, Workshops, Zertifikate, berufliche Weiterbildungen OHNE akademischen Abschluss",
       "items": {
         "type": "object",
         "required": ["Zeitraum", "Institution", "Titel"],
         "properties": {
           "Zeitraum": {
             "type": "string",
-            "description": "YYYY - YYYY oder ! fehlt – bitte prüfen!"
+            "description": "Format: MM/YYYY - MM/YYYY oder MM/YYYY. Bei fehlenden Informationen: ! fehlt – bitte prüfen!"
           },
           "Institution": {
-            "type": "string"
+            "type": "string",
+            "description": "Anbieter des Trainings/der Zertifizierung"
           },
           "Titel": {
-            "type": "string"
+            "type": "string",
+            "description": "Bezeichnung des Trainings oder der Zertifizierung"
           }
         }
       }
