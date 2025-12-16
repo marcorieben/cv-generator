@@ -7,7 +7,7 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from tkinter import Tk, filedialog, Toplevel, Label, Button, CENTER
 
 # Globale Konstante für fehlende Daten
-MISSING_DATA_MARKER = "! fehlt - bitte prüfen !"
+MISSING_DATA_MARKER = "! bitte prüfen !"
 
 # -------------------------------------
 # Hilfsfunktion: Absoluten Pfad bilden
@@ -223,12 +223,14 @@ def highlight_missing_data_in_document(doc):
     
     # Alle möglichen Varianten des Markers (OpenAI verwendet oft andere Bindestriche/Leerzeichen)
     marker_variants = [
-        "! fehlt – bitte prüfen!",   # Gedankenstrich ohne Leerzeichen vor !
-        "! fehlt – bitte prüfen !",  # Gedankenstrich mit Leerzeichen vor !
-        "! fehlt - bitte prüfen!",   # Normaler Bindestrich ohne Leerzeichen vor !
-        "! fehlt - bitte prüfen !",  # Normaler Bindestrich mit Leerzeichen vor ! (unser Standard)
-        "! fehlt — bitte prüfen!",   # Em-Dash ohne Leerzeichen vor !
-        "! fehlt — bitte prüfen !",  # Em-Dash mit Leerzeichen vor !
+        "! bitte prüfen!",           # Ohne Leerzeichen vor !
+        "! bitte prüfen !",          # Mit Leerzeichen vor ! (unser Standard)
+        "! fehlt – bitte prüfen!",   # Alt: Gedankenstrich ohne Leerzeichen vor !
+        "! fehlt – bitte prüfen !",  # Alt: Gedankenstrich mit Leerzeichen vor !
+        "! fehlt - bitte prüfen!",   # Alt: Normaler Bindestrich ohne Leerzeichen vor !
+        "! fehlt - bitte prüfen !",  # Alt: Normaler Bindestrich mit Leerzeichen vor !
+        "! fehlt — bitte prüfen!",   # Alt: Em-Dash ohne Leerzeichen vor !
+        "! fehlt — bitte prüfen !",  # Alt: Em-Dash mit Leerzeichen vor !
     ]
     
     # Durchsuche alle Paragraphen im Hauptdokument
