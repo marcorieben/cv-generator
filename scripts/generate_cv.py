@@ -177,8 +177,11 @@ def load_styles(filename="styles.json"):
 
 def add_heading_1(doc, text):
     p = doc.add_paragraph()
-    run = p.add_run(text)
     s = styles["heading1"]
+    p.paragraph_format.space_before = Pt(s["space_before"])
+    p.paragraph_format.space_after = Pt(s["space_after"])
+    
+    run = p.add_run(text)
     run.font.name = s["font"]
     run.font.size = Pt(s["size"])
     run.font.bold = s["bold"]
