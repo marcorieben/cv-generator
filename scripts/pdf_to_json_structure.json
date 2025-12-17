@@ -60,7 +60,7 @@
     },
     "Kurzprofil": {
       "type": "string",
-      "description": "Professionelle Zusammenfassung des Kandidaten in 3. Person Singular (z.B. 'Er verfügt über...', 'Sie bringt mit...'). Soll das Wichtigste kompakt zusammenfassen. Zwischen 50 und 100 Wörter. Nicht zu kurz, aber auch nicht zu lang."
+      "description": "Sachliche, professionelle Zusammenfassung des Kandidaten. WICHTIG: 1) Verwende den Vornamen der Person und schreibe in der 3. Person (z.B. 'Marco verfügt über...', 'Sarah bringt mit...'). 2) Fasse sachlich zusammen und hebe echte Stärken hervor, die aus dem CV ersichtlich sind. 3) KEINE Übertreibungen, KEINE erfundenen Informationen - nur was tatsächlich im CV steht. Zwischen 50 und 100 Wörter."
     },
     "Fachwissen_und_Schwerpunkte": {
       "type": "array",
@@ -205,7 +205,7 @@
           },
           "Rolle": {
             "type": "string",
-            "description": "Spezifische Rolle oder Funktion des Kandidaten im Projekt (z.B. 'Projektleiter', 'Senior Developer', 'Scrum Master', 'Product Owner', 'Technischer Architekt'). Bei fehlenden Informationen: '! fehlt – bitte prüfen!'"
+            "description": "Spezifische Rolle oder Funktion des Kandidaten im Projekt (z.B. 'Projektleiter', 'Senior Developer', 'Scrum Master'). WICHTIG: Maximal 8 Wörter! Kurz und prägnant formulieren. Bei fehlenden Informationen: '! fehlt – bitte prüfen!'"
           },
           "Kunde": {
             "type": "string",

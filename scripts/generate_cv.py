@@ -4,7 +4,9 @@ from datetime import datetime
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from tkinter import Tk, filedialog, Toplevel, Label, Button, CENTER
+from modern_dialogs import (
+    show_warning, select_json_file
+)
 
 # Globale Konstante für fehlende Daten
 MISSING_DATA_MARKER = "! bitte prüfen !"
@@ -694,11 +696,18 @@ def add_fachwissen_table(doc, skills_data):
         # Clear and populate category cell
         cell_cat.text = ""
         p_cat = cell_cat.paragraphs[0]
+        p_cat.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+        p_cat.paragraph_format.space_before = Pt(0)
+        p_cat.paragraph_format.space_after = Pt(0)
         run_cat = p_cat.add_run(kategorie)
         run_cat.font.name = s_text["font"]
         run_cat.font.size = Pt(s_text["size"])
         run_cat.font.bold = True
         run_cat.font.color.rgb = RGBColor(*s_text["color"])
+        
+        # Set vertical alignment to top for category cell
+        from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
+        cell_cat.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
         
         # Clear and populate content cell with comma-separated list
         cell_list.text = ""
@@ -1043,30 +1052,31 @@ def generate_cv(json_path):
     # JSON-Struktur validieren
     critical, info = validate_json_structure(data)
     if critical or info:
-        # Erstelle Liste aller Validierungsfehler für Fallback
-        validation_errors = []
-        if critical:
-            validation_errors.extend(["Kritische Fehler:"] + critical)
-        if info:
-            validation_errors.extend(["Info (nicht kritisch):"] + info)
+        # Build warning message
+        warning_msg = "Die JSON-Datei weist folgende Strukturprobleme auf:"
         
-        error_message = "Warnung: Die JSON-Datei hat mögliche Strukturprobleme:\n\n"
+        # Build details
+        details_parts = []
         if critical:
-            error_message += "Kritische Fehler:\n" + "\n".join(critical) + "\n\n"
+            details_parts.append("⚠️ Kritische Fehler:")
+            details_parts.extend([f"  • {err}" for err in critical])
         if info:
-            error_message += "Info (nicht kritisch):\n" + "\n".join(info) + "\n\n"
-        error_message += "Trotzdem fortfahren?"
+            if critical:
+                details_parts.append("")  # Empty line separator
+            details_parts.append("ℹ️ Hinweise (nicht kritisch):")
+            details_parts.extend([f"  • {wrn}" for wrn in info])
+        
+        details_parts.append("\nMöchten Sie trotzdem fortfahren?")
+        details = "\n".join(details_parts)
+        
         try:
-            from tkinter import messagebox
-            root = Tk()
-            root.withdraw()
-            proceed = messagebox.askyesno("JSON-Validierungswarnung", error_message, icon='warning')
-            root.destroy()
+            proceed = show_warning(warning_msg, title="JSON-Validierung", details=details)
             if not proceed:
                 print("❌ Benutzer hat abgebrochen.")
                 return None
-        except:
-            print("Warnung:", "\n".join(validation_errors))
+        except Exception as e:
+            print(f"Warnung konnte nicht angezeigt werden: {e}")
+            print("Kritische Fehler:" if critical else "Info:", "\n".join(critical if critical else info))
             user_input = input("Trotzdem fortfahren? (j/n): ")
             if user_input.lower() not in ['j', 'ja', 'y', 'yes']:
                 return None
@@ -1167,65 +1177,13 @@ def generate_cv(json_path):
     return out_docx
 
 
-def show_initial_dialog():
-    """Zeigt ein initiales Dialogfenster mit Anweisungen und Optionen"""
-    result = {'file_path': None}
-    
-    def select_file():
-        root.destroy()
-        file_path = select_json_file()
-        result['file_path'] = file_path
-    
-    def cancel():
-        root.destroy()
-        result['file_path'] = None
-    
-    root = Tk()
-    root.title("CV Generator")
-    root.geometry("400x200")
-    root.resizable(False, False)
-    
-    # Zentriere das Fenster
-    root.eval('tk::PlaceWindow . center')
-    
-    # Anweisungstext
-    label = Label(root, text="Willkommen beim CV Generator!\n\n"
-                            "Wählen Sie eine JSON-Datei aus, um ein CV zu erstellen.\n"
-                            "Die JSON-Datei sollte sich im Ordner 'input/json/' befinden.",
-                  justify=CENTER, padx=20, pady=20)
-    label.pack()
-    
-    # Buttons
-    button_frame = Label(root)
-    button_frame.pack(pady=10)
-    
-    select_button = Button(button_frame, text="JSON Datei auswählen", command=select_file, width=20)
-    select_button.pack(side="left", padx=10)
-    
-    cancel_button = Button(button_frame, text="Abbrechen", command=cancel, width=20)
-    cancel_button.pack(side="right", padx=10)
-    
-    root.mainloop()
-    return result['file_path']
+# Old dialog removed - now using modern_dialogs.select_json_file() directly
 
 
 def select_json_file():
     """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei"""
-    root = Tk()
-    root.withdraw()  # Versteckt das Hauptfenster
-    root.attributes('-topmost', True)  # Bringt Dialog nach vorne
-    
-    # Standard-Verzeichnis auf input/json/ setzen
-    default_dir = abs_path("../input/json/")
-    
-    file_path = filedialog.askopenfilename(
-        title="Wählen Sie eine JSON-Datei für den CV",
-        initialdir=default_dir,
-        filetypes=[("JSON-Dateien", "*.json"), ("Alle Dateien", "*.*")]
-    )
-    
-    root.destroy()
-    return file_path
+    from modern_dialogs import select_json_file as picker
+    return picker("Wählen Sie eine JSON-Datei für den CV")
 
 
 def add_sprachen_table(doc, sprachen_data):
@@ -1455,26 +1413,36 @@ def add_referenzprojekt_section(doc, projekt):
             if taetigkeit.strip():
                 p = row3_cell.add_paragraph()
                 
+                # Set up hanging indent for proper text alignment
+                # Left indent for all lines
+                left_indent_value = Pt(18)  # Position where text starts
+                first_line_negative = Pt(-18)  # Pull first line back to position bullet
+                
+                p.paragraph_format.left_indent = left_indent_value
+                p.paragraph_format.first_line_indent = first_line_negative
+                
                 # Add bullet symbol from styles.json
-                bullet_symbol = s_bullet.get("symbol", "■") + " "
+                bullet_symbol = s_bullet.get("symbol", "■")
                 symbol_run = p.add_run(bullet_symbol)
                 symbol_run.font.name = s_bullet["font"]
                 symbol_run.font.size = Pt(s_bullet.get("symbol_size", s_bullet["size"]))
                 symbol_run.font.color.rgb = RGBColor(*s_bullet["color"])
                 
+                # Add tab to separate symbol from text
+                p.add_run("\t")
+                
                 # Add text with normal size
                 add_text_with_highlight(p, taetigkeit, s_text["font"], s_text["size"], s_text["color"])
                 
-                # Hanging indent aus styles.json
-                if "hanging_indent" in s_bullet:
-                    hanging = s_bullet["hanging_indent"]
-                    p.paragraph_format.left_indent = Pt(hanging)
-                    p.paragraph_format.first_line_indent = Pt(-hanging)
-                else:
-                    p.paragraph_format.left_indent = Cm(0.5)
-                
                 p.paragraph_format.space_before = Pt(0)
                 p.paragraph_format.space_after = Pt(3)
+                p.paragraph_format.line_spacing = s_bullet.get("line_spacing", 1.0)
+                
+                # Set tab stop at the text start position
+                from docx.shared import Pt
+                from docx.enum.text import WD_TAB_ALIGNMENT
+                tab_stops = p.paragraph_format.tab_stops
+                tab_stops.add_tab_stop(left_indent_value, WD_TAB_ALIGNMENT.LEFT)
     
     # Row 4: Technologien (label 20% | content 80%)
     cell_tech_label = table.rows[3].cells[0]
@@ -1525,54 +1493,43 @@ def add_referenzprojekt_section(doc, projekt):
     spacing_paragraph.paragraph_format.space_after = Pt(24)
 
 
-def show_success_dialog(file_path):
-    """Zeigt ein Erfolgsdialog mit Option zum Öffnen der Datei"""
-    import os
-    
-    def open_file():
-        try:
-            os.startfile(file_path)  # Öffnet die Datei mit dem Standardprogramm
-        except Exception as e:
-            print(f"Fehler beim Öffnen der Datei: {e}")
-        root.destroy()
-    
-    def close():
-        root.destroy()
-    
-    root = Tk()
-    root.title("CV erfolgreich erstellt")
-    root.geometry("450x150")
-    root.resizable(False, False)
-    root.eval('tk::PlaceWindow . center')
-    
-    # Erfolgsmeldung
-    output_dir = os.path.dirname(file_path)
-    filename = os.path.basename(file_path)
-    success_text = f"✅ CV-Datei erfolgreich erstellt!\n\nOutput Directory: {output_dir}\nFilename: {filename}"
-    label = Label(root, text=success_text, justify="left", padx=20, pady=20)
-    label.pack()
-    
-    # Buttons
-    button_frame = Label(root)
-    button_frame.pack(pady=10)
-    
-    open_button = Button(button_frame, text="Datei öffnen", command=open_file, width=15)
-    open_button.pack(side="left", padx=10)
-    
-    close_button = Button(button_frame, text="Schließen", command=close, width=15)
-    close_button.pack(side="right", padx=10)
-    
-    root.mainloop()
+# Old dialog removed - now using modern_dialogs functions
 
 
 # Lade Stile global nach allen Definitionen
 styles = load_styles("styles.json")
 if __name__ == "__main__":
-    json_file = show_initial_dialog()
+    from modern_dialogs import show_success, ask_yes_no, ModernDialog
+    
+    json_file = select_json_file()
     if json_file:
         output_file = generate_cv(json_file)
         if output_file:
-            show_success_dialog(output_file)
+            # Show success with details
+            output_dir = os.path.dirname(output_file)
+            filename = os.path.basename(output_file)
+            
+            show_success(
+                "Das CV-Dokument wurde erfolgreich erstellt.",
+                title="CV erfolgreich generiert",
+                details=(
+                    f"{ModernDialog.ICON_WORD} Output Directory:\n"
+                    f"  {output_dir}\n\n"
+                    f"Filename:\n"
+                    f"  {filename}"
+                )
+            )
+            
+            # Ask to open file
+            if ask_yes_no(
+                "Möchten Sie das generierte Dokument jetzt öffnen?",
+                title="Dokument öffnen",
+                icon_type="success"
+            ):
+                try:
+                    os.startfile(output_file)
+                except Exception as e:
+                    print(f"Fehler beim Öffnen der Datei: {e}")
         else:
             print("❌ JSON-Validierung fehlgeschlagen. Programm abgebrochen.")
     else:

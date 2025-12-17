@@ -277,6 +277,8 @@ WICHTIGE REGELN:
 11. AUS- UND WEITERBILDUNG vs. TRAININGS:
     - Aus_und_Weiterbildung: NUR akademische/formale Abschlüsse (Bachelor, Master, PhD, CAS, DAS, MAS, Diplome)
     - Trainings_und_Zertifizierungen: Kurse, Workshops, Zertifikate, Weiterbildungen ohne akademischen Abschluss
+12. KURZPROFIL: Verwende den Vornamen der Person und schreibe in der 3. Person. Sei sachlich, hebe nur echte Stärken hervor, die aus dem CV ersichtlich sind. KEINE Übertreibungen oder Erfindungen!
+13. ROLLE in Referenzprojekten: Maximal 8 Wörter! Kurz und prägnant formulieren.
 
 SCHEMA:
 {json.dumps(schema, ensure_ascii=False, indent=2)}

@@ -10,48 +10,17 @@ Usage:
 import os
 import sys
 from datetime import datetime
-from tkinter import Tk, filedialog, messagebox
 
 # Import unserer Module
 from scripts.pdf_to_json import pdf_to_json
 from scripts.generate_cv import generate_cv, validate_json_structure
+from scripts.modern_dialogs import (
+    show_success, show_error, show_warning, ask_yes_no,
+    select_pdf_file, ModernDialog
+)
 
 
-def select_pdf_file():
-    """
-    Zeigt einen Datei-Auswahl-Dialog für PDF
-    
-    Returns:
-        Pfad zur ausgewählten PDF oder None
-    """
-    root = Tk()
-    root.withdraw()
-    root.attributes('-topmost', True)
-    
-    pdf_path = filedialog.askopenfilename(
-        title="PDF-Datei auswählen",
-        initialdir=os.path.join(os.path.dirname(__file__), "input", "pdf"),
-        filetypes=[("PDF Dateien", "*.pdf"), ("Alle Dateien", "*.*")]
-    )
-    
-    root.destroy()
-    return pdf_path if pdf_path else None
-
-
-def show_error(title, message):
-    """Zeigt Fehlermeldung"""
-    root = Tk()
-    root.withdraw()
-    messagebox.showerror(title, message)
-    root.destroy()
-
-
-def show_success(message):
-    """Zeigt Erfolgsmeldung"""
-    root = Tk()
-    root.withdraw()
-    messagebox.showinfo("Erfolg", message)
-    root.destroy()
+# Dialog functions are now imported from modern_dialogs.py
 
 
 def run_pipeline(pdf_path):
@@ -100,11 +69,11 @@ def run_pipeline(pdf_path):
             for err in critical:
                 print(f"   • {err}")
             
-            error_msg = "JSON-Validierung fehlgeschlagen:\n\n" + "\n".join(critical)
-            error_msg += f"\n\nJSON wurde gespeichert in:\n{json_path}"
-            error_msg += "\n\nBitte Datei manuell korrigieren und erneut versuchen."
+            error_msg = "Die JSON-Struktur weist kritische Fehler auf, die eine Word-Generierung verhindern."
+            details = "Kritische Fehler:\n\n" + "\n".join([f"• {err}" for err in critical])
+            details += f"\n\n📋 JSON gespeichert:\n{json_path}\n\nBitte korrigieren Sie die Fehler manuell und führen Sie die Generierung erneut aus."
             
-            show_error("Validierungsfehler", error_msg)
+            show_error(error_msg, title="JSON-Validierungsfehler", details=details)
             return None
         
         if info:
@@ -122,7 +91,11 @@ def run_pipeline(pdf_path):
         word_path = generate_cv(json_path)
         
         if not word_path:
-            show_error("Fehler", "Word-Generierung fehlgeschlagen")
+            show_error(
+                "Die Word-Dokument-Generierung konnte nicht abgeschlossen werden.",
+                title="Word-Generierungsfehler",
+                details="Bitte überprüfen Sie die Konsole für weitere Details."
+            )
             return None
         
         # Erfolg!
@@ -134,31 +107,41 @@ def run_pipeline(pdf_path):
         print(f"📝 Word Output: {word_path}")
         print("="*60 + "\n")
         
-        success_msg = (
-            f"✅ CV erfolgreich generiert!\n\n"
-            f"Input: {os.path.basename(pdf_path)}\n\n"
-            f"JSON gespeichert:\n{json_path}\n\n"
-            f"Word gespeichert:\n{word_path}"
+        # Build success message with details
+        success_msg = "Der Lebenslauf wurde erfolgreich generiert und ist bereit zur Verwendung."
+        
+        details = (
+            f"{ModernDialog.ICON_FILE} PDF Input:\n"
+            f"  {os.path.basename(pdf_path)}\n\n"
+            f"{ModernDialog.ICON_JSON} JSON gespeichert:\n"
+            f"  {json_path}\n\n"
+            f"{ModernDialog.ICON_WORD} Word Dokument:\n"
+            f"  {word_path}"
         )
         
-        # Frage, ob Word-Datei geöffnet werden soll
-        root = Tk()
-        root.withdraw()
-        open_file = messagebox.askyesno(
-            "Erfolg", 
-            success_msg + "\n\nWord-Datei jetzt öffnen?"
-        )
-        root.destroy()
+        # Show success and ask to open
+        show_success(success_msg, details=details)
         
-        if open_file:
+        # Ask if user wants to open the file
+        if ask_yes_no(
+            "Möchten Sie das generierte Word-Dokument jetzt öffnen?",
+            title="Dokument öffnen",
+            icon_type="success"
+        ):
             os.startfile(word_path)
         
         return word_path
     
     except Exception as e:
-        error_msg = f"Fehler in Pipeline:\n\n{str(e)}"
-        print(f"\n❌ {error_msg}")
-        show_error("Pipeline Fehler", error_msg)
+        print(f"\n❌ Fehler in Pipeline: {str(e)}")
+        import traceback
+        details = traceback.format_exc()
+        
+        show_error(
+            "Ein unerwarteter Fehler ist während der Pipeline-Ausführung aufgetreten.",
+            title="Pipeline-Fehler",
+            details=details
+        )
         return None
 
 
