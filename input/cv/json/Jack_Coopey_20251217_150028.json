@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.3",
+  "description": "Extraktionsschema für CVs gemäss PDF_TO_JSON_V1.3. Es dürfen ausschliesslich Felder verwendet werden, die in diesem Schema definiert sind.",
+  "Vorname": "Jack",
+  "Nachname": "Coopey",
+  "Hauptrolle": {
+    "Titel": "Hauptrolle",
+    "Beschreibung": "Senior Product Owner mit Erfahrung in IT und Business"
+  },
+  "Nationalität": "United Kingdom",
+  "Hauptausbildung": "! fehlt – bitte prüfen!",
+  "Kurzprofil": "Jack ist ein Senior Product Owner und Responsible AI-Stratege mit über acht Jahren Erfahrung in der Umsetzung von digitalen Transformations-, Innovations- und AI-Governance-Projekten. Sein Hintergrund vereint einen PhD in Philosophie und einen MBA von der Universität St. Gallen, was analytische Tiefe mit geschäftlicher Umsetzung kombiniert. Er hat Programme in verschiedenen Branchen geleitet und legt Wert auf menschenzentrierte, ethische und skalierbare Technologien.",
+  "Fachwissen_und_Schwerpunkte": [
+    {
+      "Kategorie": "Projektmethodik",
+      "Inhalt": [
+        "Scrum",
+        "SAFe",
+        "! fehlt – bitte prüfen!"
+      ]
+    },
+    {
+      "Kategorie": "Tech Stack",
+      "Inhalt": [
+        "MS 365",
+        "SAP S/4 HANA",
+        "Power BI",
+        "Salesforce",
+        "Oracle SQL",
+        "AWS",
+        "Azure",
+        "Google Cloud",
+        "ServiceNow",
+        "Tableau",
+        "Alteryx",
+        "Meta Suite",
+        "Figma",
+        "Canva",
+        "Miro",
+        "Workday",
+        "Atlassian Suite (Jira, Confluence, Trello)",
+        "AI/ML"
+      ]
+    },
+    {
+      "Kategorie": "Weitere Skills",
+      "Inhalt": [
+        "Stakeholdermanagement",
+        "Digital Workplace",
+        "Innovation Management"
+      ]
+    }
+  ],
+  "Aus_und_Weiterbildung": [
+    {
+      "Zeitraum": "09/2023 - Heute",
+      "Institution": "University of St.Gallen",
+      "Abschluss": "Master of Business Administration - MBA"
+    },
+    {
+      "Zeitraum": "09/2021 - 09/2023",
+      "Institution": "Durham University",
+      "Abschluss": "Doctor of Philosophy - PhD"
+    },
+    {
+      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Institution": "University of St Andrews",
+      "Abschluss": "Masters of Letters (MLitt) Intellectual History"
+    },
+    {
+      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Institution": "University of Leicester",
+      "Abschluss": "Bachelor of Arts (B.A.), English Literature and History"
+    }
+  ],
+  "Trainings_und_Zertifizierungen": [
+    {
+      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Institution": "PMI",
+      "Titel": "PMI-PBA®"
+    },
+    {
+      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Institution": "PMI",
+      "Titel": "PMI-ACP®"
+    },
+    {
+      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Institution": "PMI",
+      "Titel": "PMP®"
+    },
+    {
+      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Institution": "Microsoft",
+      "Titel": "Microsoft Certified: Azure Fundamentals"
+    },
+    {
+      "Zeitraum": "! fehlt - bitte prüfen!",
+      "Institution": "Scrum.org",
+      "Titel": "Professional Scrum Master™ II (PSM II)"
+    }
+  ],
+  "Sprachen": [
+    {
+      "Sprache": "Englisch",
+      "Level": 5
+    },
+    {
+      "Sprache": "Deutsch",
+      "Level": 4
+    }
+  ],
+  "Ausgewählte_Referenzprojekte": [
+    {
+      "Zeitraum": "04/2023 - Heute",
+      "Rolle": "Senior Consultant | Digital & Agile Transformation",
+      "Kunde": "adesso Schweiz AG, Zurich, Switzerland",
+      "Tätigkeiten": [
+        "Product ownership für Meta Suite Lieferung und agile Transformation",
+        "Agile Transformation (SAFe) bei einem globalen Pharmaunternehmen",
+        "Entwicklung von AI-Geschäftsnutzungsfällen",
+        "Management von Capex-Projekten über 5 Millionen USD",
+        "Implementierung von Software- und Hardware-Upgrades"
+      ],
+      "Technologien": "Meta Suite, SAFe",
+      "Methodik": "SAFe"
+    },
+    {
+      "Zeitraum": "07/2022 - 12/2022",
+      "Rolle": "Innovation Lab Specialist Consultant",
+      "Kunde": "Swiss Re, Zurich, Switzerland",
+      "Tätigkeiten": [
+        "Management von Projektbudgets über 2 Millionen USD",
+        "Entwicklung einer umfassenden digitalen Transformationsstrategie",
+        "Implementierung von AI-gestützten Analysen",
+        "Steigerung der Mitarbeiterproduktivität um 25%",
+        "Zusammenarbeit mit multidisziplinären Teams"
+      ],
+      "Technologien": "Meta Suite, AI-gestützte Analysen",
+      "Methodik": "Agile"
+    },
+    {
+      "Zeitraum": "08/2021 - 07/2022",
+      "Rolle": "Societal Researcher | UBS Y Think Tank",
+      "Kunde": "UBS, Zurich, Switzerland",
+      "Tätigkeiten": [
+        "Durchführung umfassender gesellschaftlicher Forschung",
+        "Gestaltung von Foresight-Design-Workshops",
+        "Zusammenarbeit mit multidisziplinären Teams",
+        "Synthese von Erkenntnissen in umsetzbare Geschäftsstrategien",
+        "Navigieren durch zukünftige Trends"
+      ],
+      "Technologien": "! fehlt – bitte prüfen!",
+      "Methodik": "! fehlt – bitte prüfen!"
+    },
+    {
+      "Zeitraum": "02/2021 - 01/2022",
+      "Rolle": "CEO Co-Founder BlackLight.AI Startup",
+      "Kunde": "Microsoft for Startups, Redmond, Washington, United States",
+      "Tätigkeiten": [
+        "Management eines Strategie-Pitches für 100 Millionen USD",
+        "Etablierung von BlackLight.AI als führende Einheit in AI-Ethischen",
+        "Förderung ethischer AI-Praktiken",
+        "Integration ethischer Überlegungen in Produktentwicklungszyklen",
+        "Partnerschaften mit akademischen Institutionen"
+      ],
+      "Technologien": "! fehlt – bitte prüfen!",
+      "Methodik": "! fehlt – bitte prüfen!"
+    },
+    {
+      "Zeitraum": "10/2017 - 01/2021",
+      "Rolle": "Postdoctoral Research Partner",
+      "Kunde": "European Commission, Paris, Île-de-France, France",
+      "Tätigkeiten": [
+        "Beratung zur Integration von Blockchain-Technologien",
+        "Zusammenarbeit mit akademischen und industriellen Partnern",
+        "Fortschritt des Verständnisses von urbaner Nachhaltigkeit",
+        "Beitrag zur ökologischen Bewusstseinsbildung",
+        "! fehlt – bitte prüfen!"
+      ],
+      "Technologien": "! fehlt – bitte prüfen!",
+      "Methodik": "! fehlt – bitte prüfen!"
+    }
+  ]
+}

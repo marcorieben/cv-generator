@@ -145,9 +145,9 @@ class TestPathResolution:
         assert os.path.exists(os.path.join(base_dir, 'input'))
         
         # Prüfe dass JSON-Pfad korrekt aufgelöst wird
-        json_path = os.path.join(base_dir, "input", "json", "test.json")
+        json_path = os.path.join(base_dir, "input", "cv", "json", "test.json")
         assert 'scripts' not in os.path.dirname(json_path).replace(base_dir, '')
-        assert json_path.endswith(os.path.join('input', 'json', 'test.json'))
+        assert json_path.endswith(os.path.join('input', 'cv', 'json', 'test.json'))
     
     def test_generate_cv_resolves_styles_correctly(self):
         """Test dass generate_cv.py styles.json im scripts/ findet"""

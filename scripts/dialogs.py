@@ -633,7 +633,7 @@ class FilePickerDialog:
         root.attributes('-topmost', True)
         
         if not initial_dir:
-            initial_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "input", "pdf")
+            initial_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "input", "cv", "pdf")
         
         file_path = filedialog.askopenfilename(
             title=title,
@@ -655,7 +655,7 @@ class FilePickerDialog:
         root.attributes('-topmost', True)
         
         if not initial_dir:
-            initial_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "input", "json")
+            initial_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "input", "cv", "json")
         
         file_path = filedialog.askopenfilename(
             title=title,

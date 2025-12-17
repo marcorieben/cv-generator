@@ -72,7 +72,7 @@ def run_pipeline(pdf_path):
         vorname = json_data.get("Vorname", "Unbekannt")
         nachname = json_data.get("Nachname", "Unbekannt")
         json_filename = f"{vorname}_{nachname}_{timestamp}.json"
-        json_path = os.path.join(base_dir, "input", "json", json_filename)
+        json_path = os.path.join(base_dir, "input", "cv", "json", json_filename)
         
         # Speichere JSON mit neuem Namen
         os.makedirs(os.path.dirname(json_path), exist_ok=True)

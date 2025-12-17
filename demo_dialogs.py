@@ -27,7 +27,7 @@ def demo_dialogs():
             f"{ModernDialog.ICON_FILE} PDF Input:\n"
             f"  Marco_Rieben_CV.pdf\n\n"
             f"{ModernDialog.ICON_JSON} JSON gespeichert:\n"
-            f"  input/json/Marco_Rieben_20251217_143022.json\n\n"
+            f"  input/cv/json/Marco_Rieben_20251217_143022.json\n\n"
             f"{ModernDialog.ICON_WORD} Word Dokument:\n"
             f"  output/word/Marco_Rieben_CV_20251217_143022.docx"
         )
@@ -48,7 +48,7 @@ def demo_dialogs():
             "• 'Hauptrolle' muss ein Objekt mit 'Titel' und 'Beschreibung' sein\n"
             "• 'Fachwissen_und_Schwerpunkte' muss genau 3 Einträge haben\n\n"
             "📋 JSON gespeichert:\n"
-            "input/json/Test_User_20251217.json\n\n"
+            "input/cv/json/Test_User_20251217.json\n\n"
             "Bitte korrigieren Sie die Fehler manuell und führen Sie die Generierung erneut aus."
         )
     )
