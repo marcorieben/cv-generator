@@ -173,7 +173,10 @@ class TestPathResolution:
         assert os.path.exists(input_dir), f"input/ nicht gefunden: {input_dir}"
         assert os.path.exists(output_dir), f"output/ nicht gefunden: {output_dir}"
         
-        # JSON und Word Unterordner
-        assert os.path.exists(os.path.join(input_dir, 'json'))
+        # Neue Struktur: input/cv/ und input/angebot/ mit Unterordnern
+        assert os.path.exists(os.path.join(input_dir, 'cv', 'json'))
+        assert os.path.exists(os.path.join(input_dir, 'cv', 'pdf'))
+        assert os.path.exists(os.path.join(input_dir, 'angebot', 'json'))
+        assert os.path.exists(os.path.join(input_dir, 'angebot', 'pdf'))
         assert os.path.exists(os.path.join(output_dir, 'word'))
 

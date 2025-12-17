@@ -197,20 +197,37 @@ def main():
     print("✅ Internetverbindung verfügbar")
     
     # PDF-Datei aus Argument oder Dialog
+    cv_path = None
+    angebot_path = None
+    
     if len(sys.argv) > 1:
-        pdf_path = sys.argv[1]
-        if not os.path.exists(pdf_path):
-            print(f"❌ Datei nicht gefunden: {pdf_path}")
+        cv_path = sys.argv[1]
+        if not os.path.exists(cv_path):
+            print(f"❌ Datei nicht gefunden: {cv_path}")
             return 1
+        # Optional: Zweites Argument für Angebot
+        if len(sys.argv) > 2:
+            angebot_path = sys.argv[2]
+            if not os.path.exists(angebot_path):
+                print(f"⚠️  Angebot-Datei nicht gefunden: {angebot_path}")
+                angebot_path = None
     else:
-        # Show welcome dialog which includes PDF selection
-        pdf_path = show_welcome()
-        if not pdf_path:
+        # Show welcome dialog which includes PDF selection (2-step workflow)
+        result = show_welcome()
+        if not result:
             print("❌ Keine Datei ausgewählt. Programm abgebrochen.")
             return 1
+        cv_path, angebot_path = result
+    
+    # Info ausgeben
+    print(f"📄 CV-PDF: {os.path.basename(cv_path)}")
+    if angebot_path:
+        print(f"📋 Angebot-PDF: {os.path.basename(angebot_path)}")
+    else:
+        print("📋 Angebot: Nicht ausgewählt (Standard-CV wird generiert)")
     
     # Pipeline ausführen
-    result = run_pipeline(pdf_path)
+    result = run_pipeline(cv_path)
     
     return 0 if result else 1
 

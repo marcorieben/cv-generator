@@ -425,14 +425,18 @@ class WelcomeDialog(ModernDialog):
     """Welcome dialog explaining the CV generation process"""
     
     def __init__(self):
-        super().__init__("CV Generator - Pipeline", width=750, height=650)
+        super().__init__("CV Generator - Pipeline", width=750, height=850)
+        
+        # Initialize file paths
+        self.cv_path = None
+        self.angebot_path = None
         
         # Header
         self.create_header("CV Generator", self.ICON_FILE, self.ORANGE)
         
         # Content
         content = tk.Frame(self.root, bg=self.WHITE)
-        content.pack(fill='both', expand=False, padx=30, pady=20, side='top')
+        content.pack(fill='both', expand=True, padx=30, pady=(20, 10), side='top')
         
         # Welcome message
         welcome = tk.Label(
@@ -524,9 +528,9 @@ class WelcomeDialog(ModernDialog):
                 )
                 arrow_label.pack(side='left', padx=3)
         
-        # DSGVO Compliance Section
+        # DSGVO Compliance Section (VOR den Uploads!)
         dsgvo_frame = tk.Frame(content, bg=self.LIGHT_GRAY, relief='flat', bd=1)
-        dsgvo_frame.pack(fill='x', pady=(20, 10))
+        dsgvo_frame.pack(fill='x', pady=(10, 10))
         
         dsgvo_title = tk.Label(
             dsgvo_frame,
@@ -535,70 +539,177 @@ class WelcomeDialog(ModernDialog):
             fg=self.DARK_GRAY,
             font=('Segoe UI', 10, 'bold')
         )
-        dsgvo_title.pack(anchor='w', padx=15, pady=(15, 10))
+        dsgvo_title.pack(anchor='w', padx=15, pady=(12, 8))
         
-        # Checkbox variables
-        consent_vars = {
-            'openai': tk.BooleanVar(value=False),
-            'personal': tk.BooleanVar(value=False),
-            'consent': tk.BooleanVar(value=False)
-        }
+        # Single checkbox variable
+        consent_var = tk.BooleanVar(value=False)
         
-        # Checkbox texts
-        consent_texts = [
-            ("openai", "Der/die Kandidat/in hat der Verarbeitung der CV-Daten über eine KI-basierte API zugestimmt."),
-            ("personal", "Die ausdrückliche Einwilligung der betroffenen Person zur Datenverarbeitung liegt vor."),
-            ("consent", "Die betroffene Person wurde über die Datenschutzhinweise informiert und hat diese akzeptiert.")
-        ]
+        # Create single checkbox
+        cb_frame = tk.Frame(dsgvo_frame, bg=self.LIGHT_GRAY)
+        cb_frame.pack(anchor='w', padx=25, pady=(0, 12))
         
-        # Create checkboxes
-        for key, text in consent_texts:
-            cb_frame = tk.Frame(dsgvo_frame, bg=self.LIGHT_GRAY)
-            cb_frame.pack(anchor='w', padx=25, pady=5)
-            
-            cb = tk.Checkbutton(
-                cb_frame,
-                text="",
-                variable=consent_vars[key],
-                bg=self.LIGHT_GRAY,
-                activebackground=self.LIGHT_GRAY,
-                selectcolor=self.WHITE,
-                font=('Segoe UI', 9),
-                command=lambda: update_button_state()
+        cb = tk.Checkbutton(
+            cb_frame,
+            text="",
+            variable=consent_var,
+            bg=self.LIGHT_GRAY,
+            activebackground=self.LIGHT_GRAY,
+            selectcolor=self.WHITE,
+            font=('Segoe UI', 9)
+        )
+        cb.pack(side='left')
+        
+        label = tk.Label(
+            cb_frame,
+            text="Ich bestätige, dass die betroffene Person über die Datenverarbeitung informiert wurde und der Nutzung von KI-basierten Diensten zur CV-Erstellung zugestimmt hat.",
+            bg=self.LIGHT_GRAY,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 9),
+            justify='left',
+            wraplength=620
+        )
+        label.pack(side='left', padx=(5, 0))
+        
+        # Stub functions - will be replaced after buttons are created
+        update_button_state = lambda: None
+        update_weiter_button = lambda: None
+        
+        # File Selection Section (NACH DSGVO)
+        # Schritt 1: CV-PDF (Pflicht)
+        self.cv_frame = tk.Frame(content, bg=self.LIGHT_GRAY, relief='flat', bd=2)
+        self.cv_frame.pack(fill='x', pady=(10, 10))
+        
+        cv_header = tk.Frame(self.cv_frame, bg=self.LIGHT_GRAY)
+        cv_header.pack(fill='x', padx=15, pady=(12, 8))
+        
+        self.cv_header_label = tk.Label(
+            cv_header,
+            text="📄  Schritt 1: CV-PDF auswählen (Pflicht)",
+            bg=self.LIGHT_GRAY,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 10, 'bold')
+        )
+        self.cv_header_label.pack(side='left')
+        
+        def select_cv():
+            cv_path = FilePickerDialog.open_pdf(title="CV-PDF auswählen")
+            if cv_path:
+                self.cv_path = cv_path
+                filename = os.path.basename(cv_path)
+                # Grüner Hintergrund für ganzen Abschnitt
+                success_bg = "#E8F5E9"
+                self.cv_frame.config(bg=success_bg, bd=2, relief='solid')
+                cv_header.config(bg=success_bg)
+                self.cv_header_label.config(bg=success_bg, fg="#2E7D32")
+                self.cv_status_label.config(text=f"✓ {filename}", bg=success_bg)
+                self.cv_desc.config(bg=success_bg)
+                cv_upload_btn.config(text="✓ CV ausgewählt", bg=self.SUCCESS_GREEN)
+                # Enable Weiter button
+                update_weiter_button()
+        
+        # CV Upload Button (rechts im Header)
+        cv_upload_btn = self.create_button(cv_header, "📤 CV hochladen", select_cv, is_primary=True, width=18)
+        cv_upload_btn.pack(side='right', padx=10)
+        
+        self.cv_desc = tk.Label(
+            self.cv_frame,
+            text="Wählen Sie das CV-PDF des Kandidaten aus.",
+            bg=self.LIGHT_GRAY,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 9),
+            justify='left'
+        )
+        self.cv_desc.pack(anchor='w', padx=25, pady=(0, 5))
+        
+        # CV Status Label (links unter Hinweistext)
+        self.cv_status_label = tk.Label(
+            self.cv_frame,
+            text="",
+            bg=self.LIGHT_GRAY,
+            fg="#2E7D32",
+            font=('Segoe UI', 9, 'bold')
+        )
+        self.cv_status_label.pack(anchor='w', padx=25, pady=(0, 12))
+        
+        # Schritt 2: Angebot-PDF (Optional)
+        self.angebot_frame = tk.Frame(content, bg=self.LIGHT_GRAY, relief='flat', bd=2)
+        self.angebot_frame.pack(fill='x', pady=(10, 10))
+        
+        angebot_header = tk.Frame(self.angebot_frame, bg=self.LIGHT_GRAY)
+        angebot_header.pack(fill='x', padx=15, pady=(12, 8))
+        
+        self.angebot_header_label = tk.Label(
+            angebot_header,
+            text="📋  Schritt 2: Angebot hinzufügen (Optional)",
+            bg=self.LIGHT_GRAY,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 10, 'bold')
+        )
+        self.angebot_header_label.pack(side='left')
+        
+        # Angebot Upload Button (rechts im Header) - Erstelle ZUERST
+        angebot_upload_btn = self.create_button(angebot_header, "📤 Angebot hochladen", lambda: None, is_primary=False, width=18)
+        angebot_upload_btn.pack(side='right', padx=10)
+        
+        def select_angebot():
+            angebot_path = FilePickerDialog.open_pdf(
+                title="Angebot/Stellenbeschreibung auswählen",
+                initial_dir=os.path.join(os.path.dirname(os.path.dirname(__file__)), "input", "angebot", "pdf")
             )
-            cb.pack(side='left')
-            
-            label = tk.Label(
-                cb_frame,
-                text=text,
-                bg=self.LIGHT_GRAY,
-                fg=self.DARK_GRAY,
-                font=('Segoe UI', 9),
-                justify='left',
-                wraplength=620
-            )
-            label.pack(side='left', padx=(5, 0))
+            if angebot_path:
+                self.angebot_path = angebot_path
+                filename = os.path.basename(angebot_path)
+                # Grüner Hintergrund für ganzen Abschnitt
+                success_bg = "#E8F5E9"
+                self.angebot_frame.config(bg=success_bg, bd=2, relief='solid')
+                angebot_header.config(bg=success_bg)
+                self.angebot_header_label.config(bg=success_bg, fg="#2E7D32")
+                self.angebot_status_label.config(text=f"✓ {filename}", bg=success_bg)
+                self.angebot_desc.config(bg=success_bg)
+                angebot_upload_btn.config(text="✓ Angebot ausgewählt", bg=self.SUCCESS_GREEN)
         
-        tk.Label(dsgvo_frame, bg=self.LIGHT_GRAY, height=1).pack()
+        # Weise die select_angebot Funktion dem Button zu
+        angebot_upload_btn.config(command=select_angebot)
+        
+        self.angebot_desc = tk.Label(
+            self.angebot_frame,
+            text="Optional: Laden Sie ein Stellenangebot hoch, um das CV automatisch darauf zuzuschneiden.",
+            bg=self.LIGHT_GRAY,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 9),
+            justify='left',
+            wraplength=620
+        )
+        self.angebot_desc.pack(anchor='w', padx=25, pady=(0, 5))
+        
+        # Angebot Status Label (links unter Hinweistext)
+        self.angebot_status_label = tk.Label(
+            self.angebot_frame,
+            text="",
+            bg=self.LIGHT_GRAY,
+            fg="#2E7D32",
+            font=('Segoe UI', 9, 'bold')
+        )
+        self.angebot_status_label.pack(anchor='w', padx=25, pady=(0, 12))
+        
+        # Initially disable upload buttons until DSGVO consent
+        cv_upload_btn.config(state='disabled', bg='#CCCCCC', cursor='arrow')
+        angebot_upload_btn.config(state='disabled', bg='#CCCCCC', cursor='arrow')
         
         # Button area - positioned at bottom right
         btn_frame = tk.Frame(self.root, bg=self.WHITE, height=80)
-        btn_frame.pack(side='bottom', fill='x', pady=15)
+        btn_frame.pack(side='bottom', fill='x', pady=(0, 15))
         btn_frame.pack_propagate(False)  # Prevent shrinking
         
         # Container for right-aligned buttons
         btn_container = tk.Frame(btn_frame, bg=self.WHITE)
         btn_container.pack(side='right', padx=30)
         
-        def select_pdf():
-            self.root.withdraw()  # Hide welcome dialog temporarily
-            # Open file picker
-            pdf_path = FilePickerDialog.open_pdf()
-            if pdf_path:
-                self.result = pdf_path  # Return the file path
-            else:
-                self.result = None  # User cancelled file picker
-            self.root.destroy()
+        def proceed():
+            """Proceed with selected files"""
+            if self.cv_path:
+                self.result = (self.cv_path, self.angebot_path)
+                self.root.destroy()
         
         def cancel():
             self.result = None
@@ -607,19 +718,32 @@ class WelcomeDialog(ModernDialog):
         btn_cancel = self.create_button(btn_container, "Abbrechen", cancel, is_primary=False, width=15)
         btn_cancel.pack(side='left', padx=5)
         
-        btn_select = self.create_button(btn_container, "📄 PDF auswählen", select_pdf, is_primary=True, width=18)
-        btn_select.pack(side='left', padx=5)
+        btn_weiter = self.create_button(btn_container, "Weiter →", proceed, is_primary=True, width=18)
+        btn_weiter.pack(side='left', padx=5)
         
-        # Initially disable PDF select button
-        btn_select.config(state='disabled', bg='#CCCCCC', cursor='arrow')
+        # Initially disable Weiter button
+        btn_weiter.config(state='disabled', bg='#CCCCCC', cursor='arrow')
+        
+        def update_weiter_button():
+            """Enable Weiter button only when CV is selected (DSGVO already required for upload)"""
+            if self.cv_path:
+                btn_weiter.config(state='normal', bg=self.ORANGE, cursor='hand2')
+            else:
+                btn_weiter.config(state='disabled', bg='#CCCCCC', cursor='arrow')
         
         def update_button_state():
-            """Enable/disable button based on all checkboxes"""
-            all_checked = all(var.get() for var in consent_vars.values())
-            if all_checked:
-                btn_select.config(state='normal', bg=self.ORANGE, cursor='hand2')
+            """Called when DSGVO checkbox changes - enable/disable upload buttons"""
+            if consent_var.get():
+                cv_upload_btn.config(state='normal', bg=self.ORANGE, cursor='hand2')
+                angebot_upload_btn.config(state='normal', bg=self.DARK_GRAY, cursor='hand2')
             else:
-                btn_select.config(state='disabled', bg='#CCCCCC', cursor='arrow')
+                cv_upload_btn.config(state='disabled', bg='#CCCCCC', cursor='arrow')
+                angebot_upload_btn.config(state='disabled', bg='#CCCCCC', cursor='arrow')
+            # Also check if Weiter button should be enabled (only if CV uploaded)
+            update_weiter_button()
+        
+        # Now set the checkbox command
+        cb.config(command=update_button_state)
 
 
 class FilePickerDialog:
@@ -706,6 +830,15 @@ def select_json_file(title="JSON-Datei auswählen"):
 
 
 def show_welcome():
-    """Show welcome dialog explaining the CV generation pipeline"""
+    """
+    Show welcome dialog with optional angebot selection:
+    1. Select CV-PDF (required)
+    2. Optional: Click "Angebot hinzufügen" button
+    3. Click "Weiter" to proceed
+    
+    Returns:
+        tuple: (cv_path, angebot_path) or None if cancelled
+               angebot_path can be None if not selected
+    """
     dialog = WelcomeDialog()
-    return dialog.show()  # Returns PDF path or None
+    return dialog.show()  # Returns (cv_path, angebot_path) or None
