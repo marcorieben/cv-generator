@@ -6,7 +6,7 @@ Converts CV PDFs to structured JSON using the defined schema
 import os
 import json
 from openai import OpenAI
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from dotenv import load_dotenv
 import re
 

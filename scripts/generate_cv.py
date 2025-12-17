@@ -1211,9 +1211,9 @@ def generate_cv(json_path):
 def select_json_file():
     """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei"""
     try:
-        from modern_dialogs import select_json_file as picker
+        from dialogs import select_json_file as picker
     except ImportError:
-        from scripts.modern_dialogs import select_json_file as picker
+        from scripts.dialogs import select_json_file as picker
     return picker("Wählen Sie eine JSON-Datei für den CV")
 
 
