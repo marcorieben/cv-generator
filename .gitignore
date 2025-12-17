@@ -9,8 +9,10 @@ output/word/
 output/pdf/*.pdf
 
 # Input files (PDFs and generated JSONs - local working files)
-input/pdf/*.pdf
-input/json/*.json
+input/cv/pdf/*.pdf
+input/cv/json/*.json
+input/angebot/pdf/*.pdf
+input/angebot/json/*.json
 !input/**/.gitkeep
 
 # Python
