@@ -3,7 +3,7 @@ Demo script to showcase all modern dialog styles
 Run this to preview the new corporate-styled dialogs
 """
 
-from scripts.modern_dialogs import (
+from scripts.dialogs import (
     show_success, show_error, show_warning, ask_yes_no,
     select_pdf_file, select_json_file, ModernDialog
 )

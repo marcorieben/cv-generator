@@ -7,9 +7,9 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 # Handle imports for both direct execution and module import
 try:
-    from modern_dialogs import show_warning, select_json_file
+    from dialogs import show_warning, select_json_file
 except ImportError:
-    from scripts.modern_dialogs import show_warning, select_json_file
+    from scripts.dialogs import show_warning, select_json_file
 
 # Globale Konstante für fehlende Daten
 MISSING_DATA_MARKER = "! bitte prüfen !"
@@ -1532,9 +1532,9 @@ styles = load_styles("styles.json")
 if __name__ == "__main__":
     # Import dialogs - handle both direct execution and module import
     try:
-        from modern_dialogs import show_success, ask_yes_no, ModernDialog
+        from dialogs import show_success, ask_yes_no, ModernDialog
     except ImportError:
-        from scripts.modern_dialogs import show_success, ask_yes_no, ModernDialog
+        from scripts.dialogs import show_success, ask_yes_no, ModernDialog
     
     json_file = select_json_file()
     if json_file:

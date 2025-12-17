@@ -132,7 +132,9 @@ class SuccessDialog(ModernDialog):
     """Modern success message dialog"""
     
     def __init__(self, title="Erfolg", message="", details=None, file_path=None):
-        super().__init__(title, width=600, height=380)
+        # Increase height if we have both details and file button
+        height = 420 if (details and file_path) else 380
+        super().__init__(title, width=600, height=height)
         
         # Store file path for opening
         self.file_path = file_path

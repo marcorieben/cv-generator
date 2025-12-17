@@ -15,7 +15,7 @@ from datetime import datetime
 # Import unserer Module
 from scripts.pdf_to_json import pdf_to_json
 from scripts.generate_cv import generate_cv, validate_json_structure
-from scripts.modern_dialogs import (
+from scripts.dialogs import (
     show_success, show_error, show_warning, ask_yes_no,
     select_pdf_file, show_welcome, ModernDialog
 )

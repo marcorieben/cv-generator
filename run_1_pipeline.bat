@@ -9,6 +9,6 @@ echo ========================================
 echo.
 
 REM Use virtual environment Python
-.venv\Scripts\python.exe run_pipeline.py
+.venv\Scripts\python.exe scripts\pipeline.py
 
 pause
