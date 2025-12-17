@@ -385,11 +385,11 @@ class WelcomeDialog(ModernDialog):
         steps_title.pack(anchor='w', padx=15, pady=(15, 10))
         
         steps = [
-            "1️⃣  PDF-Datei auswählen (Bewerbungsdossier/Lebenslauf)",
-            "2️⃣  KI-gestützte Extraktion der Daten aus PDF",
-            "3️⃣  Strukturierung in JSON-Format",
-            "4️⃣  Validierung der extrahierten Daten",
-            "5️⃣  Generierung des formatierten Word-Dokuments"
+            "📄  PDF-Datei auswählen (Bewerbungsdossier/Lebenslauf)",
+            "🤖  KI-gestützte Extraktion der Daten aus PDF",
+            "📋  Strukturierung in JSON-Format",
+            "✅  Validierung der extrahierten Daten",
+            "📝  Generierung des formatierten Word-Dokuments"
         ]
         
         for step in steps:
@@ -398,10 +398,10 @@ class WelcomeDialog(ModernDialog):
                 text=step,
                 bg=self.LIGHT_GRAY,
                 fg=self.DARK_GRAY,
-                font=('Segoe UI', 9),
+                font=('Segoe UI', 10),
                 anchor='w'
             )
-            step_label.pack(anchor='w', padx=25, pady=2)
+            step_label.pack(anchor='w', padx=25, pady=4)
         
         tk.Label(steps_frame, bg=self.LIGHT_GRAY, height=1).pack()
         
