@@ -66,7 +66,7 @@
       "type": "array",
       "minItems": 3,
       "maxItems": 3,
-      "description": "IMMER genau 3 Kategorien in dieser Reihenfolge: 1) Projektmethodik, 2) Tech Stack, 3) Weitere Fähigkeiten / Skills",
+      "description": "IMMER genau 3 Kategorien in dieser Reihenfolge: 1) Projektmethodik, 2) Tech Stack, 3) Weitere Skills",
       "items": [
         {
           "type": "object",
@@ -110,8 +110,8 @@
           "properties": {
             "Kategorie": {
               "type": "string",
-              "const": "Weitere Fähigkeiten / Skills",
-              "description": "Dritte Kategorie: Weitere Fähigkeiten / Skills (alles andere: Soft Skills, Domain-Wissen, etc.)"
+              "const": "Weitere Skills",
+              "description": "Dritte Kategorie: Weitere Skills (alles andere: Soft Skills, Domain-Wissen, etc.)"
             },
             "Inhalt": {
               "type": "array",

@@ -143,7 +143,7 @@ def normalize_json_structure(data):
         data["Fachwissen_und_Schwerpunkte"] = [
             {"Kategorie": "Projektmethodik", "Inhalt": projektmethodik_items},
             {"Kategorie": "Tech Stack", "Inhalt": tech_stack_items},
-            {"Kategorie": "Weitere Fähigkeiten / Skills", "Inhalt": weitere_skills_items}
+            {"Kategorie": "Weitere Skills", "Inhalt": weitere_skills_items}
         ]
     
     # Korrektur 3: Verschachtelte Referenzprojekte
@@ -272,7 +272,7 @@ WICHTIGE REGELN:
 9. WICHTIG: Fachwissen_und_Schwerpunkte hat IMMER genau 3 Kategorien in dieser Reihenfolge:
    - 1. "Projektmethodik"
    - 2. "Tech Stack"
-   - 3. "Weitere Fähigkeiten / Skills"
+   - 3. "Weitere Skills"
 10. ZEITFORMATE: Konvertiere ALLE Zeitangaben zu MM/YYYY Format (z.B. "01/2020", "12/2023")
 11. AUS- UND WEITERBILDUNG vs. TRAININGS:
     - Aus_und_Weiterbildung: NUR akademische/formale Abschlüsse (Bachelor, Master, PhD, CAS, DAS, MAS, Diplome)

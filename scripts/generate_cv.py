@@ -1131,6 +1131,11 @@ def generate_cv(json_path):
     firstname = str(data.get("Vorname", "Unbekannt"))
     lastname = str(data.get("Nachname", "Unbekannt"))
 
+    # Remove default empty paragraph if it exists
+    if doc.paragraphs and not doc.paragraphs[0].text.strip():
+        p_element = doc.paragraphs[0]._element
+        p_element.getparent().remove(p_element)
+
     # -----------------------------
     # Überschrift 1 (Name)
     # -----------------------------
