@@ -55,7 +55,8 @@ def run_pipeline(pdf_path):
     Returns:
         Pfad zur generierten Word-Datei oder None bei Fehler
     """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Get project root (parent of scripts/)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
     try:
         # Schritt 1: PDF → JSON

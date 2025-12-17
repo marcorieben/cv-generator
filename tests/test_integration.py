@@ -122,3 +122,58 @@ class TestModuleFunctions:
         assert callable(show_success)
         assert callable(show_error)
         assert callable(select_json_file)
+
+
+class TestPathResolution:
+    """Tests für korrekte Pfadauflösung in Scripts"""
+    
+    def test_pipeline_resolves_correct_base_directory(self):
+        """Test dass pipeline.py das Projekt-Root korrekt findet"""
+        # Simuliere die Pfadauflösung wie in pipeline.py
+        pipeline_file = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'scripts',
+            'pipeline.py'
+        )
+        
+        # Berechne base_dir wie in pipeline.py
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(pipeline_file)))
+        
+        # Prüfe dass base_dir auf Projekt-Root zeigt, nicht auf scripts/
+        assert os.path.basename(base_dir) == 'cv_generator'
+        assert os.path.exists(os.path.join(base_dir, 'scripts'))
+        assert os.path.exists(os.path.join(base_dir, 'input'))
+        
+        # Prüfe dass JSON-Pfad korrekt aufgelöst wird
+        json_path = os.path.join(base_dir, "input", "json", "test.json")
+        assert 'scripts' not in os.path.dirname(json_path).replace(base_dir, '')
+        assert json_path.endswith(os.path.join('input', 'json', 'test.json'))
+    
+    def test_generate_cv_resolves_styles_correctly(self):
+        """Test dass generate_cv.py styles.json im scripts/ findet"""
+        import sys
+        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+        
+        from scripts.generate_cv import abs_path
+        
+        # abs_path sollte relativ zum scripts/ Verzeichnis auflösen
+        styles_path = abs_path('styles.json')
+        
+        assert os.path.exists(styles_path)
+        assert styles_path.endswith(os.path.join('scripts', 'styles.json'))
+    
+    def test_input_output_directories_exist(self):
+        """Test dass input/ und output/ Verzeichnisse im richtigen Ort existieren"""
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        
+        # Diese Ordner sollten im Projekt-Root sein, nicht in scripts/
+        input_dir = os.path.join(project_root, 'input')
+        output_dir = os.path.join(project_root, 'output')
+        
+        assert os.path.exists(input_dir), f"input/ nicht gefunden: {input_dir}"
+        assert os.path.exists(output_dir), f"output/ nicht gefunden: {output_dir}"
+        
+        # JSON und Word Unterordner
+        assert os.path.exists(os.path.join(input_dir, 'json'))
+        assert os.path.exists(os.path.join(output_dir, 'word'))
+
