@@ -1,6 +1,17 @@
+# Environment & Secrets - NEVER COMMIT!
+.env
+*.env
+!.env.example
+
 # Output files
-output/word/*.docx
+output/word/
+!output/word/.gitkeep
 output/pdf/*.pdf
+
+# Input files (PDFs and generated JSONs - local working files)
+input/pdf/*.pdf
+input/json/*.json
+!input/**/.gitkeep
 
 # Python
 __pycache__/
@@ -11,6 +22,12 @@ __pycache__/
 env/
 venv/
 *.egg-info/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
 
 # OS
 .DS_Store
