@@ -21,7 +21,7 @@
     "Nachname",
     "Hauptrolle",
     "Nationalität",
-    "Hauptausbildung",
+    "Ausbildung",
     "Kurzprofil",
     "Fachwissen_und_Schwerpunkte",
     "Aus_und_Weiterbildung",
@@ -55,8 +55,9 @@
     "Nationalität": {
       "type": "string"
     },
-    "Hauptausbildung": {
-      "type": "string"
+    "Ausbildung": {
+      "type": "string",
+      "description": "Die höchste oder wichtigste Ausbildung aus dem CV (z.B. 'Master of Science, ETH Zürich' oder 'Bachelor in Informatik, Universität Bern'). WICHTIG: Nur die Hauptausbildung, nicht alle Bildungsgänge aufzählen."
     },
     "Kurzprofil": {
       "type": "string",

@@ -33,6 +33,8 @@ class ModernDialog:
     ICON_WORD = "📝"
     
     def __init__(self, title, width=550, height=300):
+        self.width = width
+        self.height = height
         self.root = tk.Tk()
         self.root.title(title)
         self.root.resizable(False, False)
@@ -258,7 +260,9 @@ class WarningDialog(ModernDialog):
     """Modern warning dialog with Yes/No options"""
     
     def __init__(self, title="Warnung", message="", details=None):
-        super().__init__(title, width=650, height=550)
+        # Dynamic height: larger if details present
+        dialog_height = 650 if details else 400
+        super().__init__(title, width=650, height=dialog_height)
         
         # Header
         self.create_header(title, self.ICON_WARNING, self.WARNING_YELLOW)

@@ -94,7 +94,7 @@ Edit `scripts/styles.json`: `heading1` (orange, 16pt), `heading2` (gray, 11pt), 
 3. Test with sample PDFs, check console output for API errors
 
 ## Schema Contract (Key Fields)
-- **Required top-level:** `Vorname`, `Nachname`, `Hauptrolle` (object with `Titel`/`Beschreibung`), `Nationalität`, `Hauptausbildung`, `Kurzprofil`, `Fachwissen_und_Schwerpunkte` (3-item array), `Aus_und_Weiterbildung`, `Trainings_und_Zertifizierungen`, `Sprachen`, `Ausgewählte_Referenzprojekte`
+- **Required top-level:** `Vorname`, `Nachname`, `Hauptrolle` (object with `Titel`/`Beschreibung`), `Nationalität`, `Ausbildung`, `Kurzprofil`, `Fachwissen_und_Schwerpunkte` (3-item array), `Aus_und_Weiterbildung`, `Trainings_und_Zertifizierungen`, `Sprachen`, `Ausgewählte_Referenzprojekte`
 - **Education vs Training:** `Aus_und_Weiterbildung` = academic degrees only (Bachelor, Master, CAS, DAS). `Trainings_und_Zertifizierungen` = courses, workshops, certifications
 - **Projects:** Max 5 bullets per `Tätigkeiten` array. Role max 8 words. Display: customer heading, time/role row, activities bullets, tech/methodology rows
 - **Kurzprofil:** 50-100 words, 3rd person using first name (e.g., "Marco verfügt über..."), factual—no invented skills

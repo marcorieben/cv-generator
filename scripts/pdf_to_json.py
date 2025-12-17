@@ -82,6 +82,11 @@ def normalize_json_structure(data):
     """
     Korrigiert verschachtelte Strukturen von OpenAI zum erwarteten Format
     """
+    # Korrektur 0: Hauptausbildung -> Ausbildung (Abwärtskompatibilität)
+    if "Hauptausbildung" in data and "Ausbildung" not in data:
+        data["Ausbildung"] = data["Hauptausbildung"]
+        del data["Hauptausbildung"]
+    
     # Korrektur 1: Expertise -> Fachwissen_und_Schwerpunkte
     if "Expertise" in data and isinstance(data["Expertise"], dict):
         if "Fachwissen_und_Schwerpunkte" in data["Expertise"]:

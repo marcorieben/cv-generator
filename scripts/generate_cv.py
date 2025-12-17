@@ -24,7 +24,7 @@ def validate_json_structure(data):
     
     # Erforderliche Top-Level-Felder
     required_fields = [
-        "Vorname", "Nachname", "Hauptrolle", "Nationalität", "Hauptausbildung",
+        "Vorname", "Nachname", "Hauptrolle", "Nationalität", "Ausbildung",
         "Kurzprofil", "Fachwissen_und_Schwerpunkte", "Aus_und_Weiterbildung",
         "Trainings_und_Zertifizierungen", "Sprachen", "Ausgewählte_Referenzprojekte"
     ]
@@ -50,7 +50,7 @@ def validate_json_structure(data):
                     word_count = len(beschreibung.split())
                     if word_count < 5 or word_count > 10:
                         info.append(f"Hauptrolle.Beschreibung sollte 5-10 Wörter haben (aktuell {word_count})")
-            elif field in ["Vorname", "Nachname", "Nationalität", "Hauptausbildung", "Kurzprofil"]:
+            elif field in ["Vorname", "Nachname", "Nationalität", "Ausbildung", "Kurzprofil"]:
                 if not isinstance(data[field], str):
                     info.append(f"Feld '{field}' sollte ein String sein (ist {type(data[field]).__name__})")
             elif field in array_fields:
@@ -485,7 +485,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     p_value2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     add_text_with_highlight(p_value2, nationalität, s["font"], s["size"], s["color"])
     
-    # Row 3: Hauptausbildung
+    # Row 3: Ausbildung
     cell_label3 = table.rows[2].cells[0]
     cell_value3 = table.rows[2].cells[1]
     cell_image3 = table.rows[2].cells[2]
@@ -500,7 +500,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     
     p_label3 = cell_label3.paragraphs[0]
     p_label3.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-    run_label3 = p_label3.add_run("Hauptausbildung:")
+    run_label3 = p_label3.add_run("Ausbildung:")
     run_label3.font.name = s["font"]
     run_label3.font.size = Pt(s["size"])
     run_label3.font.bold = True
@@ -1149,7 +1149,7 @@ def generate_cv(json_path):
     add_basic_info_table(doc, 
                          rolle_desc,
                          str(data.get("Nationalität", "")),
-                         str(data.get("Hauptausbildung", "")))
+                         str(data.get("Ausbildung", "")))
 
     # -----------------------------
     # Kurzprofil
