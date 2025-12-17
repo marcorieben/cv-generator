@@ -9,6 +9,7 @@ Usage:
 
 import os
 import sys
+import socket
 from datetime import datetime
 
 # Import unserer Module
@@ -18,6 +19,21 @@ from scripts.modern_dialogs import (
     show_success, show_error, show_warning, ask_yes_no,
     select_pdf_file, show_welcome, ModernDialog
 )
+
+
+def check_internet_connection():
+    """
+    Prüft, ob eine Internetverbindung verfügbar ist
+    
+    Returns:
+        True wenn Internet verfügbar, sonst False
+    """
+    try:
+        # Versuche DNS-Lookup für openai.com
+        socket.create_connection(("api.openai.com", 443), timeout=5)
+        return True
+    except OSError:
+        return False
 
 
 # Dialog functions are now imported from modern_dialogs.py
@@ -119,16 +135,25 @@ def run_pipeline(pdf_path):
             f"  {word_path}"
         )
         
-        # Show success and ask to open
-        show_success(success_msg, details=details)
+        # Show success with open button
+        result = show_success(success_msg, details=details, file_path=word_path)
         
-        # Ask if user wants to open the file
-        if ask_yes_no(
-            "Möchten Sie das generierte Word-Dokument jetzt öffnen?",
-            title="Dokument öffnen",
-            icon_type="success"
-        ):
-            os.startfile(word_path)
+        # Open document if user clicked "Open"
+        if result == 'open':
+            print("📂 Öffne Word-Dokument...")
+            import subprocess
+            import platform
+            
+            try:
+                if platform.system() == 'Windows':
+                    os.startfile(word_path)
+                elif platform.system() == 'Darwin':  # macOS
+                    subprocess.run(['open', word_path])
+                else:  # Linux
+                    subprocess.run(['xdg-open', word_path])
+                print("✅ Dokument geöffnet")
+            except Exception as e:
+                print(f"⚠️  Konnte Dokument nicht öffnen: {e}")
         
         return word_path
     
@@ -151,6 +176,25 @@ def main():
     print("CV GENERATOR - Unified Pipeline")
     print("PDF → JSON → Word")
     print("="*60)
+    
+    # Internetverbindung prüfen
+    print("\n🌐 Prüfe Internetverbindung...")
+    if not check_internet_connection():
+        show_error(
+            "Für die CV-Generierung ist eine Internetverbindung erforderlich.",
+            title="Keine Internetverbindung",
+            details=(
+                "Die Applikation benötigt Zugriff auf die OpenAI API zur "
+                "Extraktion und Strukturierung der CV-Daten aus PDF-Dateien.\n\n"
+                "Bitte stellen Sie sicher, dass:\n"
+                "• Sie mit dem Internet verbunden sind\n"
+                "• Ihre Firewall den Zugriff auf api.openai.com erlaubt\n"
+                "• Keine Proxy-Einstellungen die Verbindung blockieren"
+            )
+        )
+        print("❌ Keine Internetverbindung. Programm abgebrochen.")
+        return 1
+    print("✅ Internetverbindung verfügbar")
     
     # PDF-Datei aus Argument oder Dialog
     if len(sys.argv) > 1:

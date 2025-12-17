@@ -4,9 +4,12 @@ from datetime import datetime
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from scripts.modern_dialogs import (
-    show_warning, select_json_file
-)
+
+# Handle imports for both direct execution and module import
+try:
+    from modern_dialogs import show_warning, select_json_file
+except ImportError:
+    from scripts.modern_dialogs import show_warning, select_json_file
 
 # Globale Konstante für fehlende Daten
 MISSING_DATA_MARKER = "! bitte prüfen !"
@@ -1052,21 +1055,46 @@ def generate_cv(json_path):
     # JSON-Struktur validieren
     critical, info = validate_json_structure(data)
     if critical or info:
-        # Build warning message
-        warning_msg = "Die JSON-Datei weist folgende Strukturprobleme auf:"
+        # Build warning message with explanation
+        warning_msg = (
+            "ℹ️  Die Validierung prüft, ob alle erforderlichen Felder vorhanden und korrekt formatiert sind.\n\n"
+            "Die JSON-Datei weist Strukturprobleme auf, die die Qualität des generierten CVs beeinträchtigen können. \n"
+            "Nachstehend eine Auflistung der entdeckten Strukturprobleme nach Kritikalität klassifiziert."
+        )
         
-        # Build details
+        # Build details with better formatting and icons
         details_parts = []
+        
         if critical:
-            details_parts.append("⚠️ Kritische Fehler:")
-            details_parts.extend([f"  • {err}" for err in critical])
+            details_parts.append("🔴 KRITISCHE PROBLEME:")
+            details_parts.append("─" * 40)
+            for err in critical:
+                # Add specific icons based on error type
+                if "Fehlendes Feld" in err:
+                    icon = "❌"
+                elif "Muss ein" in err or "muss ein" in err:
+                    icon = "⚠️"
+                elif "Ungültig" in err or "ungültig" in err:
+                    icon = "🚫"
+                else:
+                    icon = "🔴"
+                details_parts.append(f"  {icon} {err}")
+            
         if info:
             if critical:
                 details_parts.append("")  # Empty line separator
-            details_parts.append("ℹ️ Hinweise (nicht kritisch):")
-            details_parts.extend([f"  • {wrn}" for wrn in info])
+            details_parts.append("🟡 WENIGER KRITISCHE HINWEISE:")
+            details_parts.append("─" * 40)
+            for wrn in info:
+                # Add specific icons based on warning type
+                if "sollte" in wrn:
+                    icon = "💡"
+                elif "Typ" in wrn or "sein" in wrn:
+                    icon = "ℹ️"
+                else:
+                    icon = "🟡"
+                details_parts.append(f"  {icon} {wrn}")
         
-        details_parts.append("\nMöchten Sie trotzdem fortfahren?")
         details = "\n".join(details_parts)
         
         try:
@@ -1076,7 +1104,7 @@ def generate_cv(json_path):
                 return None
         except Exception as e:
             print(f"Warnung konnte nicht angezeigt werden: {e}")
-            print("Kritische Fehler:" if critical else "Info:", "\n".join(critical if critical else info))
+            print("Probleme gefunden:", "\n".join(critical + info))
             user_input = input("Trotzdem fortfahren? (j/n): ")
             if user_input.lower() not in ['j', 'ja', 'y', 'yes']:
                 return None
@@ -1182,7 +1210,10 @@ def generate_cv(json_path):
 
 def select_json_file():
     """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei"""
-    from scripts.modern_dialogs import select_json_file as picker
+    try:
+        from modern_dialogs import select_json_file as picker
+    except ImportError:
+        from scripts.modern_dialogs import select_json_file as picker
     return picker("Wählen Sie eine JSON-Datei für den CV")
 
 
@@ -1499,35 +1530,46 @@ def add_referenzprojekt_section(doc, projekt):
 # Lade Stile global nach allen Definitionen
 styles = load_styles("styles.json")
 if __name__ == "__main__":
-    from scripts.modern_dialogs import show_success, ask_yes_no, ModernDialog
+    # Import dialogs - handle both direct execution and module import
+    try:
+        from modern_dialogs import show_success, ask_yes_no, ModernDialog
+    except ImportError:
+        from scripts.modern_dialogs import show_success, ask_yes_no, ModernDialog
     
     json_file = select_json_file()
     if json_file:
         output_file = generate_cv(json_file)
         if output_file:
-            # Show success with details
+            # Show success with open button
             output_dir = os.path.dirname(output_file)
             filename = os.path.basename(output_file)
             
-            show_success(
-                "Das CV-Dokument wurde erfolgreich erstellt.",
-                title="CV erfolgreich generiert",
-                details=(
-                    f"{ModernDialog.ICON_WORD} Output Directory:\n"
-                    f"  {output_dir}\n\n"
-                    f"Filename:\n"
-                    f"  {filename}"
-                )
+            details = (
+                f"{ModernDialog.ICON_WORD} Output Directory:\n"
+                f"  {output_dir}\n\n"
+                f"Filename:\n"
+                f"  {filename}"
             )
             
-            # Ask to open file
-            if ask_yes_no(
-                "Möchten Sie das generierte Dokument jetzt öffnen?",
-                title="Dokument öffnen",
-                icon_type="success"
-            ):
+            result = show_success(
+                "Das CV-Dokument wurde erfolgreich erstellt.",
+                title="CV erfolgreich generiert",
+                details=details,
+                file_path=output_file
+            )
+            
+            # Open document if user clicked "Open"
+            if result == 'open':
                 try:
-                    os.startfile(output_file)
+                    import platform
+                    import subprocess
+                    
+                    if platform.system() == 'Windows':
+                        os.startfile(output_file)
+                    elif platform.system() == 'Darwin':  # macOS
+                        subprocess.run(['open', output_file])
+                    else:  # Linux
+                        subprocess.run(['xdg-open', output_file])
                 except Exception as e:
                     print(f"Fehler beim Öffnen der Datei: {e}")
         else:
