@@ -3,12 +3,18 @@ Unified CV Generation Pipeline
 PDF → JSON → Word in einem einzigen Flow
 
 Usage:
-    python run_pipeline.py                     # Mit Dialog
-    python run_pipeline.py path/to/file.pdf    # Direkt mit PDF
+    python scripts/pipeline.py                 # Mit Dialog
+    python scripts/pipeline.py path/to/file.pdf    # Direkt mit PDF
 """
 
 import os
 import sys
+
+# Add parent directory to path for imports - always, not just in __main__
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 import socket
 from datetime import datetime
 
