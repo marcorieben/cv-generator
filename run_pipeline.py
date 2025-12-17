@@ -16,7 +16,7 @@ from scripts.pdf_to_json import pdf_to_json
 from scripts.generate_cv import generate_cv, validate_json_structure
 from scripts.modern_dialogs import (
     show_success, show_error, show_warning, ask_yes_no,
-    select_pdf_file, ModernDialog
+    select_pdf_file, show_welcome, ModernDialog
 )
 
 
@@ -159,7 +159,8 @@ def main():
             print(f"❌ Datei nicht gefunden: {pdf_path}")
             return 1
     else:
-        pdf_path = select_pdf_file()
+        # Show welcome dialog which includes PDF selection
+        pdf_path = show_welcome()
         if not pdf_path:
             print("❌ Keine Datei ausgewählt. Programm abgebrochen.")
             return 1

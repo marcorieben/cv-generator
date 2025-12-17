@@ -69,7 +69,7 @@ class ModernDialog:
     def create_content_frame(self):
         """Create white content area"""
         frame = tk.Frame(self.root, bg=self.WHITE)
-        frame.pack(fill='both', expand=True, padx=30, pady=20)
+        frame.pack(fill='both', expand=True, padx=30, pady=20, side='top')
         return frame
     
     def create_button(self, parent, text, command, is_primary=True, width=15):
@@ -332,6 +332,119 @@ class ConfirmDialog(ModernDialog):
         self.create_button(btn_frame, "Nein", no, is_primary=False, width=12).pack(side='left', padx=5)
 
 
+class WelcomeDialog(ModernDialog):
+    """Welcome dialog explaining the CV generation process"""
+    
+    def __init__(self):
+        super().__init__("CV Generator - Pipeline", width=650, height=520)
+        
+        # Header
+        self.create_header("CV Generator", self.ICON_FILE, self.ORANGE)
+        
+        # Content
+        content = tk.Frame(self.root, bg=self.WHITE)
+        content.pack(fill='both', expand=False, padx=30, pady=20, side='top')
+        
+        # Welcome message
+        welcome = tk.Label(
+            content,
+            text="Willkommen zum CV Generator Pipeline",
+            bg=self.WHITE,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 13, 'bold')
+        )
+        welcome.pack(anchor='w', pady=(0, 15))
+        
+        # Process explanation
+        process_text = (
+            "Dieser Prozess erstellt automatisch ein professionell formatiertes CV-Dokument "
+            "in Ihrem Corporate Design."
+        )
+        process_label = tk.Label(
+            content,
+            text=process_text,
+            bg=self.WHITE,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 10),
+            justify='left',
+            wraplength=590
+        )
+        process_label.pack(anchor='w', pady=(0, 20))
+        
+        # Steps frame
+        steps_frame = tk.Frame(content, bg=self.LIGHT_GRAY, relief='flat')
+        steps_frame.pack(fill='x', pady=(0, 20))
+        
+        steps_title = tk.Label(
+            steps_frame,
+            text="Pipeline Schritte:",
+            bg=self.LIGHT_GRAY,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 10, 'bold')
+        )
+        steps_title.pack(anchor='w', padx=15, pady=(15, 10))
+        
+        steps = [
+            "1️⃣  PDF-Datei auswählen (Bewerbungsdossier/Lebenslauf)",
+            "2️⃣  KI-gestützte Extraktion der Daten aus PDF",
+            "3️⃣  Strukturierung in JSON-Format",
+            "4️⃣  Validierung der extrahierten Daten",
+            "5️⃣  Generierung des formatierten Word-Dokuments"
+        ]
+        
+        for step in steps:
+            step_label = tk.Label(
+                steps_frame,
+                text=step,
+                bg=self.LIGHT_GRAY,
+                fg=self.DARK_GRAY,
+                font=('Segoe UI', 9),
+                anchor='w'
+            )
+            step_label.pack(anchor='w', padx=25, pady=2)
+        
+        tk.Label(steps_frame, bg=self.LIGHT_GRAY, height=1).pack()
+        
+        # Call to action
+        cta_label = tk.Label(
+            content,
+            text="Klicken Sie auf 'PDF auswählen', um zu beginnen.",
+            bg=self.WHITE,
+            fg=self.ORANGE,
+            font=('Segoe UI', 10, 'bold')
+        )
+        cta_label.pack(anchor='w', pady=(10, 0))
+        
+        # Button area - FIXED: ensure it's at bottom
+        btn_frame = tk.Frame(self.root, bg=self.WHITE, height=80)
+        btn_frame.pack(side='bottom', fill='x', pady=15)
+        btn_frame.pack_propagate(False)  # Prevent shrinking
+        
+        # Container for centered buttons
+        btn_container = tk.Frame(btn_frame, bg=self.WHITE)
+        btn_container.place(relx=0.5, rely=0.5, anchor='center')
+        
+        def select_pdf():
+            self.root.withdraw()  # Hide welcome dialog temporarily
+            # Open file picker
+            pdf_path = FilePickerDialog.open_pdf()
+            if pdf_path:
+                self.result = pdf_path  # Return the file path
+            else:
+                self.result = None  # User cancelled file picker
+            self.root.destroy()
+        
+        def cancel():
+            self.result = None
+            self.root.destroy()
+        
+        btn_select = self.create_button(btn_container, "📄 PDF auswählen", select_pdf, is_primary=True, width=18)
+        btn_select.pack(side='left', padx=5)
+        
+        btn_cancel = self.create_button(btn_container, "Abbrechen", cancel, is_primary=False, width=15)
+        btn_cancel.pack(side='left', padx=5)
+
+
 class FilePickerDialog:
     """Modern file picker with corporate styling"""
     
@@ -413,3 +526,9 @@ def select_pdf_file(title="PDF-Datei auswählen"):
 def select_json_file(title="JSON-Datei auswählen"):
     """Show file picker for JSON"""
     return FilePickerDialog.open_json(title)
+
+
+def show_welcome():
+    """Show welcome dialog explaining the CV generation pipeline"""
+    dialog = WelcomeDialog()
+    return dialog.show()  # Returns PDF path or None

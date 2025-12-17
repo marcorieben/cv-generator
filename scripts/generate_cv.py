@@ -4,7 +4,7 @@ from datetime import datetime
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from modern_dialogs import (
+from scripts.modern_dialogs import (
     show_warning, select_json_file
 )
 
@@ -1182,7 +1182,7 @@ def generate_cv(json_path):
 
 def select_json_file():
     """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei"""
-    from modern_dialogs import select_json_file as picker
+    from scripts.modern_dialogs import select_json_file as picker
     return picker("Wählen Sie eine JSON-Datei für den CV")
 
 
@@ -1499,7 +1499,7 @@ def add_referenzprojekt_section(doc, projekt):
 # Lade Stile global nach allen Definitionen
 styles = load_styles("styles.json")
 if __name__ == "__main__":
-    from modern_dialogs import show_success, ask_yes_no, ModernDialog
+    from scripts.modern_dialogs import show_success, ask_yes_no, ModernDialog
     
     json_file = select_json_file()
     if json_file:
