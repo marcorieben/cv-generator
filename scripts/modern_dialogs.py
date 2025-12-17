@@ -35,12 +35,25 @@ class ModernDialog:
     def __init__(self, title, width=550, height=300):
         self.root = tk.Tk()
         self.root.title(title)
-        self.root.geometry(f"{width}x{height}")
         self.root.resizable(False, False)
         self.root.configure(bg=self.WHITE)
         
-        # Center window
-        self.root.eval('tk::PlaceWindow . center')
+        # Set size first
+        self.root.geometry(f"{width}x{height}")
+        
+        # Withdraw to position offscreen before centering
+        self.root.withdraw()
+        self.root.update_idletasks()
+        
+        # Center window on main screen (horizontal and vertical)
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+        
+        # Show window at centered position
+        self.root.deiconify()
         self.root.attributes('-topmost', True)
         
         # Focus window
@@ -336,7 +349,7 @@ class WelcomeDialog(ModernDialog):
     """Welcome dialog explaining the CV generation process"""
     
     def __init__(self):
-        super().__init__("CV Generator - Pipeline", width=650, height=520)
+        super().__init__("CV Generator - Pipeline", width=650, height=560)
         
         # Header
         self.create_header("CV Generator", self.ICON_FILE, self.ORANGE)
