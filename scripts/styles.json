@@ -3,14 +3,16 @@
     "font": "Aptos",
     "size": 16,
     "bold": true,
-    "color": [255, 121, 0]
+    "color": [255, 121, 0],
+    "space_before": 0,
+    "space_after": 6
   },
   "heading2": {
     "font": "Aptos",
     "size": 11,
     "bold": true,
     "color": [68, 68, 68],
-    "space_before": 18,
+    "space_before": 0,
     "space_after": 6
   },
   "text": {
@@ -22,9 +24,11 @@
   "bullet": {
     "font": "Aptos",
     "size": 11,
+    "symbol": "■",
     "symbol_size": 9,
     "color": [255, 121, 0],
-    "indent": 12,
+    "indent": 0,
+    "hanging_indent": 12,
     "line_spacing": 1.0,
     "space_before": 0,
     "space_after": 0

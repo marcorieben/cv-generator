@@ -1,0 +1,14 @@
+# CV Generator Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+python-docx>=1.1.0
+
+# OpenAI API for PDF to JSON conversion
+openai>=1.0.0
+
+# PDF processing
+pypdf>=4.0.0
+
+# Environment variables
+python-dotenv>=1.0.0

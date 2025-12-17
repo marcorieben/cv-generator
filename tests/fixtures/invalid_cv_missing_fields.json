@@ -1,0 +1,15 @@
+{
+    "Vorname": "Test",
+    "Nachname": "User",
+    "Hauptrolle": {
+        "Titel": "Developer"
+    },
+    "Nationalität": "Schweiz",
+    "Ausbildung": "Bachelor",
+    "Kurzprofil": "Test",
+    "Fachwissen_und_Schwerpunkte": "Not an array",
+    "Aus_und_Weiterbildung": [],
+    "Trainings_und_Zertifizierungen": [],
+    "Sprachen": [],
+    "Ausgewählte_Referenzprojekte": []
+}

@@ -4,8 +4,15 @@ from datetime import datetime
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from tkinter import Tk, filedialog, Toplevel, Label, Button, CENTER
 
+# Handle imports for both direct execution and module import
+try:
+    from dialogs import show_warning, select_json_file
+except ImportError:
+    from scripts.dialogs import show_warning, select_json_file
+
+# Globale Konstante für fehlende Daten
+MISSING_DATA_MARKER = "! bitte prüfen !"
 
 # -------------------------------------
 # Hilfsfunktion: Absoluten Pfad bilden
@@ -17,7 +24,7 @@ def validate_json_structure(data):
     
     # Erforderliche Top-Level-Felder
     required_fields = [
-        "Vorname", "Nachname", "Hauptrolle", "Nationalität", "Hauptausbildung",
+        "Vorname", "Nachname", "Hauptrolle", "Nationalität", "Ausbildung",
         "Kurzprofil", "Fachwissen_und_Schwerpunkte", "Aus_und_Weiterbildung",
         "Trainings_und_Zertifizierungen", "Sprachen", "Ausgewählte_Referenzprojekte"
     ]
@@ -43,7 +50,7 @@ def validate_json_structure(data):
                     word_count = len(beschreibung.split())
                     if word_count < 5 or word_count > 10:
                         info.append(f"Hauptrolle.Beschreibung sollte 5-10 Wörter haben (aktuell {word_count})")
-            elif field in ["Vorname", "Nachname", "Nationalität", "Hauptausbildung", "Kurzprofil"]:
+            elif field in ["Vorname", "Nachname", "Nationalität", "Ausbildung", "Kurzprofil"]:
                 if not isinstance(data[field], str):
                     info.append(f"Feld '{field}' sollte ein String sein (ist {type(data[field]).__name__})")
             elif field in array_fields:
@@ -170,8 +177,11 @@ def load_styles(filename="styles.json"):
 
 def add_heading_1(doc, text):
     p = doc.add_paragraph()
-    run = p.add_run(text)
     s = styles["heading1"]
+    p.paragraph_format.space_before = Pt(s["space_before"])
+    p.paragraph_format.space_after = Pt(s["space_after"])
+    
+    run = p.add_run(text)
     run.font.name = s["font"]
     run.font.size = Pt(s["size"])
     run.font.bold = s["bold"]
@@ -203,54 +213,166 @@ def add_normal_text(doc, text):
 
 
 def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, bold=False):
-    """Helper function to add text with yellow highlight for missing data marker"""
+    """Helper function to add text (highlighting wird am Ende global durchgeführt)"""
+    run = paragraph.add_run(text)
+    run.font.name = font_name
+    run.font.size = Pt(font_size)
+    run.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
+    if bold:
+        run.font.bold = True
+
+
+def highlight_missing_data_in_document(doc):
+    """
+    Durchsucht das gesamte Dokument nach verschiedenen Varianten des Fehlenden-Daten-Markers,
+    normalisiert sie auf die einheitliche Version und hebt alle Vorkommen gelb hervor.
+    """
     from docx.enum.text import WD_COLOR_INDEX
-    marker = "! fehlt – bitte prüfen!"
     
-    if marker in text:
-        # Split text and highlight the marker
-        parts = text.split(marker)
-        for i, part in enumerate(parts):
-            if part:
-                run = paragraph.add_run(part)
-                run.font.name = font_name
-                run.font.size = Pt(font_size)
-                run.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
-                if bold:
-                    run.font.bold = True
-            if i < len(parts) - 1:  # Add marker with highlight
-                run_marker = paragraph.add_run(marker)
-                run_marker.font.name = font_name
-                run_marker.font.size = Pt(font_size)
-                run_marker.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
-                run_marker.font.highlight_color = WD_COLOR_INDEX.YELLOW
-                if bold:
-                    run_marker.font.bold = True
-    else:
-        run = paragraph.add_run(text)
-        run.font.name = font_name
-        run.font.size = Pt(font_size)
-        run.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
-        if bold:
-            run.font.bold = True
+    # Alle möglichen Varianten des Markers (OpenAI verwendet oft andere Bindestriche/Leerzeichen)
+    marker_variants = [
+        "! bitte prüfen!",           # Ohne Leerzeichen vor !
+        "! bitte prüfen !",          # Mit Leerzeichen vor ! (unser Standard)
+        "! fehlt – bitte prüfen!",   # Alt: Gedankenstrich ohne Leerzeichen vor !
+        "! fehlt – bitte prüfen !",  # Alt: Gedankenstrich mit Leerzeichen vor !
+        "! fehlt - bitte prüfen!",   # Alt: Normaler Bindestrich ohne Leerzeichen vor !
+        "! fehlt - bitte prüfen !",  # Alt: Normaler Bindestrich mit Leerzeichen vor !
+        "! fehlt — bitte prüfen!",   # Alt: Em-Dash ohne Leerzeichen vor !
+        "! fehlt — bitte prüfen !",  # Alt: Em-Dash mit Leerzeichen vor !
+    ]
+    
+    # Durchsuche alle Paragraphen im Hauptdokument
+    for paragraph in doc.paragraphs:
+        for run in paragraph.runs:
+            # Prüfe alle Varianten
+            found_variant = None
+            for variant in marker_variants:
+                if variant in run.text:
+                    found_variant = variant
+                    break
+            
+            if found_variant:
+                # Split den Run-Text am gefundenen Marker
+                parts = run.text.split(found_variant)
+                
+                # Lösche den aktuellen Run-Text
+                run.text = ""
+                
+                # Füge Teile und normalisierte Marker hinzu
+                for i, part in enumerate(parts):
+                    if i > 0:
+                        # Füge neuen Run mit normalisiertem Marker und Highlighting hinzu
+                        new_run = paragraph.add_run(MISSING_DATA_MARKER)
+                        new_run.font.name = run.font.name
+                        new_run.font.size = run.font.size
+                        new_run.font.color.rgb = run.font.color.rgb
+                        new_run.font.bold = run.font.bold
+                        new_run.font.highlight_color = WD_COLOR_INDEX.YELLOW
+                    
+                    if part:
+                        # Füge Text-Teil hinzu
+                        text_run = paragraph.add_run(part)
+                        text_run.font.name = run.font.name
+                        text_run.font.size = run.font.size
+                        text_run.font.color.rgb = run.font.color.rgb
+                        text_run.font.bold = run.font.bold
+    
+    # Durchsuche auch Tabellen
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        # Prüfe alle Varianten
+                        found_variant = None
+                        for variant in marker_variants:
+                            if variant in run.text:
+                                found_variant = variant
+                                break
+                        
+                        if found_variant:
+                            parts = run.text.split(found_variant)
+                            run.text = ""
+                            
+                            for i, part in enumerate(parts):
+                                if i > 0:
+                                    new_run = paragraph.add_run(MISSING_DATA_MARKER)
+                                    new_run.font.name = run.font.name
+                                    new_run.font.size = run.font.size
+                                    new_run.font.color.rgb = run.font.color.rgb
+                                    new_run.font.bold = run.font.bold
+                                    new_run.font.highlight_color = WD_COLOR_INDEX.YELLOW
+                                
+                                if part:
+                                    text_run = paragraph.add_run(part)
+                                    text_run.font.name = run.font.name
+                                    text_run.font.size = run.font.size
+                                    text_run.font.color.rgb = run.font.color.rgb
+                                    text_run.font.bold = run.font.bold
+
+                                    text_run.font.bold = run.font.bold
 
 
 def add_bullet_item(doc, text):
-    p = doc.add_paragraph()
     s = styles["bullet"]
     s_text = styles["text"]
+    
+    # Erstelle Absatz mit List Bullet Style
+    p = doc.add_paragraph(style='List Bullet')
+    
+    # Wende Formatierung aus styles.json an
     p.paragraph_format.left_indent = Pt(s["indent"])
     p.paragraph_format.space_before = Pt(s["space_before"])
     p.paragraph_format.space_after = Pt(s["space_after"])
     p.paragraph_format.line_spacing = s["line_spacing"]
-
-    bullet = p.add_run("■ ")
-    bullet.font.name = s["font"]
-    bullet.font.size = Pt(s.get("symbol_size", s["size"]))  # Use symbol_size or fallback to size
-    c = s["color"]
-    bullet.font.color.rgb = RGBColor(c[0], c[1], c[2])
-
+    
+    # Hanging indent: Text-Zeilen rücken ein, erste Zeile (mit Symbol) nicht
+    if "hanging_indent" in s:
+        hanging = s["hanging_indent"]
+        p.paragraph_format.left_indent = Pt(hanging)
+        p.paragraph_format.first_line_indent = Pt(-hanging)
+    
+    # Konfiguriere das Bullet-Zeichen auf "■" mit Farbe aus styles.json
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    
+    pPr = p._element.get_or_add_pPr()
+    
+    # Numbering-Eigenschaften für custom bullet
+    numPr = pPr.find(qn('w:numPr'))
+    if numPr is None:
+        numPr = OxmlElement('w:numPr')
+        pPr.append(numPr)
+        
+        # Level setzen (0 = erste Ebene)
+        ilvl = OxmlElement('w:ilvl')
+        ilvl.set(qn('w:val'), '0')
+        numPr.append(ilvl)
+    
+    # Run-Properties für das Bullet-Symbol erstellen
+    rPr = OxmlElement('w:rPr')
+    
+    # Font für Bullet-Symbol
+    rFonts = OxmlElement('w:rFonts')
+    rFonts.set(qn('w:ascii'), s["font"])
+    rFonts.set(qn('w:hAnsi'), s["font"])
+    rPr.append(rFonts)
+    
+    # Farbe für Bullet-Symbol aus styles.json
+    color = OxmlElement('w:color')
+    bullet_color = s["color"]
+    color_hex = '%02x%02x%02x' % (bullet_color[0], bullet_color[1], bullet_color[2])
+    color.set(qn('w:val'), color_hex.upper())
+    rPr.append(color)
+    
+    # Größe für Bullet-Symbol
+    sz = OxmlElement('w:sz')
+    sz.set(qn('w:val'), str(s.get("symbol_size", s["size"]) * 2))  # Word verwendet halbe Punkte
+    rPr.append(sz)
+    
+    # Text mit Highlighting hinzufügen
     add_text_with_highlight(p, text, s_text["font"], s_text["size"], s_text["color"])
+    
     return p
 
 
@@ -267,9 +389,9 @@ def get_available_width(doc):
 def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     """
     Render basic info as a 3-column borderless table with white background.
-    Column 1 (10%): Labels (bold)
+    Column 1 (20%): Labels (bold)
     Column 2 (60%): Values
-    Column 3 (30%): Image placeholder (merged across all 3 rows)
+    Column 3 (20%): Image placeholder (merged across all 3 rows)
     """
     from docx.shared import Inches
     from docx.oxml import parse_xml, OxmlElement
@@ -295,9 +417,9 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
         tblPr.remove(existing_borders)
     tblPr.append(tblBorders)
 
-    # Set column widths: 10%, 60%, 30%
+    # Set column widths: 20%, 60%, 20%
     available_width = get_available_width(doc)
-    widths = [available_width * 0.10, available_width * 0.60, available_width * 0.30]
+    widths = [available_width * 0.20, available_width * 0.50, available_width * 0.30]
     for row in table.rows:
         for idx, width in enumerate(widths):
             row.cells[idx].width = width
@@ -330,6 +452,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     cell_image.text = ""
     
     p_label = cell_label.paragraphs[0]
+    p_label.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     run_label = p_label.add_run("Hauptrolle:")
     run_label.font.name = s["font"]
     run_label.font.size = Pt(s["size"])
@@ -337,6 +460,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     run_label.font.color.rgb = RGBColor(*s["color"])
     
     p_value = cell_value.paragraphs[0]
+    p_value.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     add_text_with_highlight(p_value, hauptrolle_desc, s["font"], s["size"], s["color"])
     
     # Row 2: Nationalität
@@ -353,6 +477,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     cell_image2.text = ""
     
     p_label2 = cell_label2.paragraphs[0]
+    p_label2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     run_label2 = p_label2.add_run("Nationalität:")
     run_label2.font.name = s["font"]
     run_label2.font.size = Pt(s["size"])
@@ -360,9 +485,10 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     run_label2.font.color.rgb = RGBColor(*s["color"])
     
     p_value2 = cell_value2.paragraphs[0]
+    p_value2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     add_text_with_highlight(p_value2, nationalität, s["font"], s["size"], s["color"])
     
-    # Row 3: Hauptausbildung
+    # Row 3: Ausbildung
     cell_label3 = table.rows[2].cells[0]
     cell_value3 = table.rows[2].cells[1]
     cell_image3 = table.rows[2].cells[2]
@@ -376,13 +502,15 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     cell_image3.text = ""
     
     p_label3 = cell_label3.paragraphs[0]
-    run_label3 = p_label3.add_run("Hauptausbildung:")
+    p_label3.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+    run_label3 = p_label3.add_run("Ausbildung:")
     run_label3.font.name = s["font"]
     run_label3.font.size = Pt(s["size"])
     run_label3.font.bold = True
     run_label3.font.color.rgb = RGBColor(*s["color"])
     
     p_value3 = cell_value3.paragraphs[0]
+    p_value3.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     add_text_with_highlight(p_value3, ausbildung, s["font"], s["size"], s["color"])
     
     # Merge image cells vertically across all 3 rows and add placeholder
@@ -408,6 +536,9 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
 
 
 def add_bullet_table(doc, items, max_items_per_column=4):
+    # Calculate number of columns based on item count
+    num_cols = max(1, (len(items) + max_items_per_column - 1) // max_items_per_column)
+    
     if num_cols == 1:
         # Single column: just use regular bullet items
         for item in items:
@@ -477,10 +608,18 @@ def add_bullet_table(doc, items, max_items_per_column=4):
         p.paragraph_format.space_before = Pt(s.get("space_before", 0))
         p.paragraph_format.space_after = Pt(s.get("space_after", 0))
         p.paragraph_format.line_spacing = s.get("line_spacing", 1.0)
+        
+        # Hanging indent: Text-Zeilen rücken ein, erste Zeile (mit Symbol) nicht
+        if "hanging_indent" in s:
+            hanging = s["hanging_indent"]
+            p.paragraph_format.left_indent = Pt(hanging)
+            p.paragraph_format.first_line_indent = Pt(-hanging)
 
-        bullet = p.add_run("■ ")
+        # Bullet-Symbol aus styles.json
+        bullet_symbol = s.get("symbol", "■") + " "
+        bullet = p.add_run(bullet_symbol)
         bullet.font.name = s["font"]
-        bullet.font.size = Pt(s["size"])
+        bullet.font.size = Pt(s.get("symbol_size", s["size"]))
         c = s["color"]
         bullet.font.color.rgb = RGBColor(c[0], c[1], c[2])
 
@@ -552,7 +691,7 @@ def add_fachwissen_table(doc, skills_data):
     # Fill rows
     for row_idx, item in enumerate(skills_data):
         kategorie = item.get("Kategorie", "")
-        inhalt = item.get("BulletList", [])
+        inhalt = item.get("Inhalt", item.get("BulletList", []))  # Support both formats
         
         cell_cat = table.rows[row_idx].cells[0]
         cell_list = table.rows[row_idx].cells[1]
@@ -563,36 +702,34 @@ def add_fachwissen_table(doc, skills_data):
         # Clear and populate category cell
         cell_cat.text = ""
         p_cat = cell_cat.paragraphs[0]
+        p_cat.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+        p_cat.paragraph_format.space_before = Pt(0)
+        p_cat.paragraph_format.space_after = Pt(0)
         run_cat = p_cat.add_run(kategorie)
         run_cat.font.name = s_text["font"]
         run_cat.font.size = Pt(s_text["size"])
         run_cat.font.bold = True
         run_cat.font.color.rgb = RGBColor(*s_text["color"])
         
-        # Clear and populate bullet list cell
-        cell_list.text = ""
+        # Set vertical alignment to top for category cell
+        from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
+        cell_cat.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
         
-        # Add bullet items to the cell
-        for idx, inhalt_item in enumerate(inhalt):
-            if idx > 0:
-                # For subsequent items, add a new paragraph
-                p = cell_list.add_paragraph()
-            else:
-                # Use the first paragraph
-                p = cell_list.paragraphs[0]
-            
-            p.paragraph_format.left_indent = Pt(s_bullet.get("indent", 12))
-            p.paragraph_format.space_before = Pt(s_bullet.get("space_before", 0))
-            p.paragraph_format.space_after = Pt(s_bullet.get("space_after", 0))
-            p.paragraph_format.line_spacing = s_bullet.get("line_spacing", 1.0)
-            
-            bullet = p.add_run("■ ")
-            bullet.font.name = s_bullet["font"]
-            bullet.font.size = Pt(s_bullet.get("symbol_size", s_bullet["size"]))  # Use symbol_size or fallback to size
-            c = s_bullet["color"]
-            bullet.font.color.rgb = RGBColor(c[0], c[1], c[2])
-            
-            add_text_with_highlight(p, inhalt_item, s_text["font"], s_text["size"], s_text["color"])
+        # Clear and populate content cell with comma-separated list
+        cell_list.text = ""
+        p = cell_list.paragraphs[0]
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.line_spacing = s_text.get("line_spacing", 1.0)
+        
+        # Join all items with comma and space
+        comma_separated = ", ".join(inhalt)
+        
+        # Add as single run
+        run = p.add_run(comma_separated)
+        run.font.name = s_text["font"]
+        run.font.size = Pt(s_text["size"])
+        run.font.color.rgb = RGBColor(*s_text["color"])
 
 
 def add_education_table(doc, education_data):
@@ -669,11 +806,13 @@ def add_education_table(doc, education_data):
         # Column 1: Time Range
         cell_time.text = ""
         p_time = cell_time.paragraphs[0]
+        p_time.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         add_text_with_highlight(p_time, zeitraum, s_text["font"], s_text["size"], s_text["color"])
         
         # Column 2: Institution and Title in one paragraph separated by soft line break
         cell_info.text = ""
         p_info = cell_info.paragraphs[0]
+        p_info.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         # Institution (bold)
         add_text_with_highlight(p_info, institution, s_text["font"], s_text["size"], s_text["color"], bold=True)
 
@@ -919,43 +1058,86 @@ def generate_cv(json_path):
     # JSON-Struktur validieren
     critical, info = validate_json_structure(data)
     if critical or info:
-        error_message = "Warnung: Die JSON-Datei hat mögliche Strukturprobleme:\n\n"
+        # Build warning message with explanation
+        warning_msg = (
+            "ℹ️  Die Validierung prüft, ob alle erforderlichen Felder vorhanden und korrekt formatiert sind.\n\n"
+            "Die JSON-Datei weist Strukturprobleme auf, die die Qualität des generierten CVs beeinträchtigen können. \n"
+            "Nachstehend eine Auflistung der entdeckten Strukturprobleme nach Kritikalität klassifiziert."
+        )
+        
+        # Build details with better formatting and icons
+        details_parts = []
+        
         if critical:
-            error_message += "Kritische Fehler:\n" + "\n".join(critical) + "\n\n"
+            details_parts.append("🔴 KRITISCHE PROBLEME:")
+            details_parts.append("─" * 40)
+            for err in critical:
+                # Add specific icons based on error type
+                if "Fehlendes Feld" in err:
+                    icon = "❌"
+                elif "Muss ein" in err or "muss ein" in err:
+                    icon = "⚠️"
+                elif "Ungültig" in err or "ungültig" in err:
+                    icon = "🚫"
+                else:
+                    icon = "🔴"
+                details_parts.append(f"  {icon} {err}")
+            
         if info:
-            error_message += "Info (nicht kritisch):\n" + "\n".join(info) + "\n\n"
-        error_message += "Trotzdem fortfahren?"
+            if critical:
+                details_parts.append("")  # Empty line separator
+            details_parts.append("🟡 WENIGER KRITISCHE HINWEISE:")
+            details_parts.append("─" * 40)
+            for wrn in info:
+                # Add specific icons based on warning type
+                if "sollte" in wrn:
+                    icon = "💡"
+                elif "Typ" in wrn or "sein" in wrn:
+                    icon = "ℹ️"
+                else:
+                    icon = "🟡"
+                details_parts.append(f"  {icon} {wrn}")
+        
+        details = "\n".join(details_parts)
+        
         try:
-            from tkinter import messagebox
-            root = Tk()
-            root.withdraw()
-            proceed = messagebox.askyesno("JSON-Validierungswarnung", error_message, icon='warning')
-            root.destroy()
+            proceed = show_warning(warning_msg, title="JSON-Validierung", details=details)
             if not proceed:
                 print("❌ Benutzer hat abgebrochen.")
                 return None
-        except:
-            print("Warnung:", "\n".join(validation_errors))
+        except Exception as e:
+            print(f"Warnung konnte nicht angezeigt werden: {e}")
+            print("Probleme gefunden:", "\n".join(critical + info))
             user_input = input("Trotzdem fortfahren? (j/n): ")
             if user_input.lower() not in ['j', 'ja', 'y', 'yes']:
                 return None
 
-    doc = Document()
-    
-    # Set page margins: 1.5 cm all sides
-    from docx.shared import Cm
-    sections = doc.sections
-    for section in sections:
-        section.top_margin = Cm(1.5)
-        section.bottom_margin = Cm(1.5)
-        section.left_margin = Cm(1.5)
-        section.right_margin = Cm(1.5)
-    
-    # Add header with logo
-    add_header_with_logo(doc)
+    # Lade Template-Datei mit Header/Footer oder erstelle leeres Dokument
+    template_path = abs_path("../templates/cv_template.docx")
+    if os.path.exists(template_path):
+        doc = Document(template_path)
+        # Template bringt bereits Header, Footer und Seitenränder mit
+    else:
+        print(f"Warnung: Template nicht gefunden ({template_path}). Erstelle leeres Dokument.")
+        doc = Document()
+        # Set page margins: 1.5 cm all sides
+        from docx.shared import Cm
+        sections = doc.sections
+        for section in sections:
+            section.top_margin = Cm(1.5)
+            section.bottom_margin = Cm(1.5)
+            section.left_margin = Cm(1.5)
+            section.right_margin = Cm(1.5)
+        # Add header with logo
+        add_header_with_logo(doc)
 
     firstname = str(data.get("Vorname", "Unbekannt"))
     lastname = str(data.get("Nachname", "Unbekannt"))
+
+    # Remove default empty paragraph if it exists
+    if doc.paragraphs and not doc.paragraphs[0].text.strip():
+        p_element = doc.paragraphs[0]._element
+        p_element.getparent().remove(p_element)
 
     # -----------------------------
     # Überschrift 1 (Name)
@@ -970,7 +1152,7 @@ def generate_cv(json_path):
     add_basic_info_table(doc, 
                          rolle_desc,
                          str(data.get("Nationalität", "")),
-                         str(data.get("Hauptausbildung", "")))
+                         str(data.get("Ausbildung", "")))
 
     # -----------------------------
     # Kurzprofil
@@ -979,11 +1161,11 @@ def generate_cv(json_path):
     add_normal_text(doc, str(data.get("Kurzprofil", "")))
 
     # -----------------------------
-    # Fachwissen
+    # Expertise & Fachwissen
     # -----------------------------
+    add_heading_1(doc, "Expertise")
     add_heading_2(doc, "Fachwissen & Schwerpunkte")
-    expertise = data.get("Expertise", {})
-    skills = expertise.get("Fachwissen_und_Schwerpunkte", [])
+    skills = data.get("Fachwissen_und_Schwerpunkte", [])
     add_fachwissen_table(doc, skills)
 
     # -----------------------------
@@ -1023,70 +1205,24 @@ def generate_cv(json_path):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_docx = abs_path(f"../output/word/{firstname}_{lastname}_{timestamp}.docx")
 
+    # Vor dem Speichern: Highlight alle fehlenden Daten im gesamten Dokument
+    highlight_missing_data_in_document(doc)
+    
     doc.save(out_docx)
     print(f"✅ Word-Datei erstellt: {out_docx}")
     return out_docx
 
 
-def show_initial_dialog():
-    """Zeigt ein initiales Dialogfenster mit Anweisungen und Optionen"""
-    result = {'file_path': None}
-    
-    def select_file():
-        root.destroy()
-        file_path = select_json_file()
-        result['file_path'] = file_path
-    
-    def cancel():
-        root.destroy()
-        result['file_path'] = None
-    
-    root = Tk()
-    root.title("CV Generator")
-    root.geometry("400x200")
-    root.resizable(False, False)
-    
-    # Zentriere das Fenster
-    root.eval('tk::PlaceWindow . center')
-    
-    # Anweisungstext
-    label = Label(root, text="Willkommen beim CV Generator!\n\n"
-                            "Wählen Sie eine JSON-Datei aus, um ein CV zu erstellen.\n"
-                            "Die JSON-Datei sollte sich im Ordner 'input/json/' befinden.",
-                  justify=CENTER, padx=20, pady=20)
-    label.pack()
-    
-    # Buttons
-    button_frame = Label(root)
-    button_frame.pack(pady=10)
-    
-    select_button = Button(button_frame, text="JSON Datei auswählen", command=select_file, width=20)
-    select_button.pack(side="left", padx=10)
-    
-    cancel_button = Button(button_frame, text="Abbrechen", command=cancel, width=20)
-    cancel_button.pack(side="right", padx=10)
-    
-    root.mainloop()
-    return result['file_path']
+# Old dialog removed - now using modern_dialogs.select_json_file() directly
 
 
 def select_json_file():
     """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei"""
-    root = Tk()
-    root.withdraw()  # Versteckt das Hauptfenster
-    root.attributes('-topmost', True)  # Bringt Dialog nach vorne
-    
-    # Standard-Verzeichnis auf input/json/ setzen
-    default_dir = abs_path("../input/json/")
-    
-    file_path = filedialog.askopenfilename(
-        title="Wählen Sie eine JSON-Datei für den CV",
-        initialdir=default_dir,
-        filetypes=[("JSON-Dateien", "*.json"), ("Alle Dateien", "*.*")]
-    )
-    
-    root.destroy()
-    return file_path
+    try:
+        from dialogs import select_json_file as picker
+    except ImportError:
+        from scripts.dialogs import select_json_file as picker
+    return picker("Wählen Sie eine JSON-Datei für den CV")
 
 
 def add_sprachen_table(doc, sprachen_data):
@@ -1311,24 +1447,41 @@ def add_referenzprojekt_section(doc, projekt):
         row3_cell._element.clear_content()
         
         s_bullet = styles["bullet"]
-        symbol_size = styles.get("symbol_size", 9)
         
         for taetigkeit in taetigkeiten:
             if taetigkeit.strip():
                 p = row3_cell.add_paragraph()
                 
-                # Add bullet symbol with smaller size
-                symbol_run = p.add_run('■ ')
+                # Set up hanging indent for proper text alignment
+                # Left indent for all lines
+                left_indent_value = Pt(18)  # Position where text starts
+                first_line_negative = Pt(-18)  # Pull first line back to position bullet
+                
+                p.paragraph_format.left_indent = left_indent_value
+                p.paragraph_format.first_line_indent = first_line_negative
+                
+                # Add bullet symbol from styles.json
+                bullet_symbol = s_bullet.get("symbol", "■")
+                symbol_run = p.add_run(bullet_symbol)
                 symbol_run.font.name = s_bullet["font"]
-                symbol_run.font.size = Pt(symbol_size)
+                symbol_run.font.size = Pt(s_bullet.get("symbol_size", s_bullet["size"]))
                 symbol_run.font.color.rgb = RGBColor(*s_bullet["color"])
+                
+                # Add tab to separate symbol from text
+                p.add_run("\t")
                 
                 # Add text with normal size
                 add_text_with_highlight(p, taetigkeit, s_text["font"], s_text["size"], s_text["color"])
                 
-                p.paragraph_format.left_indent = Cm(0.5)
                 p.paragraph_format.space_before = Pt(0)
                 p.paragraph_format.space_after = Pt(3)
+                p.paragraph_format.line_spacing = s_bullet.get("line_spacing", 1.0)
+                
+                # Set tab stop at the text start position
+                from docx.shared import Pt
+                from docx.enum.text import WD_TAB_ALIGNMENT
+                tab_stops = p.paragraph_format.tab_stops
+                tab_stops.add_tab_stop(left_indent_value, WD_TAB_ALIGNMENT.LEFT)
     
     # Row 4: Technologien (label 20% | content 80%)
     cell_tech_label = table.rows[3].cells[0]
@@ -1379,54 +1532,54 @@ def add_referenzprojekt_section(doc, projekt):
     spacing_paragraph.paragraph_format.space_after = Pt(24)
 
 
-def show_success_dialog(file_path):
-    """Zeigt ein Erfolgsdialog mit Option zum Öffnen der Datei"""
-    import os
-    
-    def open_file():
-        try:
-            os.startfile(file_path)  # Öffnet die Datei mit dem Standardprogramm
-        except Exception as e:
-            print(f"Fehler beim Öffnen der Datei: {e}")
-        root.destroy()
-    
-    def close():
-        root.destroy()
-    
-    root = Tk()
-    root.title("CV erfolgreich erstellt")
-    root.geometry("450x150")
-    root.resizable(False, False)
-    root.eval('tk::PlaceWindow . center')
-    
-    # Erfolgsmeldung
-    output_dir = os.path.dirname(file_path)
-    filename = os.path.basename(file_path)
-    success_text = f"✅ CV-Datei erfolgreich erstellt!\n\nOutput Directory: {output_dir}\nFilename: {filename}"
-    label = Label(root, text=success_text, justify="left", padx=20, pady=20)
-    label.pack()
-    
-    # Buttons
-    button_frame = Label(root)
-    button_frame.pack(pady=10)
-    
-    open_button = Button(button_frame, text="Datei öffnen", command=open_file, width=15)
-    open_button.pack(side="left", padx=10)
-    
-    close_button = Button(button_frame, text="Schließen", command=close, width=15)
-    close_button.pack(side="right", padx=10)
-    
-    root.mainloop()
+# Old dialog removed - now using modern_dialogs functions
 
 
 # Lade Stile global nach allen Definitionen
 styles = load_styles("styles.json")
 if __name__ == "__main__":
-    json_file = show_initial_dialog()
+    # Import dialogs - handle both direct execution and module import
+    try:
+        from dialogs import show_success, ask_yes_no, ModernDialog
+    except ImportError:
+        from scripts.dialogs import show_success, ask_yes_no, ModernDialog
+    
+    json_file = select_json_file()
     if json_file:
         output_file = generate_cv(json_file)
         if output_file:
-            show_success_dialog(output_file)
+            # Show success with open button
+            output_dir = os.path.dirname(output_file)
+            filename = os.path.basename(output_file)
+            
+            details = (
+                f"{ModernDialog.ICON_WORD} Output Directory:\n"
+                f"  {output_dir}\n\n"
+                f"Filename:\n"
+                f"  {filename}"
+            )
+            
+            result = show_success(
+                "Das CV-Dokument wurde erfolgreich erstellt.",
+                title="CV erfolgreich generiert",
+                details=details,
+                file_path=output_file
+            )
+            
+            # Open document if user clicked "Open"
+            if result == 'open':
+                try:
+                    import platform
+                    import subprocess
+                    
+                    if platform.system() == 'Windows':
+                        os.startfile(output_file)
+                    elif platform.system() == 'Darwin':  # macOS
+                        subprocess.run(['open', output_file])
+                    else:  # Linux
+                        subprocess.run(['xdg-open', output_file])
+                except Exception as e:
+                    print(f"Fehler beim Öffnen der Datei: {e}")
         else:
             print("❌ JSON-Validierung fehlgeschlagen. Programm abgebrochen.")
     else:
