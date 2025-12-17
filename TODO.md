@@ -1,14 +1,14 @@
 # CV Generator - Improvement Roadmap
 
 **Status:** MVP Complete | **Target:** Production-Ready  
-**Last Updated:** 2025-12-17
+**Last Updated:** 2025-12-17 17:30
 
 ---
 
 ## 🔴 Kritisch (P0) - Sofort angehen
 
 ### 1. Security & Secrets Management
-- [ ] `.env` zur `.gitignore` hinzufügen
+- [x] `.env` zur `.gitignore` hinzufügen ✅
 - [ ] Dokumentation für Umgebungsvariablen erstellen
 - [ ] Warnung bei fehlendem API-Key verbessern
 - [ ] Für Production: Azure Key Vault / AWS Secrets Manager evaluieren
@@ -39,8 +39,8 @@ logger = logging.getLogger(__name__)
 ```
 
 ### 3. Dependency Management
-- [ ] `requirements.txt` mit Version-Pinning erstellen
-- [ ] `requirements-dev.txt` für Development-Tools
+- [x] `requirements.txt` mit Version-Pinning erstellen ✅
+- [x] `requirements-dev.txt` für Development-Tools ✅
 - [ ] Dependency-Update-Strategie definieren
 
 **Aufwand:** 15 Min | **Impact:** Hoch | **Stabilität**
@@ -57,26 +57,28 @@ python-dotenv==1.0.0
 
 ## 🟡 Wichtig (P1) - Mittelfristig
 
-### 4. Unit & Integration Tests
-- [ ] Test-Framework aufsetzen (`pytest`)
-- [ ] Unit Tests für `validate_json_structure()`
+### 4. Unit & Integration Tests ✅ ERLEDIGT
+- [x] Test-Framework aufsetzen (`pytest`) ✅
+- [x] Unit Tests für `validate_json_structure()` ✅ (15 Tests)
 - [ ] Unit Tests für `normalize_json_structure()`
 - [ ] Integration Tests für Pipeline-Flow
-- [ ] Test-Fixtures erstellen (`tests/fixtures/`)
+- [x] Test-Fixtures erstellen (`tests/fixtures/`) ✅
+- [x] Pre-Commit Hook einrichten ✅
+- [x] Coverage-Reporting konfigurieren ✅
 
-**Aufwand:** 8h | **Impact:** Sehr Hoch | **Qualität**
+**Status:** 11% Coverage | **Ziel:** 80%  
+**Erledigt:** 2025-12-17
 
 **Struktur:**
 ```
 tests/
   __init__.py
-  test_validation.py
+  test_validation.py ✅ (15 Tests)
   test_pdf_to_json.py
   test_generate_cv.py
   fixtures/
-    valid_cv.json
-    invalid_cv.json
-    sample.pdf
+    valid_cv.json ✅
+    invalid_cv_missing_fields.json ✅
 ```
 
 ### 5. Error Handling & Retry Logic
@@ -193,7 +195,7 @@ def pdf_to_json_with_retry(pdf_path):
 
 | Kategorie | Aktuell | Ziel | Status |
 |-----------|---------|------|--------|
-| Test Coverage | 0% | 80% | 🔴 |
+| Test Coverage | 11% | 80% | 🟡 |
 | Code Duplication | ~15% | <5% | 🟡 |
 | Documentation | 60% | 90% | 🟡 |
 | Type Hints | 30% | 95% | 🟡 |
