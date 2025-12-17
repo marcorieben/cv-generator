@@ -1,0 +1,64 @@
+{
+    "Vorname": "Max",
+    "Nachname": "Mustermann",
+    "Hauptrolle": {
+        "Titel": "Senior Software Engineer",
+        "Beschreibung": "Experte für Backend-Entwicklung und Cloud-Architekturen"
+    },
+    "Nationalität": "Deutsch",
+    "Hauptausbildung": "Master of Science in Computer Science",
+    "Kurzprofil": "Max verfügt über mehr als 10 Jahre Erfahrung in der Softwareentwicklung mit Fokus auf skalierbare Backend-Systeme und Cloud-native Architekturen. Seine Expertise umfasst die Entwicklung von Microservices, API-Design und DevOps-Praktiken.",
+    "Fachwissen_und_Schwerpunkte": [
+        {
+            "Kategorie": "Projektmethodik",
+            "Inhalt": ["Scrum", "Kanban", "SAFe"]
+        },
+        {
+            "Kategorie": "Tech Stack",
+            "Inhalt": ["Python", "Docker", "Kubernetes", "AWS", "PostgreSQL"]
+        },
+        {
+            "Kategorie": "Weitere Fähigkeiten / Skills",
+            "Inhalt": ["CI/CD", "Terraform", "Git", "REST APIs"]
+        }
+    ],
+    "Aus_und_Weiterbildung": [
+        {
+            "Zeitraum": "09/2010 - 06/2015",
+            "Institution": "Technische Universität München",
+            "Abschluss": "Master of Science in Computer Science"
+        }
+    ],
+    "Trainings_und_Zertifizierungen": [
+        {
+            "Zeitraum": "03/2022",
+            "Institution": "AWS",
+            "Titel": "AWS Certified Solutions Architect"
+        }
+    ],
+    "Sprachen": [
+        {
+            "Sprache": "Deutsch",
+            "Level": 5
+        },
+        {
+            "Sprache": "Englisch",
+            "Level": 4
+        }
+    ],
+    "Ausgewählte_Referenzprojekte": [
+        {
+            "Zeitraum": "01/2023 - heute",
+            "Rolle": "Lead Developer",
+            "Kunde": "FinTech AG",
+            "Tätigkeiten": [
+                "Architektur und Entwicklung einer Microservices-Plattform",
+                "Implementation von CI/CD Pipelines",
+                "Team-Lead für 5 Entwickler",
+                "Performance-Optimierung der bestehenden Systeme"
+            ],
+            "Technologien": "Python, Docker, Kubernetes, AWS, PostgreSQL",
+            "Projektmethodik": "Scrum, SAFe"
+        }
+    ]
+}
