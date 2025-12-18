@@ -1,0 +1,175 @@
+{
+  "_extraction_control": {
+    "purpose": "Strukturierte, vergleichbare Extraktion von CVs und Lebensläufen",
+
+    "missing_value_marker": "! bitte prüfen !",
+
+    "hard_rules": [
+      "Keine Inhalte erfinden oder interpretieren",
+      "Nur explizit im Dokument enthaltene Informationen verwenden",
+      "Bei fehlenden oder unklaren Informationen exakt '! bitte prüfen !' setzen",
+      "JSON-Struktur exakt einhalten",
+      "Keine zusätzlichen Felder hinzufügen oder entfernen",
+      "WICHTIG: Alle Felder mit '_hint_' Präfix sind NUR Anweisungen für dich und dürfen NICHT in der finalen JSON-Ausgabe erscheinen. Nur die eigentlichen Datenfelder (ohne '_hint_') befüllen!"
+    ],
+
+    "language_handling": [
+      "Originalsprache des Dokuments beibehalten",
+      "Keine Umformulierungen oder inhaltlichen Bewertungen",
+      "Begriffe nur vereinheitlichen, wenn sie im Dokument synonym verwendet werden"
+    ],
+
+    "list_handling": [
+      "Listen nur verwenden, wenn sie im Dokument vorhanden sind",
+      "Keine Zusammenfassung mehrerer Punkte in einem Listeneintrag",
+      "Granularität des Dokuments beibehalten",
+      "Maximal 5 Bullets pro Referenzprojekt"
+    ],
+
+    "prioritisation": [
+      "Vollständigkeit: ALLE Referenzprojekte erfassen, nicht nur erste 3",
+      "Berufserfahrung und konkrete Projekte höher priorisieren als Marketing-Texte",
+      "Wiederholungen nur einmal erfassen",
+      "Technische Details und Methodiken präzise erfassen"
+    ],
+
+    "quality_check": [
+      "Alle Felder befüllt oder korrekt mit '! bitte prüfen !' markiert",
+      "Keine impliziten Annahmen enthalten",
+      "Struktur vollständig und konsistent",
+      "Kurzprofil: 50-100 Wörter, 3. Person, Vorname verwenden",
+      "Fachwissen: Exakt 3 Kategorien (Projektmethodik, Tech Stack, Weitere Skills)",
+      "Sprachen: Level 1-5 numerisch"
+    ]
+  },
+
+  "metadata": {
+    "document_id": "",
+    "_hint_document_id": "Interne Dokument-ID oder Referenznummer aus dem PDF (z. B. Kandidaten-ID, CV-Referenz). Falls nicht vorhanden: ! bitte prüfen !",
+
+    "document_type": "CV / Lebenslauf",
+    "_hint_document_type": "Fixer Wert. Nicht verändern.",
+
+    "source": "PDF",
+    "_hint_source": "Fixer Wert. Herkunft des Dokuments.",
+
+    "language": "",
+    "_hint_language": "Dokumentsprache, z. B. de-CH, de-DE, en. Falls nicht klar: ! bitte prüfen !",
+
+    "extracted_at": "",
+    "_hint_extracted_at": "Datum der Extraktion (DD.MM.YYYY)",
+
+    "confidence_note": "Automatisch extrahiert – manuelle Prüfung empfohlen",
+    "_hint_confidence_note": "Fixer Hinweis"
+  },
+
+  "Vorname": "",
+  "_hint_Vorname": "Vorname der Person aus dem CV",
+
+  "Nachname": "",
+  "_hint_Nachname": "Nachname der Person aus dem CV",
+
+  "Hauptrolle": {
+    "Titel": "Hauptrolle",
+    "_hint_Titel": "Fixer Wert. Nicht verändern.",
+
+    "Beschreibung": "",
+    "_hint_Beschreibung": "Kurzbeschreibung der Hauptrolle in maximal 5-10 Wörtern. Bei fehlenden Informationen: ! bitte prüfen !"
+  },
+
+  "Nationalität": "",
+  "_hint_Nationalität": "Staatsangehörigkeit der Person",
+
+  "Ausbildung": "",
+  "_hint_Ausbildung": "Die höchste oder wichtigste Ausbildung aus dem CV (z.B. 'Master of Science, ETH Zürich' oder 'Bachelor in Informatik, Universität Bern'). WICHTIG: Nur die Hauptausbildung, nicht alle Bildungsgänge aufzählen.",
+
+  "Kurzprofil": "",
+  "_hint_Kurzprofil": "Sachliche, professionelle Zusammenfassung des Kandidaten. WICHTIG: 1) Verwende den Vornamen der Person und schreibe in der 3. Person (z.B. 'Marco verfügt über...', 'Sarah bringt mit...'). 2) Fasse sachlich zusammen und hebe echte Stärken hervor, die aus dem CV ersichtlich sind. 3) KEINE Übertreibungen, KEINE erfundenen Informationen - nur was tatsächlich im CV steht. Zwischen 50 und 100 Wörter.",
+
+  "Fachwissen_und_Schwerpunkte": [
+    {
+      "Kategorie": "Projektmethodik",
+      "_hint_Kategorie": "Erste Kategorie: Projektmethodik (z.B. Scrum, SAFe, HERMES, Agile, Waterfall, Kanban)",
+
+      "Inhalt": [],
+      "_hint_Inhalt": "Liste der Projektmethodiken. Bei fehlenden Informationen: ['! bitte prüfen !']"
+    },
+    {
+      "Kategorie": "Tech Stack",
+      "_hint_Kategorie": "Zweite Kategorie: Tech Stack (Technologien, Tools, Programmiersprachen, Plattformen)",
+
+      "Inhalt": [],
+      "_hint_Inhalt": "Liste der Technologien und Tools. Bei fehlenden Informationen: ['! bitte prüfen !']"
+    },
+    {
+      "Kategorie": "Weitere Skills",
+      "_hint_Kategorie": "Dritte Kategorie: Weitere Skills (alles andere: Soft Skills, Domain-Wissen, etc.)",
+
+      "Inhalt": [],
+      "_hint_Inhalt": "Liste weiterer Skills. Bei fehlenden Informationen: ['! bitte prüfen !']"
+    }
+  ],
+  "_hint_Fachwissen_und_Schwerpunkte": "IMMER genau 3 Kategorien in dieser Reihenfolge: 1) Projektmethodik, 2) Tech Stack, 3) Weitere Skills",
+
+  "Aus_und_Weiterbildung": [
+    {
+      "Zeitraum": "",
+      "_hint_Zeitraum": "Format: MM/YYYY - MM/YYYY oder MM/YYYY. Bei fehlenden Informationen: ! bitte prüfen !",
+
+      "Institution": "",
+      "_hint_Institution": "Name der Bildungsinstitution",
+
+      "Abschluss": "",
+      "_hint_Abschluss": "Abschlussbezeichnung oder Studiengang"
+    }
+  ],
+  "_hint_Aus_und_Weiterbildung": "NUR akademische und formale Abschlüsse: Bachelor, Master, PhD, CAS, DAS, MAS, Diplome von Universitäten/Fachhochschulen",
+
+  "Trainings_und_Zertifizierungen": [
+    {
+      "Zeitraum": "",
+      "_hint_Zeitraum": "Format: MM/YYYY - MM/YYYY oder MM/YYYY. Bei fehlenden Informationen: ! bitte prüfen !",
+
+      "Institution": "",
+      "_hint_Institution": "Anbieter des Trainings/der Zertifizierung",
+
+      "Titel": "",
+      "_hint_Titel": "Bezeichnung des Trainings oder der Zertifizierung"
+    }
+  ],
+  "_hint_Trainings_und_Zertifizierungen": "Kurse, Workshops, Zertifikate, berufliche Weiterbildungen OHNE akademischen Abschluss",
+
+  "Sprachen": [
+    {
+      "Sprache": "",
+      "_hint_Sprache": "Name der Sprache",
+
+      "Level": 0,
+      "_hint_Level": "Sprachniveau als Zahl 1-5: 5=Muttersprache, 4=Verhandlungssicher, 3=Sehr gute Kenntnisse, 2=Gute Kenntnisse, 1=Grundkenntnisse"
+    }
+  ],
+  "_hint_Sprachen": "Liste aller Sprachen mit numerischem Level (1-5)",
+
+  "Ausgewählte_Referenzprojekte": [
+    {
+      "Zeitraum": "",
+      "_hint_Zeitraum": "Projektlaufzeit von Start bis Ende im Format MM/YYYY - MM/YYYY (z.B. '01/2023 - 12/2024'). Bei laufenden Projekten: MM/YYYY - Heute. Bei fehlenden Informationen: ! bitte prüfen !",
+
+      "Rolle": "",
+      "_hint_Rolle": "Spezifische Rolle oder Funktion des Kandidaten im Projekt (z.B. 'Projektleiter', 'Senior Developer', 'Scrum Master'). WICHTIG: Maximal 8 Wörter! Kurz und prägnant formulieren. Bei fehlenden Informationen: ! bitte prüfen !",
+
+      "Kunde": "",
+      "_hint_Kunde": "Name des Auftraggebers, Unternehmens oder der Organisation für die das Projekt durchgeführt wurde. Bei fehlenden Informationen: ! bitte prüfen !",
+
+      "Tätigkeiten": [],
+      "_hint_Tätigkeiten": "Maximal 5 konkrete Tätigkeiten oder Verantwortlichkeiten im Projekt. Fokus auf Ergebnisse und Impact. Bei fehlenden Informationen: ['! bitte prüfen !']",
+
+      "Technologien": "",
+      "_hint_Technologien": "Kommagetrennte Liste ALLER im Projekt eingesetzten Technologien, Tools, Programmiersprachen und Plattformen (z.B. 'Java, Spring Boot, PostgreSQL, Docker, Kubernetes, Jenkins'). Bei fehlenden Informationen: ! bitte prüfen !",
+
+      "Methodik": "",
+      "_hint_Methodik": "Spezifische Projektmethodik(en), die im Projekt angewendet wurde(n), kommagetrennt (z.B. 'Scrum', 'SAFe', 'Kanban', 'HERMES', 'Waterfall', 'Agile'). Keine generischen Begriffe wie 'Projektmanagement' oder 'Beratung'. Bei fehlenden Informationen: ! bitte prüfen !"
+    }
+  ],
+  "_hint_Ausgewählte_Referenzprojekte": "WICHTIG: ALLE Referenzprojekte im CV müssen vollständig und inhaltlich detailliert erfasst werden, nicht nur die ersten 3. Jedes Projekt muss alle erforderlichen Felder enthalten."
+}

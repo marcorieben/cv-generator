@@ -1,0 +1,112 @@
+{
+  "_extraction_control": {
+    "_hint_fields_note": "Alle Felder mit '_hint_' sind nur als Anweisung für die LLM zu verstehen und dürfen NICHT in der generierten JSON-Ausgabe erscheinen.",
+    "purpose": "Qualitäts- und Vollständigkeitsprüfung eines CVs basierend auf der definierten CV-Zielstruktur",
+    "missing_value_marker": "! bitte prüfen !",
+    "hard_rules": [
+      "Keine Inhalte erfinden oder ergänzen",
+      "Feedback ausschliesslich aus CV-JSON und Zielstruktur ableiten",
+      "Hinweise immer einem konkreten CV-Feld zuordnen",
+      "Struktur exakt einhalten"
+    ],
+    "feedback_types": [
+      "fehlend",
+      "unklar",
+      "regelverstoss",
+      "strukturabweichung"
+    ],
+    "quality_check": [
+      "Alle Hauptfelder der CV-Struktur geprüft",
+      "Feedback ist eindeutig und handlungsorientiert",
+      "Keine redundanten Hinweise"
+    ]
+  },
+  "feedback_metadata": {
+    "cv_id": "",
+    "_hint_cv_id": "Referenz auf metadata.document_id oder Kandidatenname",
+    "stellenprofil_bezogen": "",
+    "_hint_stellenprofil_bezogen": "true / false",
+    "stellenprofil_id": "",
+    "_hint_stellenprofil_id": "Referenz auf Stellenprofil-ID, falls vorhanden",
+    "feedback_datum": "",
+    "_hint_feedback_datum": "YYYY-MM-DD"
+  },
+  "zusammenfassung": {
+    "gesamt_einschaetzung": "",
+    "_hint_gesamt_einschaetzung": "sehr gut / gut / ausbaufähig / kritisch",
+    "kritische_punkte": "",
+    "_hint_kritische_punkte": "Anzahl kritischer Findings (fehlend oder regelverstoss)",
+    "empfehlung": "",
+    "_hint_empfehlung": "CV verwendbar / Rückfragen nötig / Überarbeitung empfohlen"
+  },
+  "feldbezogenes_feedback": [
+    {
+      "cv_feld": "",
+      "_hint_cv_feld": "Exakter Feldname aus der CV-Zielstruktur (z. B. 'Kurzprofil', 'Hauptrolle.Beschreibung')",
+      "feedback_typ": "",
+      "_hint_feedback_typ": "fehlend / unklar / regelverstoss / strukturabweichung",
+      "beschreibung": "",
+      "_hint_beschreibung": "Was ist am aktuellen Feld problematisch oder unvollständig",
+      "regelbezug": "",
+      "_hint_regelbezug": "Welche Regel aus _extraction_control / quality_check verletzt ist",
+      "empfohlene_klaerung": "",
+      "_hint_empfohlene_klaerung": "Konkrete Information, die vom Kandidaten benötigt wird"
+    }
+  ],
+  "fachwissen_feedback": [
+    {
+      "kategorie": "",
+      "_hint_kategorie": "Projektmethodik / Tech Stack / Weitere Skills",
+      "beobachtung": "",
+      "_hint_beobachtung": "Was an der Kategorie unklar, zu breit oder leer ist",
+      "fehlende_oder_unklare_punkte": [
+        ""
+      ],
+      "_hint_fehlende_oder_unklare_punkte": "Konkrete Skills oder Begriffe, die fehlen oder unpräzise sind",
+      "empfohlene_nachfrage": "",
+      "_hint_empfohlene_nachfrage": "Gezielte Rückfrage an den Kandidaten"
+    }
+  ],
+  "sprachen_feedback": [
+    {
+      "sprache": "",
+      "_hint_sprache": "Sprache gemäss CV",
+      "problem": "",
+      "_hint_problem": "z. B. Level fehlt, Level nicht numerisch, widersprüchliche Angaben",
+      "empfohlene_klaerung": "",
+      "_hint_empfohlene_klaerung": "Welche Präzisierung benötigt wird"
+    }
+  ],
+  "referenzprojekte_feedback": [
+    {
+      "projekt_index": "",
+      "_hint_projekt_index": "Index oder Identifikator des Referenzprojekts",
+      "betroffenes_feld": "",
+      "_hint_betroffenes_feld": "z. B. Zeitraum, Rolle, Tätigkeiten, Technologien, Methodik",
+      "problem": "",
+      "_hint_problem": "z. B. fehlend, zu generisch, Regel verletzt (max. 5 Tätigkeiten)",
+      "empfohlene_klaerung": "",
+      "_hint_empfohlene_klaerung": "Welche konkrete Information fehlt oder muss präzisiert werden"
+    }
+  ],
+  "struktur_und_regelchecks": [
+    {
+      "regel": "",
+      "_hint_regel": "Konkrete Regel aus der CV-Zielstruktur (z. B. 'Kurzprofil 50–100 Wörter')",
+      "status": "",
+      "_hint_status": "erfüllt / verletzt / ! bitte prüfen !",
+      "beobachtung": "",
+      "_hint_beobachtung": "Kurze Beschreibung der Abweichung"
+    }
+  ],
+  "priorisierte_rueckfragen": [
+    {
+      "prioritaet": "",
+      "_hint_prioritaet": "1 (hoch) – 3 (niedrig)",
+      "bezogenes_cv_feld": "",
+      "_hint_bezogenes_cv_feld": "CV-Feld, auf das sich die Rückfrage bezieht",
+      "frage": "",
+      "_hint_frage": "Klar formulierte Frage an den Kandidaten"
+    }
+  ]
+}

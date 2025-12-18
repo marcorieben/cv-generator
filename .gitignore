@@ -4,9 +4,8 @@
 !.env.example
 
 # Output files
-output/word/
-!output/word/.gitkeep
-output/pdf/*.pdf
+output/*
+!output/**/.gitkeep
 
 # Input files (PDFs and generated JSONs - local working files)
 input/cv/pdf/*.pdf
@@ -49,10 +48,6 @@ desktop.ini
 
 # Logs
 *.log
-
-# Keep directory structure but ignore contents
-output/word/.gitkeep
-output/pdf/.gitkeep
 
 # Backups
 templates/*_original.png

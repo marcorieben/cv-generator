@@ -10,7 +10,7 @@ class TestDialogDimensions:
     """Tests für Dialog-Größen und -Layout"""
     
     def test_success_dialog_height_without_details(self):
-        """SuccessDialog ohne Details sollte 380px hoch sein"""
+        """SuccessDialog ohne Details sollte 450px hoch sein"""
         with patch('tkinter.Tk'):
             from scripts.dialogs import SuccessDialog
             
@@ -19,12 +19,12 @@ class TestDialogDimensions:
                 message="Test message"
             )
             
-            # Höhe sollte 380px sein wenn weder Details noch file_path vorhanden
-            assert dialog.height == 380, \
-                f"SuccessDialog ohne Details sollte 380px hoch sein, ist aber {dialog.height}px"
+            # Höhe sollte 450px sein (Standard)
+            assert dialog.height == 450, \
+                f"SuccessDialog ohne Details sollte 450px hoch sein, ist aber {dialog.height}px"
     
     def test_success_dialog_height_with_details_only(self):
-        """SuccessDialog mit nur Details bleibt bei 380px"""
+        """SuccessDialog mit nur Details bleibt bei 450px"""
         with patch('tkinter.Tk'):
             from scripts.dialogs import SuccessDialog
             
@@ -34,12 +34,12 @@ class TestDialogDimensions:
                 details="Some details here"
             )
             
-            # Höhe bleibt 380px - nur wenn Details UND file_path vorhanden wird es 420px
-            assert dialog.height == 380, \
-                f"SuccessDialog mit nur Details sollte 380px hoch sein, ist aber {dialog.height}px"
+            # Höhe bleibt 450px - nur wenn Details UND file_path/dashboard vorhanden wird es 550px
+            assert dialog.height == 450, \
+                f"SuccessDialog mit nur Details sollte 450px hoch sein, ist aber {dialog.height}px"
     
     def test_success_dialog_height_with_file_path(self):
-        """SuccessDialog mit nur file_path bleibt bei 380px"""
+        """SuccessDialog mit nur file_path bleibt bei 450px"""
         with patch('tkinter.Tk'):
             from scripts.dialogs import SuccessDialog
             
@@ -49,9 +49,9 @@ class TestDialogDimensions:
                 file_path="C:\\test\\file.docx"
             )
             
-            # Höhe bleibt 380px - nur wenn Details UND file_path vorhanden wird es 420px
-            assert dialog.height == 380, \
-                f"SuccessDialog mit nur file_path sollte 380px hoch sein, ist aber {dialog.height}px"
+            # Höhe bleibt 450px
+            assert dialog.height == 450, \
+                f"SuccessDialog mit nur file_path sollte 450px hoch sein, ist aber {dialog.height}px"
     
     def test_success_dialog_height_with_both(self):
         """SuccessDialog mit Details UND file_path sollte größer sein"""
@@ -65,9 +65,9 @@ class TestDialogDimensions:
                 file_path="C:\\test\\file.docx"
             )
             
-            # Höhe sollte 420px sein wenn Details UND file_path vorhanden
-            assert dialog.height == 420, \
-                f"SuccessDialog mit Details und file_path sollte 420px hoch sein, ist aber {dialog.height}px"
+            # Höhe sollte 550px sein wenn Details UND file_path vorhanden
+            assert dialog.height == 550, \
+                f"SuccessDialog mit Details und file_path sollte 550px hoch sein, ist aber {dialog.height}px"
     
     def test_warning_dialog_height_without_details(self):
         """WarningDialog ohne Details sollte 400px hoch sein"""
@@ -161,11 +161,11 @@ class TestDialogMinimumDimensions:
             )
             
             # Mit Details und file_path gibt es 2 Buttons: "OK" und "Word öffnen"
-            # 420px sollte ausreichen für alle Elemente
-            assert dialog.height >= 380, \
-                "SuccessDialog muss mindestens 380px hoch sein"
-            assert dialog.height == 420, \
-                "SuccessDialog mit Details/file_path sollte genau 420px hoch sein"
+            # 550px sollte ausreichen für alle Elemente
+            assert dialog.height >= 450, \
+                "SuccessDialog muss mindestens 450px hoch sein"
+            assert dialog.height == 550, \
+                "SuccessDialog mit Details/file_path sollte genau 550px hoch sein"
 
 
 class TestDialogWidthConsistency:
@@ -182,14 +182,14 @@ class TestDialogWidthConsistency:
                 f"WarningDialog sollte 650px breit sein, ist aber {dialog.width}px"
     
     def test_success_dialog_width(self):
-        """SuccessDialog sollte 600px breit sein"""
+        """SuccessDialog sollte 650px breit sein"""
         with patch('tkinter.Tk'):
             from scripts.dialogs import SuccessDialog
             
             dialog = SuccessDialog(title="Test", message="Test")
             
-            assert dialog.width == 600, \
-                f"SuccessDialog sollte 600px breit sein, ist aber {dialog.width}px"
+            assert dialog.width == 650, \
+                f"SuccessDialog sollte 650px breit sein, ist aber {dialog.width}px"
     
     def test_error_dialog_width(self):
         """ErrorDialog sollte 600px breit sein"""

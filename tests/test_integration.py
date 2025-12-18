@@ -173,10 +173,10 @@ class TestPathResolution:
         assert os.path.exists(input_dir), f"input/ nicht gefunden: {input_dir}"
         assert os.path.exists(output_dir), f"output/ nicht gefunden: {output_dir}"
         
-        # Neue Struktur: input/cv/ und input/angebot/ mit Unterordnern
+        # Neue Struktur: input/cv/ und input/stellenprofil/ mit Unterordnern
         assert os.path.exists(os.path.join(input_dir, 'cv', 'json'))
         assert os.path.exists(os.path.join(input_dir, 'cv', 'pdf'))
-        assert os.path.exists(os.path.join(input_dir, 'angebot', 'json'))
-        assert os.path.exists(os.path.join(input_dir, 'angebot', 'pdf'))
-        assert os.path.exists(os.path.join(output_dir, 'word'))
+        assert os.path.exists(os.path.join(input_dir, 'stellenprofil', 'json'))
+        assert os.path.exists(os.path.join(input_dir, 'stellenprofil', 'pdf'))
+        # output/word is legacy, new structure uses per-run folders in output/
 

@@ -1,0 +1,164 @@
+{
+  "_extraction_control": {
+    "_hint_fields_note": "Alle Felder mit '_hint_' sind nur als Anweisung für die LLM zu verstehen und dürfen NICHT in der generierten JSON-Ausgabe erscheinen.",
+    "purpose": "Strukturierte, vergleichbare Extraktion von Projektangeboten und Rollenprofilen",
+
+    "missing_value_marker": "! bitte prüfen !",
+
+    "hard_rules": [
+      "Keine Inhalte erfinden oder interpretieren",
+      "Nur explizit im Dokument enthaltene Informationen verwenden",
+      "Bei fehlenden oder unklaren Informationen exakt '! bitte prüfen !' setzen",
+      "JSON-Struktur exakt einhalten",
+      "Keine zusätzlichen Felder hinzufügen oder entfernen",
+      "WICHTIG: Alle Felder mit '_hint_' Präfix sind NUR Anweisungen für dich und dürfen NICHT in der finalen JSON-Ausgabe erscheinen. Nur die eigentlichen Datenfelder (ohne '_hint_') befüllen!"
+    ],
+
+    "language_handling": [
+      "Originalsprache des Dokuments beibehalten",
+      "Keine Umformulierungen oder inhaltlichen Bewertungen",
+      "Begriffe nur vereinheitlichen, wenn sie im Dokument synonym verwendet werden"
+    ],
+
+    "list_handling": [
+      "Listen nur verwenden, wenn sie im Dokument vorhanden sind",
+      "Keine Zusammenfassung mehrerer Punkte in einem Listeneintrag",
+      "Granularität des Dokuments beibehalten"
+    ],
+
+    "prioritisation": [
+      "Rollenbeschreibungen und Aufgaben höher priorisieren als Marketingtexte",
+      "Wiederholungen nur einmal erfassen",
+      "Operative Inhalte höher priorisieren als werbliche Aussagen"
+    ],
+
+    "quality_check": [
+      "Alle Felder befüllt oder korrekt mit '! bitte prüfen !' markiert",
+      "Keine impliziten Annahmen enthalten",
+      "Struktur vollständig und konsistent"
+    ]
+  },
+
+  "metadata": {
+    "document_id": "",
+    "_hint_document_id": "Interne Dokument-ID oder Referenznummer aus dem PDF (z. B. Job-ID, Angebotsnummer). Falls nicht vorhanden: ! bitte prüfen !",
+
+    "document_type": "Projektangebot / Rollenprofil",
+    "_hint_document_type": "Fixer Wert. Nicht verändern.",
+
+    "source": "PDF",
+    "_hint_source": "Fixer Wert. Herkunft des Dokuments.",
+
+    "language": "",
+    "_hint_language": "Dokumentsprache, z. B. de-CH, de-DE, en. Falls nicht klar: ! bitte prüfen !",
+
+    "created_at": "",
+    "_hint_created_at": "Erstellungsdatum des Dokuments (DD.MM.YYYY). Falls nicht vorhanden: ! bitte prüfen !",
+
+    "extracted_at": "",
+    "_hint_extracted_at": "Datum der Extraktion (DD.MM.YYYY)",
+
+    "confidence_note": "Automatisch extrahiert – manuelle Prüfung empfohlen",
+    "_hint_confidence_note": "Fixer Hinweis"
+  },
+
+  "projekt_kontext": {
+    "auftraggeber": "",
+    "_hint_auftraggeber": "Name des Unternehmens oder der Organisation, die das Angebot erstellt hat",
+
+    "organisationseinheit": "",
+    "_hint_organisationseinheit": "Abteilung, Bereich oder Organisationseinheit",
+
+    "programm_umfeld": [],
+    "_hint_programm_umfeld": "Programme, Initiativen, ARTs oder vergleichbare organisatorische Setups",
+
+    "kurzbeschreibung": "",
+    "_hint_kurzbeschreibung": "Kurzbeschreibung des Projekt- oder Angebotskontexts in 1–2 Sätzen"
+  },
+
+  "rolle": {
+    "titel": "",
+    "_hint_titel": "Offizieller Titel der Rolle gemäss Dokument",
+
+    "ziel_der_rolle": "",
+    "_hint_ziel_der_rolle": "Zweck und Hauptziel der Rolle gemäss Beschreibung im Dokument",
+
+    "einordnung": {
+      "rolle_im_setup": "",
+      "_hint_rolle_im_setup": "Einordnung der Rolle im Team, Programm oder Betrieb",
+
+      "zusammenarbeit_mit": [],
+      "_hint_zusammenarbeit_mit": "Rollen oder Funktionen, mit denen eng zusammengearbeitet wird"
+    }
+  },
+
+  "aufgaben_und_verantwortlichkeiten": {
+    "kernaufgaben": [],
+    "_hint_kernaufgaben": "Zentrale fachliche oder strategische Aufgaben der Rolle",
+
+    "operative_aufgaben": [],
+    "_hint_operative_aufgaben": "Operative, wiederkehrende oder betriebsnahe Aufgaben",
+
+    "kommunikation_und_governance": [],
+    "_hint_kommunikation_und_governance": "Stakeholder-Kommunikation, Governance, Meetings, Gremien"
+  },
+
+  "anforderungen": {
+    "muss_kriterien": [],
+    "_hint_muss_kriterien": "Zwingend erforderliche Fähigkeiten, Erfahrungen oder Eigenschaften",
+
+    "soll_kriterien": [],
+    "_hint_soll_kriterien": "Wünschenswerte oder optionale Zusatzqualifikationen",
+
+    "sprachen": [
+      {
+        "sprache": "",
+        "_hint_sprache": "Sprache gemäss Dokument",
+
+        "level": "",
+        "_hint_level": "Sprachniveau gemäss Dokument. Falls nicht spezifiziert: ! bitte prüfen !"
+      }
+    ]
+  },
+
+  "einsatzrahmen": {
+    "zeitraum": {
+      "start": "",
+      "_hint_start": "Startdatum des Einsatzes (DD.MM.YYYY)",
+
+      "ende": "",
+      "_hint_ende": "Enddatum des Einsatzes (DD.MM.YYYY)",
+
+      "verlaengerung": "",
+      "_hint_verlaengerung": "Hinweis auf Verlängerungsoption, falls erwähnt"
+    },
+
+    "pensum": "",
+    "_hint_pensum": "Arbeitspensum, z. B. 80–100%",
+
+    "arbeitsort": [],
+    "_hint_arbeitsort": "Arbeitsort(e) inkl. Remote- oder Hybrid-Regelung",
+
+    "delivery_model": "",
+    "_hint_delivery_model": "Vertrags- oder Liefermodell, z. B. Personalverleih, Werkvertrag"
+  },
+
+  "organisation_und_reporting": {
+    "regeltermine": [],
+    "_hint_regeltermine": "Regelmässige Meetings, Events oder Zeremonien",
+
+    "reporting_artifacts": [],
+    "_hint_reporting_artifacts": "Reports, Dashboards oder formale Artefakte"
+  },
+
+  "kontakt": {
+    "rolle": "",
+    "_hint_rolle": "Rolle der Kontaktperson (z. B. Sourcing Manager)",
+
+    "name": "",
+    "_hint_name": "Name der Kontaktperson",
+
+    "organisation": "",
+    "_hint_organisation": "Organisation der Kontaktperson"
+  }
+}
