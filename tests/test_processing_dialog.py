@@ -24,7 +24,7 @@ def test_cv_only():
         assert dialog.stellenprofil_filename is None
         
         # Verify steps are initialized
-        assert len(dialog.steps) == 8
+        assert len(dialog.visible_steps) == 8
         assert dialog.step_widgets is not None
 
 def test_cv_and_angebot():

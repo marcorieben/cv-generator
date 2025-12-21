@@ -48,52 +48,73 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         # Create a mock offer based on the schema structure
         angebot_json = {
             "angebots_metadata": {
-                "angebots_id": "MOCK-12345",
-                "anbieter": "Musterfirma AG",
-                "kunde": "Musterkunde GmbH",
-                "datum": datetime.now().strftime("%Y-%m-%d"),
+                "angebots_id": "OFFER-2025-001",
+                "anbieter": "Ihre Firma AG",
+                "kunde": "Bundesamt für Informatik und Telekommunikation BIT",
+                "datum": datetime.now().strftime("%d.%m.%Y"),
                 "ansprechpartner": {
-                    "name": "Max Mustermann",
-                    "rolle": "Account Manager",
-                    "kontakt": "max.mustermann@musterfirma.ch"
+                    "name": "Hans Muster",
+                    "rolle": "Key Account Manager",
+                    "kontakt": "hans.muster@ihrefirma.ch | +41 79 123 45 67"
                 }
             },
             "stellenbezug": {
-                "rollenbezeichnung": stellenprofil_data.get("titel", "Software Engineer"),
-                "organisationseinheit": "IT",
-                "kurzkontext": "Unterstützung im Projekt X"
+                "rollenbezeichnung": "Senior Software Engineer (Java/Spring)",
+                "organisationseinheit": "Abteilung Entwicklung",
+                "kurzkontext": "Unterstützung bei der Modernisierung der Fachanwendung 'SuperApp' im Rahmen des Programms 'Digitalisierung 2025'."
             },
             "kandidatenvorschlag": {
-                "name": f"{cv_data.get('Vorname', '')} {cv_data.get('Nachname', '')}",
-                "angebotene_rolle": "Senior Developer",
-                "eignungs_summary": "Der Kandidat verfügt über hervorragende Kenntnisse."
+                "name": "Marco Rieben",
+                "angebotene_rolle": "Senior Software Engineer & Architect",
+                "eignungs_summary": "Marco Rieben ist ein erfahrener Software Engineer mit über 10 Jahren Erfahrung in der Entwicklung komplexer Enterprise-Anwendungen. Er verfügt über tiefgehende Expertise im geforderten Tech-Stack (Java, Spring Boot, Angular) und hat in ähnlichen Projekten beim Bund (z.B. Projekt 'Phoenix') bereits erfolgreich Architekturen modernisiert. Seine Stärke liegt in der Verbindung von technischer Exzellenz mit methodischer Kompetenz (Scrum, SAFe)."
             },
             "profil_und_kompetenzen": {
-                "methoden_und_technologien": ["Python", "Scrum", "Cloud"],
-                "operative_und_fuehrungserfahrung": ["5 Jahre Entwicklung", "Teamleitung"]
+                "methoden_und_technologien": [
+                    "Java / JEE (Expert Level, >10 Jahre)",
+                    "Spring Boot / Spring Cloud (Expert Level)",
+                    "Angular / TypeScript (Advanced Level)",
+                    "Docker / Kubernetes / OpenShift",
+                    "CI/CD (Jenkins, GitLab CI)",
+                    "Datenbanken (PostgreSQL, Oracle)"
+                ],
+                "operative_und_fuehrungserfahrung": [
+                    "Langjährige Erfahrung als Lead Developer in agilen Teams",
+                    "Erfahrung in der technischen Projektleitung",
+                    "Coaching von Junior-Entwicklern",
+                    "Anforderungsanalyse und Solution Design in enger Zusammenarbeit mit dem Fachbereich"
+                ]
             },
             "einsatzkonditionen": {
-                "pensum": "100%",
-                "verfuegbarkeit": "sofort",
-                "stundensatz": "150.00",
-                "subunternehmen": "-"
+                "pensum": "80-100%",
+                "verfuegbarkeit": "ab 01.02.2026",
+                "stundensatz": "165.00 CHF (exkl. MWST)",
+                "subunternehmen": "Nein, direkter Mitarbeiter"
             },
             "kriterien_abgleich": {
                 "muss_kriterien": [
-                    {"kriterium": "Python", "erfuellt": True, "begruendung": "Experte"}
+                    {"kriterium": "Hochschulabschluss in Informatik oder vergleichbar", "erfuellt": True, "begruendung": "Master of Science in Computer Science, ETH Zürich (2015)"},
+                    {"kriterium": "Mind. 5 Jahre Erfahrung mit Java/Spring", "erfuellt": True, "begruendung": "Über 8 Jahre nachgewiesene Projekterfahrung mit Java Enterprise und Spring Framework."},
+                    {"kriterium": "Erfahrung mit Container-Technologien", "erfuellt": True, "begruendung": "Einsatz von Docker und OpenShift in den letzten 3 Projekten."}
                 ],
                 "soll_kriterien": [
-                    {"kriterium": "Java", "erfuellt": False, "begruendung": "Grundkenntnisse"}
+                    {"kriterium": "Erfahrung im öffentlichen Sektor", "erfuellt": True, "begruendung": "Diverse Mandate beim BIT und BAZG."},
+                    {"kriterium": "Zertifizierung in SAFe", "erfuellt": True, "begruendung": "SAFe 5 Architect Zertifizierung vorhanden."},
+                    {"kriterium": "Französischkenntnisse", "erfuellt": False, "begruendung": "Grundkenntnisse vorhanden, Projektsprache Deutsch bevorzugt."}
                 ]
             },
             "gesamtbeurteilung": {
-                "zusammenfassung": "Sehr guter Fit.",
-                "mehrwert_fuer_kunden": ["Schnelle Einarbeitung"],
-                "empfehlung": "Klare Empfehlung"
+                "zusammenfassung": "Marco Rieben erfüllt alle Muss-Kriterien und die meisten Soll-Kriterien in hohem Masse. Durch seine Kombination aus technischer Tiefe und Verständnis für behördliche Prozesse ist er die ideale Besetzung für diese Schlüsselposition.",
+                "mehrwert_fuer_kunden": [
+                    "Sofortige Produktivität durch bekannten Tech-Stack",
+                    "Risikominimierung durch Erfahrung im Bundesumfeld",
+                    "Wissenstransfer ins interne Team durch Coaching-Erfahrung",
+                    "Pragmatische und lösungsorientierte Arbeitsweise"
+                ],
+                "empfehlung": "Aufgrund der hohen Übereinstimmung mit dem Anforderungsprofil und der nachgewiesenen Erfolgsbilanz empfehlen wir Marco Rieben ausdrücklich für diese Position."
             },
             "abschluss": {
-                "verfuegbarkeit_gespraech": "Jederzeit",
-                "kontakt_hinweis": "Bei Fragen stehen wir gerne zur Verfügung."
+                "verfuegbarkeit_gespraech": "Für ein Vorstellungsgespräch steht Herr Rieben ab sofort zur Verfügung (bevorzugt Di/Do).",
+                "kontakt_hinweis": "Wir freuen uns auf Ihre Rückmeldung und stehen für Rückfragen jederzeit gerne zur Verfügung."
             }
         }
     else:

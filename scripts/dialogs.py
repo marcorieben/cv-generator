@@ -147,14 +147,15 @@ class ModernDialog:
 class SuccessDialog(ModernDialog):
     """Modern success message dialog"""
     
-    def __init__(self, title="Erfolg", message="", details=None, file_path=None, dashboard_path=None, match_score=None):
+    def __init__(self, title="Erfolg", message="", details=None, file_path=None, dashboard_path=None, match_score=None, angebot_json_path=None):
         # Increase height if we have both details and file button
-        height = 550 if (details and (file_path or dashboard_path)) else 450
-        super().__init__(title, width=650, height=height)
+        height = 700 if (details and (file_path or dashboard_path)) else 600
+        super().__init__(title, width=800, height=height)
         
         # Store file paths
         self.file_path = file_path
         self.dashboard_path = dashboard_path
+        self.angebot_json_path = angebot_json_path
         
         # Header
         self.create_header(title, self.ICON_SUCCESS, self.SUCCESS_GREEN)
@@ -242,6 +243,22 @@ class SuccessDialog(ModernDialog):
             except Exception as e:
                 print(f"Error opening file: {e}")
 
+        def generate_angebot_action():
+            try:
+                from scripts.generate_angebot_word import generate_angebot_word
+                output_path = self.angebot_json_path.replace(".json", ".docx")
+                generate_angebot_word(self.angebot_json_path, output_path)
+                
+                # Show success message
+                from tkinter import messagebox
+                messagebox.showinfo("Erfolg", f"Angebot wurde erstellt:\n{os.path.basename(output_path)}")
+                
+                # Open file
+                open_file_action(output_path)
+            except Exception as e:
+                from tkinter import messagebox
+                messagebox.showerror("Fehler", f"Fehler bei der Erstellung: {e}")
+
         # Buttons
         self.create_button(btn_container, "Schließen", close, is_primary=False, width=15).pack(side='left', padx=5)
         
@@ -250,6 +267,10 @@ class SuccessDialog(ModernDialog):
 
         if self.file_path:
             self.create_button(btn_container, "📝 Word CV", lambda: open_file_action(self.file_path), is_primary=True, width=15).pack(side='left', padx=5)
+
+        if self.angebot_json_path:
+            self.create_button(btn_container, "💼 Angebot", generate_angebot_action, is_primary=True, width=15, bg_color="#9b59b6").pack(side='left', padx=5)
+
 
     def create_meter(self, parent, score):
         """Create a visual meter for the match score"""
@@ -507,12 +528,204 @@ class ConfirmDialog(ModernDialog):
         self.create_button(btn_container, "Ja", yes, is_primary=True, width=12).pack(side='left', padx=5)
 
 
+class ModeSelectionDialog(ModernDialog):
+    """
+    Initial dialog to select the operation mode:
+    1. Basic CV (CV only)
+    2. Analysis & Matching (CV + Job + Match)
+    3. Full Package (CV + Job + Match + Offer)
+    """
+    def __init__(self):
+        super().__init__("CV Generator - Modus wählen", width=1100, height=750)
+        
+        # Main container with padding
+        main_frame = tk.Frame(self.root, bg=self.WHITE)
+        main_frame.pack(fill='both', expand=True, padx=40, pady=30)
+        
+        # Header
+        header_frame = tk.Frame(main_frame, bg=self.WHITE)
+        header_frame.pack(fill='x', pady=(0, 30))
+        
+        tk.Label(
+            header_frame,
+            text="Was möchten Sie heute tun?",
+            bg=self.WHITE,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 24, 'bold')
+        ).pack(anchor='center')
+        
+        tk.Label(
+            header_frame,
+            text="Wählen Sie den gewünschten Prozess für Ihre Dokumentenerstellung",
+            bg=self.WHITE,
+            fg="#666666",
+            font=('Segoe UI', 12)
+        ).pack(anchor='center', pady=(10, 0))
+        
+        # Cards Container
+        cards_frame = tk.Frame(main_frame, bg=self.WHITE)
+        cards_frame.pack(fill='both', expand=True)
+        
+        # Grid configuration for 3 columns
+        cards_frame.grid_columnconfigure(0, weight=1, uniform="cols")
+        cards_frame.grid_columnconfigure(1, weight=1, uniform="cols")
+        cards_frame.grid_columnconfigure(2, weight=1, uniform="cols")
+        
+        # Card 1: Basic CV
+        self.create_mode_card(
+            cards_frame, 0,
+            title="Basis CV",
+            icon="📄",
+            description="Generiert einen professionellen Lebenslauf aus Ihrem PDF.",
+            features=["• PDF zu Word Konvertierung", "• Modernes Layout", "• Ohne Stellenbezug"],
+            mode_id="basic"
+        )
+        
+        # Card 2: Analysis & Matching
+        self.create_mode_card(
+            cards_frame, 1,
+            title="Analyse & Matching",
+            icon="📄 ↔ 📋",
+            description="Analysiert CV und Stellenprofil für optimales Matching.",
+            features=["• Alles aus Basis CV", "• Detaillierte Matching-Analyse", "• Gap-Analyse & Empfehlungen"],
+            mode_id="analysis"
+        )
+        
+        # Card 3: Full Package
+        self.create_mode_card(
+            cards_frame, 2,
+            title="Komplettpaket",
+            icon="💼",
+            description="Erstellt alle Unterlagen inklusive Angebot.",
+            features=["• Alles aus Analyse", "• Generiertes Angebotsschreiben", "• Vollständige Bewerbungsmappe"],
+            mode_id="full",
+            is_highlighted=True
+        )
+        
+    def create_mode_card(self, parent, col, title, icon, description, features, mode_id, is_highlighted=False):
+        """Creates a selection card"""
+        
+        # Card Frame (with border effect)
+        border_color = self.ORANGE if is_highlighted else "#E0E0E0"
+        bg_color = "#FFF5EB" if is_highlighted else "#F8F9FA"
+        
+        card = tk.Frame(parent, bg=border_color, padx=1, pady=1)
+        card.grid(row=0, column=col, padx=15, sticky="nsew")
+        
+        # Inner Content
+        content = tk.Frame(card, bg=bg_color, padx=20, pady=25)
+        content.pack(fill='both', expand=True)
+        
+        # --- Bottom Area: Button ---
+        # Create button first to pack it at bottom
+        btn_text = "Auswählen"
+        btn_bg = self.ORANGE if is_highlighted else "#FFFFFF"
+        btn_fg = "#FFFFFF" if is_highlighted else self.DARK_GRAY
+        
+        def on_click():
+            self.result = mode_id
+            self.root.destroy()
+            
+        btn = tk.Button(
+            content,
+            text=btn_text,
+            bg=btn_bg,
+            fg=btn_fg,
+            font=('Segoe UI', 10, 'bold'),
+            relief='flat',
+            padx=20,
+            pady=8,
+            cursor='hand2',
+            command=on_click
+        )
+        if not is_highlighted:
+            btn.config(borderwidth=1, relief="solid")
+            
+        btn.pack(side='bottom', pady=(20, 0))
+        
+        # Hover effects
+        def on_enter(e):
+            if not is_highlighted:
+                btn.config(bg="#E0E0E0")
+        def on_leave(e):
+            if not is_highlighted:
+                btn.config(bg="#FFFFFF")
+                
+        btn.bind("<Enter>", on_enter)
+        btn.bind("<Leave>", on_leave)
+
+        # --- Top Area: Icon & Title ---
+        # Fixed height container for header part to ensure alignment
+        header_frame = tk.Frame(content, bg=bg_color)
+        header_frame.pack(fill='x', pady=(0, 15))
+        
+        tk.Label(
+            header_frame,
+            text=icon,
+            bg=bg_color,
+            fg=self.ORANGE if is_highlighted else self.DARK_GRAY,
+            font=('Segoe UI', 40)
+        ).pack(pady=(0, 10))
+        
+        tk.Label(
+            header_frame,
+            text=title,
+            bg=bg_color,
+            fg=self.DARK_GRAY,
+            font=('Segoe UI', 16, 'bold')
+        ).pack()
+        
+        # --- Middle Area: Description ---
+        # Fixed height container for description to align feature lists
+        desc_frame = tk.Frame(content, bg=bg_color, height=50)
+        desc_frame.pack(fill='x', pady=(0, 20))
+        desc_frame.pack_propagate(False)
+        
+        tk.Label(
+            desc_frame,
+            text=description,
+            bg=bg_color,
+            fg="#555555",
+            font=('Segoe UI', 10),
+            wraplength=250,
+            justify="center"
+        ).place(relx=0.5, rely=0.0, anchor='n') # Align to top of frame
+        
+        # --- Features List ---
+        feature_frame = tk.Frame(content, bg=bg_color)
+        feature_frame.pack(fill='both', expand=True)
+        
+        for feature in features:
+            # Use a grid or frame for bullet + text to ensure nice indentation
+            row = tk.Frame(feature_frame, bg=bg_color)
+            row.pack(fill='x', pady=2)
+            
+            tk.Label(
+                row,
+                text=feature,
+                bg=bg_color,
+                fg="#666666",
+                font=('Segoe UI', 9),
+                anchor="w",
+                justify="left"
+            ).pack(side='left', fill='x')
+
+
 class WelcomeDialog(ModernDialog):
     """Welcome dialog explaining the CV generation process"""
     
-    def __init__(self):
+    def __init__(self, mode="full"):
         # Increased height to accommodate High DPI scaling and content
-        super().__init__("CV Generator - Pipeline", width=750, height=950)
+        title = "CV Generator - Pipeline"
+        if mode == "basic":
+            title += " (Basis CV)"
+        elif mode == "analysis":
+            title += " (Analyse & Matching)"
+        elif mode == "full":
+            title += " (Komplettpaket)"
+            
+        super().__init__(title, width=750, height=950)
+        self.mode = mode
         
         # Initialize file paths
         self.cv_path = None
@@ -755,6 +968,19 @@ class WelcomeDialog(ModernDialog):
         self.cv_required_label = tk.Label(cv_label_container, text=" (Pflichtfeld)", bg=self.LIGHT_GRAY, fg=self.ORANGE, font=('Segoe UI', 10, 'bold'))
         self.cv_required_label.pack(side='left')
         
+        def remove_cv():
+            self.cv_path = None
+            self.cv_frame.config(bg=self.LIGHT_GRAY, bd=2, relief='flat')
+            cv_header.config(bg=self.LIGHT_GRAY)
+            cv_label_container.config(bg=self.LIGHT_GRAY)
+            self.cv_header_label.config(bg=self.LIGHT_GRAY, fg=self.DARK_GRAY)
+            self.cv_required_label.config(text=" (Pflichtfeld)", bg=self.LIGHT_GRAY, fg=self.ORANGE)
+            self.cv_status_label.config(text="Bitte laden Sie hier den Lebenslauf hoch.", bg=self.LIGHT_GRAY)
+            self.cv_upload_btn.config(text="📤 CV wählen", bg=self.ORANGE)
+            self.cv_remove_btn.config(bg=self.LIGHT_GRAY)
+            self.cv_remove_btn.pack_forget()
+            update_weiter_button()
+
         def select_cv():
             cv_path = FilePickerDialog.open_pdf(title="CV-PDF auswählen")
             if cv_path:
@@ -768,17 +994,43 @@ class WelcomeDialog(ModernDialog):
                 self.cv_required_label.config(text=" ✓", bg=success_bg, fg="#2E7D32")
                 self.cv_status_label.config(text=f"Ausgewählt: {filename}", bg=success_bg)
                 self.cv_upload_btn.config(text="Ändern", bg=self.SUCCESS_GREEN)
+                self.cv_remove_btn.config(bg=success_bg)
+                self.cv_remove_btn.pack(side='right', padx=5)
                 update_weiter_button()
         
         self.cv_upload_btn = self.create_button(cv_header, "📤 CV wählen", select_cv, is_primary=True, width=18)
         self.cv_upload_btn.pack(side='right', padx=10)
+
+        # Custom subtle remove button
+        self.cv_remove_btn = tk.Button(
+            cv_header,
+            text="✕",
+            command=remove_cv,
+            bg=self.LIGHT_GRAY,
+            fg="#999999",
+            font=('Segoe UI', 10, 'bold'),
+            relief='flat',
+            bd=0,
+            cursor='hand2'
+        )
+        
+        def on_cv_remove_enter(e):
+            self.cv_remove_btn.config(fg="#FF5252")
+            
+        def on_cv_remove_leave(e):
+            self.cv_remove_btn.config(fg="#999999")
+            
+        self.cv_remove_btn.bind("<Enter>", on_cv_remove_enter)
+        self.cv_remove_btn.bind("<Leave>", on_cv_remove_leave)
+        # Initially hidden
         
         self.cv_status_label = tk.Label(self.cv_frame, text="Bitte laden Sie hier den Lebenslauf hoch.", bg=self.LIGHT_GRAY, fg=self.DARK_GRAY, font=('Segoe UI', 9))
         self.cv_status_label.pack(anchor='w', padx=25, pady=(0, 12))
         
         # Schritt 2: Stellenprofil-PDF
         self.stellenprofil_frame = tk.Frame(content, bg=self.LIGHT_GRAY, relief='flat', bd=2)
-        self.stellenprofil_frame.pack(fill='x', pady=(10, 10))
+        if self.mode != "basic":
+            self.stellenprofil_frame.pack(fill='x', pady=(10, 10))
         
         stellenprofil_header = tk.Frame(self.stellenprofil_frame, bg=self.LIGHT_GRAY)
         stellenprofil_header.pack(fill='x', padx=15, pady=(12, 8))
@@ -792,6 +1044,18 @@ class WelcomeDialog(ModernDialog):
         self.stellenprofil_optional_label = tk.Label(stellenprofil_label_container, text=" (Optional)", bg=self.LIGHT_GRAY, fg="#777777", font=('Segoe UI', 10))
         self.stellenprofil_optional_label.pack(side='left')
         
+        def remove_stellenprofil():
+            self.stellenprofil_path = None
+            self.stellenprofil_frame.config(bg=self.LIGHT_GRAY, bd=2, relief='flat')
+            stellenprofil_header.config(bg=self.LIGHT_GRAY)
+            stellenprofil_label_container.config(bg=self.LIGHT_GRAY)
+            self.stellenprofil_header_label.config(bg=self.LIGHT_GRAY, fg=self.DARK_GRAY)
+            self.stellenprofil_optional_label.config(text=" (Optional)", bg=self.LIGHT_GRAY, fg="#777777")
+            self.stellenprofil_status_label.config(text="Optional: Stellenprofil für maßgeschneiderten CV hochladen.", bg=self.LIGHT_GRAY, fg="#777777")
+            self.stellenprofil_upload_btn.config(text="📤 Stellenprofil wählen", bg=self.DARK_GRAY)
+            self.stellenprofil_remove_btn.config(bg=self.LIGHT_GRAY)
+            self.stellenprofil_remove_btn.pack_forget()
+
         def select_stellenprofil():
             stellenprofil_path = FilePickerDialog.open_pdf(
                 title="Stellenprofil/Stellenbeschreibung auswählen",
@@ -808,9 +1072,34 @@ class WelcomeDialog(ModernDialog):
                 self.stellenprofil_optional_label.config(text=" ✓", bg=success_bg, fg="#2E7D32")
                 self.stellenprofil_status_label.config(text=f"Ausgewählt: {filename}", bg=success_bg, fg="#2E7D32")
                 self.stellenprofil_upload_btn.config(text="Ändern", bg=self.SUCCESS_GREEN)
+                self.stellenprofil_remove_btn.config(bg=success_bg)
+                self.stellenprofil_remove_btn.pack(side='right', padx=5)
         
         self.stellenprofil_upload_btn = self.create_button(stellenprofil_header, "📤 Stellenprofil wählen", select_stellenprofil, is_primary=False, width=18)
         self.stellenprofil_upload_btn.pack(side='right', padx=10)
+
+        # Custom subtle remove button
+        self.stellenprofil_remove_btn = tk.Button(
+            stellenprofil_header,
+            text="✕",
+            command=remove_stellenprofil,
+            bg=self.LIGHT_GRAY,
+            fg="#999999",
+            font=('Segoe UI', 10, 'bold'),
+            relief='flat',
+            bd=0,
+            cursor='hand2'
+        )
+        
+        def on_sp_remove_enter(e):
+            self.stellenprofil_remove_btn.config(fg="#FF5252")
+            
+        def on_sp_remove_leave(e):
+            self.stellenprofil_remove_btn.config(fg="#999999")
+            
+        self.stellenprofil_remove_btn.bind("<Enter>", on_sp_remove_enter)
+        self.stellenprofil_remove_btn.bind("<Leave>", on_sp_remove_leave)
+        # Initially hidden
         
         self.stellenprofil_status_label = tk.Label(self.stellenprofil_frame, text="Optional: Stellenprofil für maßgeschneiderten CV hochladen.", bg=self.LIGHT_GRAY, fg="#777777", font=('Segoe UI', 9))
         self.stellenprofil_status_label.pack(anchor='w', padx=25, pady=(0, 12))
@@ -835,33 +1124,51 @@ class WelcomeDialog(ModernDialog):
 class ProcessingDialog(ModernDialog):
     """Processing dialog with step-by-step progress visualization"""
     
-    def __init__(self, cv_filename, stellenprofil_filename=None):
+    def __init__(self, cv_filename, stellenprofil_filename=None, mode="full"):
         """
         Create processing dialog with animated steps
         
         Args:
             cv_filename: Name of CV file being processed
             stellenprofil_filename: Optional name of Stellenprofil file being processed
+            mode: 'basic', 'analysis', or 'full'
         """
         super().__init__("CV Generator - Verarbeitung läuft...", width=600, height=750)
         
         self.cv_filename = cv_filename
         self.stellenprofil_filename = stellenprofil_filename
+        self.mode = mode
         self.animation_running = True
         
-        # Define steps
-        self.steps = [
-            ("Stellenprofil analysieren", "🔍"),
-            ("CV analysieren", "📄"),
-            ("Qualitätsprüfung & Validierung", "✅"),
-            ("Word-Dokument erstellen", "📝"),
-            ("Match-Making Analyse", "🤝"),
-            ("CV-Feedback generieren", "💡"),
-            ("Angebot erstellen", "💼"),
-            ("Dashboard erstellen", "📊")
+        # Define all possible steps with their logical index
+        # (Index, Name, Icon)
+        all_steps = [
+            (0, "Stellenprofil analysieren", "🔍"),
+            (1, "CV analysieren", "📄"),
+            (2, "Qualitätsprüfung & Validierung", "✅"),
+            (3, "Word-Dokument erstellen", "📝"),
+            (4, "Match-Making Analyse", "🤝"),
+            (5, "CV-Feedback generieren", "💡"),
+            (6, "Angebot erstellen", "💼"),
+            (7, "Dashboard erstellen", "📊")
         ]
         
-        self.step_widgets = [] # List of dicts with widget references
+        # Filter steps based on mode
+        self.visible_steps = []
+        if mode == "basic":
+            # Basic: CV -> Valid -> Word -> Dashboard
+            # Skip: Job(0), Match(4), Feedback(5), Offer(6)
+            allowed_indices = [1, 2, 3, 7]
+            self.visible_steps = [s for s in all_steps if s[0] in allowed_indices]
+        elif mode == "analysis":
+            # Analysis: All except Offer(6)
+            allowed_indices = [0, 1, 2, 3, 4, 5, 7]
+            self.visible_steps = [s for s in all_steps if s[0] in allowed_indices]
+        else:
+            # Full: All steps
+            self.visible_steps = all_steps
+            
+        self.step_widgets = {} # Dict mapping logical_index -> widget_dict
         
         # Header
         self.create_header("Verarbeitung läuft", "⚙️", self.ORANGE)
@@ -883,7 +1190,7 @@ class ProcessingDialog(ModernDialog):
         steps_frame = tk.Frame(content, bg=self.WHITE)
         steps_frame.pack(fill='both', expand=True, padx=40)
         
-        for i, (step_name, icon) in enumerate(self.steps):
+        for logical_index, step_name, icon in self.visible_steps:
             step_row = tk.Frame(steps_frame, bg=self.WHITE)
             step_row.pack(fill='x', pady=8)
             
@@ -918,13 +1225,13 @@ class ProcessingDialog(ModernDialog):
             )
             status_lbl.pack(side='right', padx=5)
             
-            self.step_widgets.append({
+            self.step_widgets[logical_index] = {
                 "row": step_row,
                 "icon": icon_lbl,
                 "name": name_lbl,
                 "status": status_lbl,
-                "state": "pending" # pending, running, completed, error, skipped
-            })
+                "state": "pending"
+            }
             
         # Footer Note
         tk.Label(
@@ -949,7 +1256,8 @@ class ProcessingDialog(ModernDialog):
         self.root.after(0, lambda: self._do_update_step(step_index, status))
 
     def _do_update_step(self, step_index, status):
-        if step_index < 0 or step_index >= len(self.step_widgets):
+        # Check if this step exists in our visible widgets
+        if step_index not in self.step_widgets:
             return
             
         widget = self.step_widgets[step_index]
@@ -993,7 +1301,7 @@ class ProcessingDialog(ModernDialog):
         char = self.spinner_chars[self.spinner_idx]
         self.spinner_idx = (self.spinner_idx + 1) % len(self.spinner_chars)
         
-        for widget in self.step_widgets:
+        for widget in self.step_widgets.values():
             if widget["state"] == "running":
                 widget["status"].config(text=char)
         
@@ -1056,9 +1364,9 @@ class FilePickerDialog:
 
 
 # Convenience functions for easy use
-def show_success(message, title="Erfolg", details=None, file_path=None, dashboard_path=None, match_score=None):
+def show_success(message, title="Erfolg", details=None, file_path=None, dashboard_path=None, match_score=None, angebot_json_path=None):
     """Show modern success dialog with optional file open button"""
-    dialog = SuccessDialog(title, message, details, file_path, dashboard_path, match_score)
+    dialog = SuccessDialog(title, message, details, file_path, dashboard_path, match_score, angebot_json_path)
     return dialog.show()
 
 
@@ -1093,26 +1401,41 @@ def select_json_file(title="JSON-Datei auswählen"):
 def show_welcome():
     """
     Show welcome dialog with optional stellenprofil selection:
-    1. Select CV-PDF (required)
-    2. Optional: Click "Stellenprofil hinzufügen" button
-    3. Click "Weiter" to proceed
+    1. Select Mode (Basic, Analysis, Full)
+    2. Select CV-PDF (required)
+    3. Optional: Click "Stellenprofil hinzufügen" button (if mode allows)
+    4. Click "Weiter" to proceed
     
     Returns:
         tuple: (cv_path, stellenprofil_path) or None if cancelled
                stellenprofil_path can be None if not selected
     """
-    dialog = WelcomeDialog()
+    # 1. Mode Selection
+    mode_dialog = ModeSelectionDialog()
+    mode = mode_dialog.show() # Returns mode_id or None
+    
+    if not mode:
+        return None
+        
+    # 2. File Selection
+    dialog = WelcomeDialog(mode=mode)
     result = dialog.show()  # Returns (cv_path, stellenprofil_path, model_name) or None
+    
     if result is None:
         return None
+        
     # Set environment variable for model, always use dropdown selection
     import os
     selected_model = result[2] if len(result) > 2 and result[2] else "gpt-4o-mini"
     os.environ["MODEL_NAME"] = selected_model
+    
+    # Store mode in env var for pipeline to use
+    os.environ["CV_GENERATOR_MODE"] = mode
+    
     return result[:2]  # (cv_path, stellenprofil_path)
 
 
-def show_processing(cv_filename, stellenprofil_filename=None):
+def show_processing(cv_filename, stellenprofil_filename=None, mode="full"):
     """
     Show processing dialog with animated documents
     Returns dialog instance for manual control (close when done)
@@ -1120,11 +1443,12 @@ def show_processing(cv_filename, stellenprofil_filename=None):
     Args:
         cv_filename: Name of CV file being processed
         stellenprofil_filename: Optional name of Stellenprofil file being processed
+        mode: 'basic', 'analysis', or 'full'
         
     Returns:
         ProcessingDialog instance (call .close() when processing is done)
     """
-    dialog = ProcessingDialog(cv_filename, stellenprofil_filename)
+    dialog = ProcessingDialog(cv_filename, stellenprofil_filename, mode=mode)
     return dialog
 
 

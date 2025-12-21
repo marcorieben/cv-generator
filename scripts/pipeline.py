@@ -74,15 +74,15 @@ class CVPipeline:
         except OSError:
             return False
 
-    def _show_processing_dialog(self, cv_filename: str, stellenprofil_filename: Optional[str]):
-        self.processing_dialog = show_processing(cv_filename, stellenprofil_filename)
+    def _show_processing_dialog(self, cv_filename: str, stellenprofil_filename: Optional[str], mode: str = "full"):
+        self.processing_dialog = show_processing(cv_filename, stellenprofil_filename, mode=mode)
         self.processing_dialog.show()
         self.dialog_closed_event.set()
 
-    def start_processing_dialog(self, cv_filename: str, stellenprofil_filename: Optional[str]):
+    def start_processing_dialog(self, cv_filename: str, stellenprofil_filename: Optional[str], mode: str = "full"):
         self.dialog_thread = threading.Thread(
             target=self._show_processing_dialog,
-            args=(cv_filename, stellenprofil_filename),
+            args=(cv_filename, stellenprofil_filename, mode),
             daemon=True
         )
         self.dialog_thread.start()
@@ -196,7 +196,8 @@ class CVPipeline:
         cv_filename = os.path.basename(cv_path)
         stellenprofil_filename = os.path.basename(stellenprofil_path) if stellenprofil_path else None
         
-        self.start_processing_dialog(cv_filename, stellenprofil_filename)
+        mode = os.environ.get("CV_GENERATOR_MODE", "full")
+        self.start_processing_dialog(cv_filename, stellenprofil_filename, mode=mode)
 
         try:
             # --- STEP 1: PDF Extraction ---
@@ -235,7 +236,9 @@ class CVPipeline:
 
             # Save Offer Data if it exists
             if stellenprofil_data:
-                stellenprofil_json_filename = f"Stellenprofil_{vorname}_{nachname}_{self.timestamp}.json"
+                # Use original filename of the job profile for the JSON file
+                sp_basename = os.path.splitext(stellenprofil_filename)[0]
+                stellenprofil_json_filename = f"stellenprofil_{sp_basename}_{self.timestamp}.json"
                 stellenprofil_json_path = os.path.join(output_dir, stellenprofil_json_filename)
                 self.save_json(stellenprofil_data, stellenprofil_json_path)
 
@@ -308,7 +311,9 @@ class CVPipeline:
 
             # --- STEP 3b: Angebot Generation (Sequential, depends on Match) ---
             angebot_json_path = None
-            if stellenprofil_json_path and matchmaking_json_path and os.path.exists(matchmaking_json_path):
+            mode = os.environ.get("CV_GENERATOR_MODE", "full")
+            
+            if mode == "full" and stellenprofil_json_path and matchmaking_json_path and os.path.exists(matchmaking_json_path):
                 self.update_progress(6, "running") # Angebot
                 try:
                     angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
@@ -415,7 +420,7 @@ class CVPipeline:
                     print(f"⚠️  Konnte Match-Score nicht lesen: {e}")
 
             # Dialog handles opening files now
-            show_success(success_msg, details=details, file_path=word_path, dashboard_path=dashboard_path, match_score=match_score)
+            show_success(success_msg, details=details, file_path=word_path, dashboard_path=dashboard_path, match_score=match_score, angebot_json_path=angebot_json_path)
                 
             return word_path
 
