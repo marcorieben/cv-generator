@@ -594,6 +594,14 @@ class WelcomeDialog(ModernDialog):
             
             # If Mock mode selected, enable "Weiter" immediately and skip file checks
             if val == "mock":
+                from tkinter import messagebox
+                messagebox.showinfo(
+                    "Test-Modus aktiviert",
+                    "Im Test-Modus werden keine Dateien hochgeladen.\n\n"
+                    "Das System verwendet interne Testdaten, um den Prozess zu simulieren "
+                    "und die Generierung zu testen, ohne KI-Kosten zu verursachen."
+                )
+
                 # Auto-fill dummy paths if not set
                 if not self.cv_path:
                     self.cv_path = "MOCK_CV.pdf"

@@ -17,6 +17,36 @@ project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+def check_dependencies():
+    """Check if all required packages are installed."""
+    required_packages = {
+        'openai': 'openai',
+        'pypdf': 'pypdf',
+        'python-dotenv': 'dotenv',
+        'python-docx': 'docx'
+    }
+    
+    missing = []
+    for package_name, import_name in required_packages.items():
+        try:
+            __import__(import_name)
+        except ImportError:
+            missing.append(package_name)
+    
+    if missing:
+        print("\nError: Missing required dependencies!")
+        print("The following packages are missing:")
+        for pkg in missing:
+            print(f"  - {pkg}")
+        print("\nPlease install them using the following command:")
+        print(f"  pip install -r {os.path.join(current_dir, 'requirements.txt')}")
+        print("\nOr install them individually:")
+        print(f"  pip install {' '.join(missing)}")
+        sys.exit(1)
+
+# Check dependencies before importing local modules that might use them
+check_dependencies()
+
 # Local imports
 from scripts.pdf_to_json import pdf_to_json
 from scripts.generate_cv import generate_cv, validate_json_structure
@@ -68,6 +98,11 @@ class CVPipeline:
         if self.processing_dialog:
             try:
                 self.processing_dialog.update_step(step_index, status)
+                
+                # Add delay for demo purposes if in mock mode
+                if os.environ.get("MODEL_NAME") == "mock" and status == "completed":
+                    time.sleep(1.5)  # 1.5 seconds delay per completed step to make it visible
+                    
             except Exception as e:
                 print(f"Error updating progress dialog: {e}")
 
