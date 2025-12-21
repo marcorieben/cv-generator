@@ -1,0 +1,148 @@
+{
+  "_extraction_control": {
+    "purpose": "Strukturierte Generierung eines Angebots basierend auf Stellenprofil und Kandidaten-CV",
+
+    "missing_value_marker": "! bitte prüfen !",
+
+    "hard_rules": [
+      "Angebotsinhalte nur aus Stellenprofil-JSON, CV-JSON und Matching-Result ableiten",
+      "Keine neuen Fähigkeiten oder Erfahrungen erfinden",
+      "Angebot sachlich, professionell und kundenspezifisch formulieren",
+      "Struktur exakt einhalten"
+    ],
+
+    "composition_rules": [
+      "Rollenbeschreibung primär aus dem Stellenprofil ableiten",
+      "Skill- und Erfahrungsargumentation aus dem CV ableiten",
+      "Erfüllungsgrad Muss/Soll aus dem Matching-Result ableiten",
+      "Keine Marketingfloskeln ohne fachliche Substanz"
+    ],
+
+    "quality_check": [
+      "Alle Angebotsfelder befüllt oder korrekt markiert",
+      "Kandidat eindeutig identifizierbar",
+      "Muss- und Soll-Kriterien explizit adressiert"
+    ]
+  },
+
+  "angebots_metadata": {
+    "angebots_id": "",
+    "_hint_angebots_id": "Angebotsnummer (z. B. GDJOB-12786)",
+
+    "anbieter": "",
+    "_hint_anbieter": "Name der anbietenden Firma",
+
+    "kunde": "",
+    "_hint_kunde": "Name des Kunden (z. B. SBB)",
+
+    "datum": "",
+    "_hint_datum": "Angebotsdatum (YYYY-MM-DD)",
+
+    "ansprechpartner": {
+      "name": "",
+      "_hint_name": "Name Ansprechpartner",
+
+      "rolle": "",
+      "_hint_rolle": "Rolle oder Funktion",
+
+      "kontakt": ""
+    }
+  },
+
+  "stellenbezug": {
+    "rollenbezeichnung": "",
+    "_hint_rollenbezeichnung": "Titel aus dem Stellenprofil",
+
+    "organisationseinheit": "",
+    "_hint_organisationseinheit": "ART / Programm / Bereich",
+
+    "kurzkontext": "",
+    "_hint_kurzkontext": "Einleitender Kontext zur ausgeschriebenen Rolle"
+  },
+
+  "kandidatenvorschlag": {
+    "name": "",
+    "_hint_name": "Name des vorgeschlagenen Kandidaten",
+
+    "angebotene_rolle": "",
+    "_hint_angebotene_rolle": "Rolle im Angebot (kann leicht vom Stellentitel abweichen)",
+
+    "eignungs_summary": "",
+    "_hint_eignungs_summary": "2–3 Sätze zur Gesamteignung (aus Matching + CV)"
+  },
+
+  "profil_und_kompetenzen": {
+    "methoden_und_technologien": [
+      ""
+    ],
+    "_hint_methoden_und_technologien": "Relevante Methoden & Technologien aus dem CV, angebotsbezogen",
+
+    "operative_und_fuehrungserfahrung": [
+      ""
+    ],
+    "_hint_operative_und_fuehrungserfahrung": "Erfahrungen mit Ops, Führung, Coaching, Betrieb"
+  },
+
+  "einsatzkonditionen": {
+    "pensum": "",
+    "_hint_pensum": "z. B. 100%",
+
+    "verfuegbarkeit": "",
+    "_hint_verfuegbarkeit": "Startdatum",
+
+    "stundensatz": "",
+    "_hint_stundensatz": "CHF-Stundensatz",
+
+    "subunternehmen": "",
+    "_hint_subunternehmen": "Falls vorhanden, sonst '-'"
+  },
+
+  "kriterien_abgleich": {
+    "muss_kriterien": [
+      {
+        "kriterium": "",
+        "_hint_kriterium": "Muss-Kriterium aus dem Stellenprofil",
+
+        "erfuellt": "",
+        "_hint_erfuellt": "true / false",
+
+        "begruendung": "",
+        "_hint_begruendung": "Begründung aus CV / Matching"
+      }
+    ],
+
+    "soll_kriterien": [
+      {
+        "kriterium": "",
+        "_hint_kriterium": "Soll-Kriterium aus dem Stellenprofil",
+
+        "erfuellt": "",
+        "_hint_erfuellt": "true / false",
+
+        "begruendung": "",
+        "_hint_begruendung": "Begründung aus CV / Matching"
+      }
+    ]
+  },
+
+  "gesamtbeurteilung": {
+    "zusammenfassung": "",
+    "_hint_zusammenfassung": "Verdichtete Argumentation, warum der Kandidat geeignet ist",
+
+    "mehrwert_fuer_kunden": [
+      ""
+    ],
+    "_hint_mehrwert_fuer_kunden": "Kundenspezifische Nutzenargumente",
+
+    "empfehlung": "",
+    "_hint_empfehlung": "Klare Angebots-Empfehlung"
+  },
+
+  "abschluss": {
+    "verfuegbarkeit_gespraech": "",
+    "_hint_verfuegbarkeit_gespraech": "Hinweis auf Gesprächsbereitschaft",
+
+    "kontakt_hinweis": "",
+    "_hint_kontakt_hinweis": "Standardformulierung für Rückfragen"
+  }
+}

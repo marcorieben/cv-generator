@@ -52,6 +52,7 @@ from scripts.pdf_to_json import pdf_to_json
 from scripts.generate_cv import generate_cv, validate_json_structure
 from scripts.generate_matchmaking import generate_matchmaking_json
 from scripts.generate_cv_feedback import generate_cv_feedback_json
+from scripts.generate_angebot import generate_angebot_json
 from scripts.visualize_results import generate_dashboard
 from scripts.dialogs import (
     show_success, show_error, show_warning, ask_yes_no,
@@ -305,6 +306,27 @@ class CVPipeline:
                 except Exception:
                     self.update_progress(5, "error")
 
+            # --- STEP 3b: Angebot Generation (Sequential, depends on Match) ---
+            angebot_json_path = None
+            if stellenprofil_json_path and matchmaking_json_path and os.path.exists(matchmaking_json_path):
+                self.update_progress(6, "running") # Angebot
+                try:
+                    angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
+                    schema_path = os.path.join(self.base_dir, "scripts", "angebot_json_schema.json")
+                    generate_angebot_json(
+                        cv_json_path,
+                        stellenprofil_json_path,
+                        matchmaking_json_path,
+                        angebot_json_path,
+                        schema_path
+                    )
+                    self.update_progress(6, "completed")
+                except Exception as e:
+                    print(f"❌ Fehler bei Angebots-Generierung: {e}")
+                    self.update_progress(6, "error")
+            else:
+                self.update_progress(6, "skipped")
+
             if not word_path:
                 self.stop_processing_dialog()
                 show_error(
@@ -315,14 +337,14 @@ class CVPipeline:
                 return None
 
             # --- STEP 4: Dashboard ---
-            self.update_progress(6, "running") # Dashboard
+            self.update_progress(7, "running") # Dashboard
             dashboard_path = generate_dashboard(
                 cv_json_path=cv_json_path,
                 match_json_path=matchmaking_json_path if stellenprofil_json_path and os.path.exists(stellenprofil_json_path) else None,
                 feedback_json_path=feedback_json_path,
                 output_dir=output_dir
             )
-            self.update_progress(6, "completed")
+            self.update_progress(7, "completed")
 
             self.stop_processing_dialog()
             
@@ -354,6 +376,9 @@ class CVPipeline:
                 
             if matchmaking_json_path:
                  details += f"• Matchmaking JSON: {os.path.basename(matchmaking_json_path)}\n"
+            
+            if angebot_json_path:
+                 details += f"• Angebot JSON: {os.path.basename(angebot_json_path)}\n"
                  
             if feedback_json_path:
                 details += f"• Feedback JSON: {os.path.basename(feedback_json_path)}\n"

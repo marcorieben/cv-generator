@@ -857,6 +857,7 @@ class ProcessingDialog(ModernDialog):
             ("Word-Dokument erstellen", "📝"),
             ("Match-Making Analyse", "🤝"),
             ("CV-Feedback generieren", "💡"),
+            ("Angebot erstellen", "💼"),
             ("Dashboard erstellen", "📊")
         ]
         
