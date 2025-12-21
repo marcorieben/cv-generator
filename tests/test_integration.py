@@ -145,9 +145,9 @@ class TestPathResolution:
         assert os.path.exists(os.path.join(base_dir, 'input'))
         
         # Prüfe dass JSON-Pfad korrekt aufgelöst wird
-        json_path = os.path.join(base_dir, "input", "json", "test.json")
+        json_path = os.path.join(base_dir, "input", "cv", "json", "test.json")
         assert 'scripts' not in os.path.dirname(json_path).replace(base_dir, '')
-        assert json_path.endswith(os.path.join('input', 'json', 'test.json'))
+        assert json_path.endswith(os.path.join('input', 'cv', 'json', 'test.json'))
     
     def test_generate_cv_resolves_styles_correctly(self):
         """Test dass generate_cv.py styles.json im scripts/ findet"""
@@ -173,7 +173,10 @@ class TestPathResolution:
         assert os.path.exists(input_dir), f"input/ nicht gefunden: {input_dir}"
         assert os.path.exists(output_dir), f"output/ nicht gefunden: {output_dir}"
         
-        # JSON und Word Unterordner
-        assert os.path.exists(os.path.join(input_dir, 'json'))
-        assert os.path.exists(os.path.join(output_dir, 'word'))
+        # Neue Struktur: input/cv/ und input/stellenprofil/ mit Unterordnern
+        assert os.path.exists(os.path.join(input_dir, 'cv', 'json'))
+        assert os.path.exists(os.path.join(input_dir, 'cv', 'pdf'))
+        assert os.path.exists(os.path.join(input_dir, 'stellenprofil', 'json'))
+        assert os.path.exists(os.path.join(input_dir, 'stellenprofil', 'pdf'))
+        # output/word is legacy, new structure uses per-run folders in output/
 

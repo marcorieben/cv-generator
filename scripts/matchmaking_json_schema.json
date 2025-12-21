@@ -1,0 +1,113 @@
+{
+  "_extraction_control": {
+    "_hint_fields_note": "Alle Felder mit '_hint_' sind nur als Anweisung für die LLM zu verstehen und dürfen NICHT in der generierten JSON-Ausgabe erscheinen.",
+    "purpose": "Vergleich und Matching zwischen Stellenprofil und Kandidaten-CV",
+    "missing_value_marker": "! bitte prüfen !",
+    "hard_rules": [
+      "Keine neuen Skills oder Anforderungen erfinden",
+      "Nur Stellenprofil-JSON und CV-JSON als Grundlage verwenden",
+      "Bewertung nachvollziehbar und erklärbar halten",
+      "Keine impliziten Annahmen treffen",
+      "Struktur exakt einhalten"
+    ],
+    "matching_principles": [
+      "Muss-Kriterien haben höchste Priorität",
+      "Nicht erfüllte Muss-Kriterien sind kritisch",
+      "Soll-Kriterien erhöhen den Match-Score",
+      "Fehlende Informationen explizit markieren"
+    ],
+    "quality_check": [
+      "Alle Muss-Kriterien bewertet",
+      "Alle Bewertungen begründet",
+      "Score konsistent zur Bewertung"
+    ]
+  },
+  "match_metadata": {
+    "stellenprofil_vorhanden": "",
+    "_hint_stellenprofil_vorhanden": "true / false",
+    "stellenprofil_id": "",
+    "_hint_stellenprofil_id": "Referenz auf metadata.document_id des Stellenprofils",
+    "cv_id": "",
+    "_hint_cv_id": "Referenz auf CV-ID oder Kandidatenname",
+    "matching_datum": "",
+    "_hint_matching_datum": "Datum des Matchings (YYYY-MM-DD)"
+  },
+  "muss_kriterien_abgleich": [
+    {
+      "kriterium": "",
+      "_hint_kriterium": "Muss-Kriterium aus dem Stellenprofil",
+      "im_cv_gefunden": "",
+      "_hint_im_cv_gefunden": "true / false / ! bitte prüfen !",
+      "cv_evidenz": "",
+      "_hint_cv_evidenz": "Konkrete Textstelle, Skill oder Erfahrung aus dem CV",
+      "bewertung": "",
+      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / ! bitte prüfen !",
+      "kommentar": "",
+      "_hint_kommentar": "Kurze Begründung der Bewertung"
+    }
+  ],
+  "soll_kriterien_abgleich": [
+    {
+      "kriterium": "",
+      "_hint_kriterium": "Soll-Kriterium aus dem Stellenprofil",
+      "im_cv_gefunden": "",
+      "_hint_im_cv_gefunden": "true / false / ! bitte prüfen !",
+      "cv_evidenz": "",
+      "_hint_cv_evidenz": "Konkrete Evidenz aus dem CV",
+      "bewertung": "",
+      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / ! bitte prüfen !",
+      "kommentar": "",
+      "_hint_kommentar": "Einordnung der Relevanz"
+    }
+  ],
+  "skill_abdeckung": {
+    "gesamt_einschaetzung": "",
+    "_hint_gesamt_einschaetzung": "hoch / mittel / niedrig / ! bitte prüfen !",
+    "starke_skills": [
+      ""
+    ],
+    "_hint_starke_skills": "Skills mit sehr guter Passung zum Stellenprofil",
+    "teilweise_passende_skills": [
+      ""
+    ],
+    "_hint_teilweise_passende_skills": "Skills mit eingeschränkter oder indirekter Passung",
+    "fehlende_skills": [
+      ""
+    ],
+    "_hint_fehlende_skills": "Stellenprofilrelevante Skills, die im CV nicht gefunden wurden"
+  },
+  "risiken_und_luecken": [
+    {
+      "typ": "",
+      "_hint_typ": "Skill-Lücke / Erfahrungs-Lücke / Kontext-Lücke",
+      "beschreibung": "",
+      "_hint_beschreibung": "Konkret benannte Lücke",
+      "kritikalitaet": "",
+      "_hint_kritikalitaet": "hoch / mittel / niedrig",
+      "begruendung": "",
+      "_hint_begruendung": "Warum diese Lücke relevant ist"
+    }
+  ],
+  "match_score": {
+    "score_gesamt": "",
+    "_hint_score_gesamt": "Numerischer Score 0–100",
+    "gewichtung": {
+      "muss_kriterien": "",
+      "_hint_muss_kriterien": "z. B. 60",
+      "soll_kriterien": "",
+      "_hint_soll_kriterien": "z. B. 30",
+      "skill_abdeckung": "",
+      "_hint_skill_abdeckung": "z. B. 10"
+    }
+  },
+  "gesamt_fazit": {
+    "empfehlung": "",
+    "_hint_empfehlung": "Go / Maybe / No-Go",
+    "kurzbegruendung": "",
+    "_hint_kurzbegruendung": "2–3 Sätze, zusammenfassend und sachlich",
+    "naechste_schritte": [
+      ""
+    ],
+    "_hint_naechste_schritte": "Empfohlene Folgeaktionen (Interview-Fokus, Klärungen etc.)"
+  }
+}
