@@ -1,0 +1,46 @@
+{
+  "match_metadata": {
+    "stellenprofil_vorhanden": true,
+    "matching_datum": "2025-12-18"
+  },
+  "muss_kriterien_abgleich": [
+    {
+      "kriterium": "Python Entwicklung",
+      "im_cv_gefunden": true,
+      "cv_evidenz": "5+ Jahre Python Erfahrung",
+      "bewertung": "erfüllt",
+      "kommentar": "Sehr gute Kenntnisse vorhanden."
+    },
+    {
+      "kriterium": "Cloud Erfahrung",
+      "im_cv_gefunden": true,
+      "cv_evidenz": "AWS Zertifizierung",
+      "bewertung": "erfüllt",
+      "kommentar": "Zertifiziert und Projekterfahrung."
+    }
+  ],
+  "soll_kriterien_abgleich": [
+    {
+      "kriterium": "Teamleitung",
+      "im_cv_gefunden": false,
+      "cv_evidenz": "",
+      "bewertung": "nicht erfüllt",
+      "kommentar": "Keine Führungserfahrung im CV gefunden."
+    }
+  ],
+  "match_score": {
+    "score_gesamt": 85,
+    "gewichtung": {
+      "muss_kriterien": 60,
+      "soll_kriterien": 30,
+      "skill_abdeckung": 10
+    }
+  },
+  "gesamt_fazit": {
+    "empfehlung": "Go",
+    "kurzbegruendung": "Mock-Matching: Der Kandidat erfüllt alle Muss-Kriterien und passt technisch sehr gut.",
+    "naechste_schritte": [
+      "Technisches Interview vereinbaren"
+    ]
+  }
+}

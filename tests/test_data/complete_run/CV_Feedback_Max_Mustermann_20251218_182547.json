@@ -1,0 +1,29 @@
+{
+  "feedback_metadata": {
+    "feedback_datum": "2025-12-18",
+    "stellenprofil_bezogen": false
+  },
+  "zusammenfassung": {
+    "gesamt_einschaetzung": "gut",
+    "kritische_punkte": 0,
+    "empfehlung": "CV verwendbar"
+  },
+  "feldbezogenes_feedback": [
+    {
+      "cv_feld": "Kurzprofil",
+      "feedback_typ": "unklar",
+      "beschreibung": "Könnte etwas prägnanter sein.",
+      "verbesserungsvorschlag": "Auf 3-4 Sätze kürzen."
+    },
+    {
+      "cv_feld": "Sprachen",
+      "feedback_typ": "strukturabweichung",
+      "beschreibung": "Level-Angaben prüfen.",
+      "verbesserungsvorschlag": "Standard-Skala verwenden."
+    }
+  ],
+  "allgemeine_hinweise": [
+    "Gutes Layout",
+    "Klare Struktur"
+  ]
+}
