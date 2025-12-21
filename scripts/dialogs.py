@@ -1,10 +1,5 @@
 # Test entry point for dialog development
 
-
-# Test entry point for dialog development (wirklich am Dateiende)
-if __name__ == "__main__":
-    result = show_welcome()
-    print("Dialog result:", result)
 """
 Modern Corporate-Styled Dialogs for CV Generator
 Uses corporate colors from styles.json: Orange (#FF7900), Gray (#444444)
@@ -1130,3 +1125,9 @@ def show_processing(cv_filename, stellenprofil_filename=None):
     """
     dialog = ProcessingDialog(cv_filename, stellenprofil_filename)
     return dialog
+
+
+if __name__ == "__main__":
+    # Test entry point for dialog development
+    result = show_welcome()
+    print("Dialog result:", result)
