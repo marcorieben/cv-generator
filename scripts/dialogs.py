@@ -147,10 +147,14 @@ class ModernDialog:
 class SuccessDialog(ModernDialog):
     """Modern success message dialog"""
     
+    DEFAULT_WIDTH = 800
+    DEFAULT_HEIGHT = 600
+    EXPANDED_HEIGHT = 700
+    
     def __init__(self, title="Erfolg", message="", details=None, file_path=None, dashboard_path=None, match_score=None, angebot_json_path=None):
         # Increase height if we have both details and file button
-        height = 700 if (details and (file_path or dashboard_path)) else 600
-        super().__init__(title, width=800, height=height)
+        height = self.EXPANDED_HEIGHT if (details and (file_path or dashboard_path)) else self.DEFAULT_HEIGHT
+        super().__init__(title, width=self.DEFAULT_WIDTH, height=height)
         
         # Store file paths
         self.file_path = file_path
@@ -308,8 +312,11 @@ class SuccessDialog(ModernDialog):
 class ErrorDialog(ModernDialog):
     """Modern error message dialog"""
     
+    DEFAULT_WIDTH = 600
+    DEFAULT_HEIGHT = 380
+    
     def __init__(self, title="Fehler", message="", details=None):
-        super().__init__(title, width=600, height=380)
+        super().__init__(title, width=self.DEFAULT_WIDTH, height=self.DEFAULT_HEIGHT)
         
         # Header
         self.create_header(title, self.ICON_ERROR, self.ERROR_RED)
@@ -366,10 +373,14 @@ class ErrorDialog(ModernDialog):
 class WarningDialog(ModernDialog):
     """Modern warning dialog with Yes/No options"""
     
+    DEFAULT_WIDTH = 650
+    DEFAULT_HEIGHT = 400
+    EXPANDED_HEIGHT = 650
+    
     def __init__(self, title="Warnung", message="", details=None):
         # Dynamic height: larger if details present
-        dialog_height = 650 if details else 400
-        super().__init__(title, width=650, height=dialog_height)
+        dialog_height = self.EXPANDED_HEIGHT if details else self.DEFAULT_HEIGHT
+        super().__init__(title, width=self.DEFAULT_WIDTH, height=dialog_height)
         
         # Header
         self.create_header(title, self.ICON_WARNING, self.WARNING_YELLOW)
@@ -480,8 +491,11 @@ class WarningDialog(ModernDialog):
 class ConfirmDialog(ModernDialog):
     """Modern confirmation dialog with Yes/No options"""
     
+    DEFAULT_WIDTH = 550
+    DEFAULT_HEIGHT = 250
+    
     def __init__(self, title="Bestätigung", message="", icon_type="question"):
-        super().__init__(title, width=550, height=250)
+        super().__init__(title, width=self.DEFAULT_WIDTH, height=self.DEFAULT_HEIGHT)
         
         # Select icon and color
         icon_map = {
