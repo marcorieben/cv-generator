@@ -206,7 +206,7 @@ def extract_text_from_pdf(pdf_path):
         raise Exception(f"Fehler beim Lesen der PDF: {str(e)}")
 
 
-def load_schema(schema_path="scripts/pdf_to_json_schema.json"):
+def load_schema(schema_path="scripts/pdf_to_json_struktur_cv.json"):
     """
     Lädt das JSON-Schema für die CV-Struktur
     
@@ -227,7 +227,7 @@ def load_schema(schema_path="scripts/pdf_to_json_schema.json"):
         return json.load(f)
 
 
-def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_schema.json"):
+def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_struktur_cv.json", job_profile_context=None):
     """
     Konvertiert eine PDF-CV zu strukturiertem JSON via OpenAI API
     
@@ -235,6 +235,7 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_sch
         pdf_path: Pfad zur PDF-Datei
         output_path: Optionaler Pfad für JSON-Output (wenn None, nur zurückgeben)
         schema_path: Pfad zur Schema-Datei
+        job_profile_context: Optionales Dictionary mit Stellenprofildaten zur Kontextualisierung
         
     Returns:
         Dictionary mit den extrahierten CV-Daten
@@ -242,6 +243,45 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_sch
     # Lade Environment Variables
     load_dotenv()
     
+    # Check for Mock Mode
+    model_name = os.getenv("MODEL_NAME", "gpt-4o-mini")
+    if model_name == "mock":
+        print("🧪 TEST-MODUS AKTIV: Verwende Mock-Daten (keine API-Kosten)")
+        import time
+        time.sleep(2) # Simulate processing time
+        
+        # Determine if we need CV or Offer mock data based on schema path
+        is_offer = "stellenprofil" in schema_path.lower()
+        
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
+        if is_offer:
+            # Create a simple mock offer
+            mock_data = {
+                "Titel": "Senior Software Engineer",
+                "Beschreibung": "Wir suchen einen erfahrenen Entwickler...",
+                "Anforderungen": ["Python", "Cloud", "Agile"],
+                "Aufgaben": ["Entwicklung", "Architektur"]
+            }
+        else:
+            # Load valid CV fixture
+            fixture_path = os.path.join(base_dir, "tests", "fixtures", "valid_cv.json")
+            if os.path.exists(fixture_path):
+                with open(fixture_path, 'r', encoding='utf-8') as f:
+                    mock_data = json.load(f)
+            else:
+                # Fallback if fixture missing
+                mock_data = {"Vorname": "Max", "Nachname": "Mustermann", "Mock": True}
+                
+        # Save if requested
+        if output_path:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(mock_data, f, ensure_ascii=False, indent=2)
+            print(f"💾 Mock-JSON gespeichert: {output_path}")
+            
+        return mock_data
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError(
@@ -290,12 +330,24 @@ SCHEMA:
 
 Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
 
+    user_content = f"Extrahiere die CV-Daten aus folgendem Text:\n\n{cv_text}"
+
+    # Wenn Stellenprofil-Kontext vorhanden ist, füge ihn zum Prompt hinzu
+    if job_profile_context:
+        print("🎯 Verwende Stellenprofil-Kontext für massgeschneiderte Extraktion...")
+        offer_str = json.dumps(job_profile_context, ensure_ascii=False, indent=2)
+        user_content += f"\n\nZUSATZ-INSTRUKTION (STELLENPROFIL-KONTEXT):\n" \
+                        f"Der Kandidat bewirbt sich auf folgendes Stellenprofil:\n{offer_str}\n\n" \
+                        f"Bitte hebe im 'Kurzprofil' und bei den 'Ausgewählte_Referenzprojekte' besonders jene Erfahrungen hervor, " \
+                        f"die für dieses Stellenprofil relevant sind. Erfinde NICHTS dazu, aber fokussiere dich auf die passenden Aspekte " \
+                        f"aus dem CV-Text, die zum Stellenprofil passen."
+
     try:
         response = client.chat.completions.create(
             model=os.getenv("MODEL_NAME", "gpt-4o-mini"),
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Extrahiere die CV-Daten aus folgendem Text:\n\n{cv_text}"}
+                {"role": "user", "content": user_content}
             ],
             response_format={"type": "json_object"},
             temperature=0
@@ -315,30 +367,6 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
             print(f"💾 JSON gespeichert: {output_path}")
         
         return json_data
-    
-    except Exception as e:
-        raise Exception(f"Fehler bei OpenAI API-Aufruf: {str(e)}")
-
-
-if __name__ == "__main__":
-    # Test-Modus
-    import sys
-    
-    if len(sys.argv) < 2:
-        print("Usage: python pdf_to_json.py <pdf_file> [output_json]")
-        sys.exit(1)
-    
-    pdf_file = sys.argv[1]
-    output_file = sys.argv[2] if len(sys.argv) > 2 else None
-    
-    try:
-        result = pdf_to_json(pdf_file, output_file)
-        
-        if not output_file:
-            # Ausgabe auf Konsole
-            print("\n" + "="*60)
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-            print("="*60)
     
     except Exception as e:
         print(f"❌ Fehler: {str(e)}")

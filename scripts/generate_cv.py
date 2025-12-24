@@ -1047,7 +1047,7 @@ def add_header_with_logo(doc):
                 p_element.getparent().remove(p_element)
 
 
-def generate_cv(json_path):
+def generate_cv(json_path, output_dir=None):
 
     json_path = abs_path(json_path)
 
@@ -1203,7 +1203,11 @@ def generate_cv(json_path):
     # Dateien speichern
     # -----------------------------
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_docx = abs_path(f"../output/word/{firstname}_{lastname}_{timestamp}.docx")
+    if output_dir is None:
+        # Fallback to old structure if not provided
+        out_docx = abs_path(f"../output/word/{firstname}_{lastname}_{timestamp}.docx")
+    else:
+        out_docx = os.path.join(output_dir, f"{firstname}_{lastname}_{timestamp}.docx")
 
     # Vor dem Speichern: Highlight alle fehlenden Daten im gesamten Dokument
     highlight_missing_data_in_document(doc)
@@ -1217,12 +1221,16 @@ def generate_cv(json_path):
 
 
 def select_json_file():
-    """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei"""
+    """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei (standardmäßig im output/-Ordner)"""
     try:
         from dialogs import select_json_file as picker
     except ImportError:
         from scripts.dialogs import select_json_file as picker
-    return picker("Wählen Sie eine JSON-Datei für den CV")
+    # Default to output/ for manual selection
+    output_dir = abs_path("../output/")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+    return picker("Wählen Sie eine JSON-Datei für den CV", initialdir=output_dir)
 
 
 def add_sprachen_table(doc, sprachen_data):
