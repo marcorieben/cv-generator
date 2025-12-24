@@ -230,7 +230,7 @@ class CVPipeline:
             output_dir = os.path.join(self.base_dir, "output", f"{vorname}_{nachname}_{self.timestamp}")
             os.makedirs(output_dir, exist_ok=True)
             
-            cv_json_filename = f"{vorname}_{nachname}_{self.timestamp}.json"
+            cv_json_filename = f"cv_{vorname}_{nachname}_{self.timestamp}.json"
             cv_json_path = os.path.join(output_dir, cv_json_filename)
             self.save_json(cv_data, cv_json_path)
 
