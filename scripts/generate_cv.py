@@ -1205,9 +1205,9 @@ def generate_cv(json_path, output_dir=None):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     if output_dir is None:
         # Fallback to old structure if not provided
-        out_docx = abs_path(f"../output/word/{firstname}_{lastname}_{timestamp}.docx")
+        out_docx = abs_path(f"../output/word/cv_{firstname}_{lastname}_{timestamp}.docx")
     else:
-        out_docx = os.path.join(output_dir, f"{firstname}_{lastname}_{timestamp}.docx")
+        out_docx = os.path.join(output_dir, f"cv_{firstname}_{lastname}_{timestamp}.docx")
 
     # Vor dem Speichern: Highlight alle fehlenden Daten im gesamten Dokument
     highlight_missing_data_in_document(doc)

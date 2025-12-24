@@ -1,0 +1,6 @@
+# Ignore all files
+*
+# Keep .gitignore
+!.gitignore
+# Keep .gitkeep to preserve folder structure
+!.gitkeep
