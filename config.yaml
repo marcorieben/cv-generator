@@ -1,0 +1,13 @@
+cookie:
+  expiry_days: 30
+  key: random_signature_key
+  name: cv_generator_cookie
+credentials:
+  usernames:
+    admin:
+      email: admin@example.com
+      failed_login_attempts: 0
+      name: Administrator
+      password: $2b$12$Tr8YgsFEHuyk2R615.iwAum4j4uGaLL7IxSt1JozUQm2oWvcgfLlq
+preauthorized:
+  emails: []

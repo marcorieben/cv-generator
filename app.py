@@ -1,6 +1,9 @@
 import streamlit as st
 import os
 import json
+import yaml
+from yaml.loader import SafeLoader
+import streamlit_authenticator as stauth
 from datetime import datetime
 from dotenv import load_dotenv
 from scripts.streamlit_pipeline import StreamlitCVGenerator
@@ -8,7 +11,7 @@ from scripts.streamlit_pipeline import StreamlitCVGenerator
 # Page config
 st.set_page_config(
     page_title="CV Generator",
-    page_icon="📄",
+    page_icon="templates/logo.png",
     layout="wide"
 )
 
@@ -22,6 +25,42 @@ st.markdown("""
 
 # Load environment variables (for local dev)
 load_dotenv()
+
+# --- Authentication ---
+with open('config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
+
+# Center the login form
+col1, col2, col3 = st.columns([3, 2, 3])
+with col2:
+    authenticator.login('main')
+
+    if st.session_state["authentication_status"] is False:
+        st.error('Username/password is incorrect')
+        st.info('Forgot your password? Please contact the administrator.')
+        st.stop()
+    elif st.session_state["authentication_status"] is None:
+        st.warning('Please enter your username and password')
+        st.stop()
+
+# If we get here, the user is authenticated
+name = st.session_state["name"]
+username = st.session_state["username"]
+
+# --- Sidebar ---
+with st.sidebar:
+    # Logo (Top Left)
+    if os.path.exists("templates/logo.png"):
+        st.image("templates/logo.png", use_container_width=True)
+    
+    st.divider()
 
 # --- History Management ---
 HISTORY_FILE = os.path.join("output", "run_history.json")
@@ -73,27 +112,20 @@ def get_api_key():
     
     return None
 
-# --- Sidebar ---
+# --- Sidebar Settings ---
 with st.sidebar:
-    # Logo Placeholder (will be filled if logo exists)
-    logo_placeholder = st.empty()
-    
     st.title("⚙️ Einstellungen")
     
-    # API Key Handling
-    api_key = get_api_key()
-    if not api_key:
-        st.warning("Kein API Key gefunden!")
-        user_key = st.text_input("OpenAI API Key eingeben:", type="password")
-        if user_key:
-            st.session_state.api_key = user_key
-            st.rerun()
-    else:
-        st.success("API Key aktiv ✅")
-    
-    st.divider()
+    # --- Settings Menu ---
+    with st.expander("👤 Persönliche Einstellungen", expanded=False):
+        try:
+            if authenticator.reset_password(username, 'main'):
+                st.success('Passwort erfolgreich geändert')
+                with open('config.yaml', 'w') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+        except Exception as e:
+            st.error(e)
 
-    # --- CI/CD Settings ---
     with st.expander("🎨 Design & Farben", expanded=False):
         st.caption("Passen Sie das Erscheinungsbild an:")
         
@@ -189,8 +221,6 @@ with st.sidebar:
             "font": selected_font
         }
     
-    st.divider()
-    
     # --- Model Settings ---
     with st.expander("🤖 KI-Modell", expanded=False):
         model_options = ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo", "mock"]
@@ -208,39 +238,72 @@ with st.sidebar:
         
         st.caption(f"Aktueller Modus: {os.getenv('CV_GENERATOR_MODE', 'full')}")
 
+        # API Key Handling (Admin only)
+        if username == 'admin':
+            st.divider()
+            api_key = get_api_key()
+            if not api_key:
+                st.warning("Kein API Key gefunden!")
+                user_key = st.text_input("OpenAI API Key eingeben:", type="password")
+                if user_key:
+                    st.session_state.api_key = user_key
+                    st.rerun()
+            else:
+                st.success("API Key aktiv ✅")
+                # Only show change button if key is not from environment
+                if not os.getenv("OPENAI_API_KEY") and "OPENAI_API_KEY" not in st.secrets:
+                    if st.button("API Key ändern"):
+                        if "api_key" in st.session_state:
+                            del st.session_state.api_key
+                        st.rerun()
+        
+        st.caption(f"Aktueller Modus: {os.getenv('CV_GENERATOR_MODE', 'full')}")
+
     st.divider()
     
     # --- History Section ---
-    st.subheader("📜 Verlauf")
-    history = load_history()
-    
-    if not history:
-        st.caption("Noch keine Läufe gespeichert.")
-    else:
-        for item in history:
-            timestamp = item.get("timestamp", "")
-            # Format timestamp nicely if possible (YYYYMMDD_HHMMSS -> DD.MM.YYYY HH:MM)
-            try:
-                dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
-                display_time = dt.strftime("%d.%m. %H:%M")
-            except:
-                display_time = timestamp
+    with st.expander("📜 Verlauf", expanded=False):
+        history = load_history()
+        
+        if not history:
+            st.caption("Noch keine Läufe gespeichert.")
+        else:
+            for item in history:
+                timestamp = item.get("timestamp", "")
+                # Format timestamp nicely if possible (YYYYMMDD_HHMMSS -> DD.MM.YYYY HH:MM)
+                try:
+                    dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
+                    display_time = dt.strftime("%d.%m. %H:%M")
+                except:
+                    display_time = timestamp
 
-            name = item.get("candidate_name", "Unbekannt")
-            
-            with st.expander(f"{display_time} - {name}"):
-                st.caption(f"Modus: {item.get('mode')}")
-                if item.get("match_score"):
-                    st.caption(f"Match: {item.get('match_score')}%")
+                name = item.get("candidate_name", "Unbekannt")
                 
-                # Download Links for History Items
-                if item.get("word_path") and os.path.exists(item.get("word_path")):
-                    with open(item["word_path"], "rb") as f:
-                        st.download_button("📄 Word", f, file_name=os.path.basename(item["word_path"]), key=f"hist_word_{timestamp}")
-                
-                if item.get("dashboard_path") and os.path.exists(item.get("dashboard_path")):
-                    with open(item["dashboard_path"], "rb") as f:
-                        st.download_button("📊 Dashboard", f, file_name=os.path.basename(item["dashboard_path"]), key=f"hist_dash_{timestamp}")
+                with st.expander(f"{display_time} - {name}", expanded=False):
+                    st.caption(f"Modus: {item.get('mode')}")
+                    if item.get("match_score"):
+                        st.caption(f"Match: {item.get('match_score')}%")
+                    
+                    # Download Links for History Items
+                    col_h1, col_h2 = st.columns(2)
+                    if item.get("word_path") and os.path.exists(item.get("word_path")):
+                        with open(item["word_path"], "rb") as f:
+                            with col_h1:
+                                st.download_button("📄 Word", f, file_name=os.path.basename(item["word_path"]), key=f"hist_word_{timestamp}")
+                    
+                    if item.get("dashboard_path") and os.path.exists(item.get("dashboard_path")):
+                        with open(item["dashboard_path"], "rb") as f:
+                            with col_h2:
+                                st.download_button("📊 Dash", f, file_name=os.path.basename(item["dashboard_path"]), key=f"hist_dash_{timestamp}")
+    
+    # Spacer to push content to bottom
+    st.markdown("<div style='flex-grow: 1;'></div>", unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # --- User Info & Logout (Bottom) ---
+    st.write(f'Welcome *{name}*')
+    authenticator.logout('Logout', 'sidebar')
 
 # --- Main Content ---
 st.title("📄 CV Generator")
