@@ -400,15 +400,9 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
 
     user_content = f"Extrahiere die CV-Daten aus folgendem Text:\n\n{cv_text}"
 
-    # Wenn Stellenprofil-Kontext vorhanden ist, füge ihn zum Prompt hinzu
-    if job_profile_context:
-        print("🎯 Verwende Stellenprofil-Kontext für massgeschneiderte Extraktion...")
-        offer_str = json.dumps(job_profile_context, ensure_ascii=False, indent=2)
-        user_content += f"\n\nZUSATZ-INSTRUKTION (STELLENPROFIL-KONTEXT):\n" \
-                        f"Der Kandidat bewirbt sich auf folgendes Stellenprofil:\n{offer_str}\n\n" \
-                        f"Bitte hebe im 'Kurzprofil' und bei den 'Ausgewählte_Referenzprojekte' besonders jene Erfahrungen hervor, " \
-                        f"die für dieses Stellenprofil relevant sind. Erfinde NICHTS dazu, aber fokussiere dich auf die passenden Aspekte " \
-                        f"aus dem CV-Text, die zum Stellenprofil passen."
+    # HINWEIS: Wir übergeben KEINEN Stellenprofil-Kontext mehr, um Halluzinationen zu vermeiden.
+    # Die Extraktion soll rein objektiv auf Basis des PDFs erfolgen.
+    # Das Matching erfolgt in einem separaten Schritt.
 
     try:
         response = client.chat.completions.create(

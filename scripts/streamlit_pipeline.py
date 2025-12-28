@@ -94,6 +94,8 @@ class StreamlitCVGenerator:
             "word_path": None,
             "dashboard_path": None,
             "match_score": None,
+            "stellenprofil_json": None,
+            "match_json": None,
             "error": None
         }
 
@@ -111,7 +113,8 @@ class StreamlitCVGenerator:
             # --- STEP 2: Extract CV ---
             if progress_callback: progress_callback(30, "Analysiere Lebenslauf...", "running")
             
-            cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data)
+            # WICHTIG: job_profile_context=None, um Halluzinationen zu vermeiden!
+            cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=None)
             
             # Save JSONs
             vorname = cv_data.get("Vorname", "Unbekannt")
@@ -128,6 +131,7 @@ class StreamlitCVGenerator:
                 stellenprofil_json_path = os.path.join(output_dir, f"stellenprofil_{self.timestamp}.json")
                 with open(stellenprofil_json_path, 'w', encoding='utf-8') as f:
                     json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
+                results["stellenprofil_json"] = stellenprofil_json_path
 
             # --- STEP 3: Validation ---
             if progress_callback: progress_callback(50, "Validiere Daten...", "running")
@@ -143,8 +147,8 @@ class StreamlitCVGenerator:
             feedback_json_path = None
             
             with ThreadPoolExecutor(max_workers=3) as executor:
-                # Word
-                future_word = executor.submit(generate_cv, cv_json_path, output_dir)
+                # Word (interactive=False to suppress dialogs)
+                future_word = executor.submit(generate_cv, cv_json_path, output_dir, interactive=False)
                 
                 # Match
                 future_match = None
@@ -175,6 +179,7 @@ class StreamlitCVGenerator:
                 future_feedback.result()
 
             results["word_path"] = word_path
+            results["match_json"] = matchmaking_json_path
 
             # --- STEP 5: Dashboard ---
             if progress_callback: progress_callback(90, "Erstelle Dashboard...", "running")
@@ -183,7 +188,8 @@ class StreamlitCVGenerator:
                 cv_json_path=cv_json_path,
                 match_json_path=matchmaking_json_path if matchmaking_json_path and os.path.exists(matchmaking_json_path) else None,
                 feedback_json_path=feedback_json_path,
-                output_dir=output_dir
+                output_dir=output_dir,
+                validation_warnings=info
             )
             results["dashboard_path"] = dashboard_path
             
