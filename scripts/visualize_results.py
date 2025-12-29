@@ -2,7 +2,7 @@ import os
 import json
 from datetime import datetime
 
-def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, validation_warnings=None):
+def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, validation_warnings=None, model_name=None, pipeline_mode=None):
     """
     Generates a professional HTML dashboard visualizing the results of the CV processing,
     matchmaking, and quality feedback.
@@ -39,6 +39,13 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     nachname = cv_data.get("Nachname", "")
     candidate_name = f"{vorname} {nachname}".strip()
     timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
+    
+    subtitle_parts = [f"Generiert: {timestamp}"]
+    if model_name:
+        subtitle_parts.append(f"KI-Modell: {model_name}")
+    if pipeline_mode:
+        subtitle_parts.append(f"Modus: {pipeline_mode}")
+    subtitle_text = " &bull; ".join(subtitle_parts)
 
     # Prepare HTML Content
     html_content = f"""
@@ -67,9 +74,10 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                 color: #333;
             }}
             .container {{
-                max-width: 1200px;
+                max-width: 100%;
                 margin: 0 auto;
                 padding: 20px;
+                box-sizing: border-box;
             }}
             header {{
                 background-color: #fff;
@@ -177,7 +185,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             <header>
                 <div>
                     <h1>Dashboard - CV Analyse - {candidate_name}</h1>
-                    <div class="meta">Generiert: {timestamp}</div>
+                    <div class="meta">{subtitle_text}</div>
                 </div>
                 <div>
                     <a href="#" onclick="window.print()" style="text-decoration: none; color: var(--secondary-color); font-weight: bold;">🖨️ Drucken / PDF</a>
@@ -285,6 +293,8 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                     icon = "⚪" # Neutral
                 elif "nicht" in status:
                     icon = "❌"
+                elif "potenziell" in status or "implizit" in status:
+                    icon = "🤔" # Potential / Review needed
                 elif "teilweise" in status or "unklar" in status:
                     icon = "⚠️"
                 elif "erfüllt" in status:
@@ -391,7 +401,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                     </div>
                 </div>
                 
-                <div class="card" style="grid-column: span 2;">
+                <div class="card" style="grid-column: 2 / -1;">
                     <div class="card-header">Handlungsbedarf & Feedback</div>
                     <div style="max-height: 250px; overflow-y: auto;">
         """
@@ -436,17 +446,33 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
 
     # --- JAVASCRIPT FOR CHARTS ---
     if match_data:
+        def count_status(items):
+            ok = 0
+            potential = 0
+            neutral = 0
+            for k in items:
+                s = k.get("bewertung", "").lower()
+                if "nicht explizit" in s:
+                    neutral += 1
+                elif "nicht" in s: # "nicht erfüllt"
+                    continue
+                elif "potenziell" in s or "implizit" in s or "teilweise" in s:
+                    potential += 1
+                elif "erfüllt" in s:
+                    ok += 1
+            return ok, potential, neutral
+
         muss_total = len(match_data.get("muss_kriterien_abgleich", []))
-        muss_ok = sum(1 for k in match_data.get("muss_kriterien_abgleich", []) if "erfüllt" in k.get("bewertung", "").lower() and "nicht" not in k.get("bewertung", "").lower())
+        muss_ok, muss_pot, muss_neu = count_status(match_data.get("muss_kriterien_abgleich", []))
         
         soll_total = len(match_data.get("soll_kriterien_abgleich", []))
-        soll_ok = sum(1 for k in match_data.get("soll_kriterien_abgleich", []) if "erfüllt" in k.get("bewertung", "").lower() and "nicht" not in k.get("bewertung", "").lower())
+        soll_ok, soll_pot, soll_neu = count_status(match_data.get("soll_kriterien_abgleich", []))
 
         soft_total = len(match_data.get("soft_skills_abgleich", []))
-        soft_ok = sum(1 for k in match_data.get("soft_skills_abgleich", []) if "erfüllt" in k.get("bewertung", "").lower() and "nicht" not in k.get("bewertung", "").lower())
+        soft_ok, soft_pot, soft_neu = count_status(match_data.get("soft_skills_abgleich", []))
 
         weitere_total = len(match_data.get("weitere_kriterien_abgleich", []))
-        weitere_ok = sum(1 for k in match_data.get("weitere_kriterien_abgleich", []) if "erfüllt" in k.get("bewertung", "").lower() and "nicht" not in k.get("bewertung", "").lower())
+        weitere_ok, weitere_pot, weitere_neu = count_status(match_data.get("weitere_kriterien_abgleich", []))
 
         html_content += f"""
         <script>
@@ -492,12 +518,22 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                             backgroundColor: '#27ae60'
                         }},
                         {{
-                            label: 'Nicht Erfüllt / Offen',
+                            label: 'Potenziell / Teilweise',
+                            data: [{muss_pot}, {soll_pot}, {soft_pot}, {weitere_pot}],
+                            backgroundColor: '#f1c40f'
+                        }},
+                        {{
+                            label: 'Neutral / Nicht explizit',
+                            data: [{muss_neu}, {soll_neu}, {soft_neu}, {weitere_neu}],
+                            backgroundColor: '#95a5a6'
+                        }},
+                        {{
+                            label: 'Nicht Erfüllt',
                             data: [
-                                {muss_total - muss_ok}, 
-                                {soll_total - soll_ok},
-                                {soft_total - soft_ok},
-                                {weitere_total - weitere_ok}
+                                {muss_total - muss_ok - muss_pot - muss_neu}, 
+                                {soll_total - soll_ok - soll_pot - soll_neu},
+                                {soft_total - soft_ok - soft_pot - soft_neu},
+                                {weitere_total - weitere_ok - weitere_pot - weitere_neu}
                             ],
                             backgroundColor: '#e74c3c'
                         }}
@@ -505,6 +541,20 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                 }},
                 options: {{
                     responsive: true,
+                    layout: {{
+                        padding: {{
+                            bottom: 10
+                        }}
+                    }},
+                    plugins: {{
+                        legend: {{ 
+                            position: 'bottom',
+                            labels: {{
+                                padding: 20,
+                                boxWidth: 12
+                            }}
+                        }}
+                    }},
                     scales: {{
                         x: {{ stacked: true }},
                         y: {{ stacked: true, beginAtZero: true }}

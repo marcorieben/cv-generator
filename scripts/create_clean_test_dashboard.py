@@ -42,7 +42,9 @@ def create_clean_test_data():
         match_json_path=None,
         feedback_json_path=None,
         output_dir=output_dir,
-        validation_warnings=warnings
+        validation_warnings=warnings,
+        model_name="TEST-MODEL-GPT-4",
+        pipeline_mode="Test Mode"
     )
     
     print(f"Dashboard created at: {dashboard_path}")

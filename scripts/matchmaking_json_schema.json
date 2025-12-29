@@ -41,7 +41,7 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Konkrete Textstelle, Skill oder Erfahrung aus dem CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / ! bitte prüfen !",
+      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
       "kommentar": "",
       "_hint_kommentar": "Kurze Begründung der Bewertung"
     }
@@ -55,7 +55,7 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Konkrete Evidenz aus dem CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / ! bitte prüfen !",
+      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
       "kommentar": "",
       "_hint_kommentar": "Einordnung der Relevanz"
     }
@@ -69,7 +69,7 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Konkrete Evidenz aus dem CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / ! bitte prüfen !",
+      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
       "kommentar": "",
       "_hint_kommentar": "Einordnung der Relevanz"
     }

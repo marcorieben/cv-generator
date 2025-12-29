@@ -28,6 +28,102 @@ def show_model_info_dialog():
     **Empfehlung:** Nutzen Sie standardmäßig `gpt-4o-mini`. Wechseln Sie nur zu `gpt-4o`, wenn die Extraktion ungenau ist.
     """)
 
+def get_git_history(limit=10):
+    """Fetches the recent git commit history."""
+    try:
+        import subprocess
+        # Get commit hash, date, author, and message
+        # Format: %h|%cd|%an|%s
+        cmd = ["git", "log", f"-n {limit}", "--pretty=format:%h|%cd|%an|%s", "--date=short"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        
+        commits = []
+        for line in result.stdout.splitlines():
+            parts = line.split("|")
+            if len(parts) >= 4:
+                commits.append({
+                    "hash": parts[0],
+                    "date": parts[1],
+                    "author": parts[2],
+                    "message": parts[3]
+                })
+        return commits
+    except Exception as e:
+        return [{"hash": "-", "date": "-", "author": "System", "message": f"Konnte Git-History nicht laden: {str(e)}"}]
+
+@st.dialog("Applikations-Informationen", width="large")
+def show_app_info_dialog():
+    st.markdown("""
+    ### 🏢 Geschäftszweck & Nutzen
+    
+    **CV Generator & Matchmaking Suite**
+    
+    Diese Applikation dient der automatisierten Verarbeitung, Analyse und Optimierung von Kandidatenprofilen. 
+    Sie unterstützt HR-Teams und Recruiter dabei, den manuellen Aufwand bei der CV-Erstellung und dem Abgleich mit Stellenprofilen drastisch zu reduzieren.
+    
+    **Kernfunktionen:**
+    *   **CV Parsing:** Extraktion strukturierter Daten aus PDF-Lebensläufen mittels KI.
+    *   **Standardisierung:** Generierung von einheitlichen, gebrandeten Word-CVs.
+    *   **Matchmaking:** Intelligenter Abgleich von Kandidatenprofilen gegen Stellenbeschreibungen.
+    *   **Qualitätssicherung:** Automatische Prüfung auf Lücken, Inkonsistenzen und fehlende Skills.
+    
+    ---
+    """)
+    
+    st.subheader("📜 Änderungshistorie (Changelog)")
+    
+    commits = get_git_history(20)
+    
+    relevant_types = {
+        "feat": "✨ Neue Funktion",
+        "fix": "🐛 Fehlerbehebung",
+        "ui": "🎨 Design & UI",
+        "perf": "⚡ Performance",
+        "docs": "📚 Dokumentation"
+    }
+    
+    visible_count = 0
+    for commit in commits:
+        msg = commit['message']
+        category = "📝 Allgemein"
+        clean_msg = msg
+        is_relevant = False
+        
+        # Parse Conventional Commits
+        if ":" in msg:
+            parts = msg.split(":", 1)
+            type_scope = parts[0].lower()
+            # Handle scopes like feat(ui):
+            if "(" in type_scope:
+                type_key = type_scope.split("(")[0]
+            else:
+                type_key = type_scope.strip()
+            
+            if type_key in relevant_types:
+                category = relevant_types[type_key]
+                clean_msg = parts[1].strip().replace("{", "&#123;").replace("}", "&#125;")
+                is_relevant = True
+            elif type_key in ["chore", "refactor", "test", "ci", "build"]:
+                is_relevant = False # Skip technical commits
+        else:
+            # Show non-conventional commits as general, unless they look like merges
+            if not msg.startswith("Merge"):
+                clean_msg = msg.replace("{", "&#123;").replace("}", "&#125;")
+                is_relevant = True
+
+        if is_relevant:
+            visible_count += 1
+            st.markdown(f"""
+            <div style="display: flex; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;">
+                <div style="width: 85px; color: #888; font-family: monospace; flex-shrink: 0;">{commit['date']}</div>
+                <div style="width: 130px; font-weight: 600; color: #2c3e50; flex-shrink: 0;">{category}</div>
+                <div style="color: #333; flex-grow: 1;">{clean_msg}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    if visible_count == 0:
+        st.caption("Keine relevanten Änderungen in den letzten Commits gefunden.")
+
 # Page config
 st.set_page_config(
     page_title="CV Generator",
@@ -305,6 +401,12 @@ with st.sidebar:
         
         st.caption(f"Aktueller Modus: {os.getenv('CV_GENERATOR_MODE', 'full')}")
 
+    # --- Application Info ---
+    with st.expander("ℹ️ Applikations-Infos", expanded=False):
+        st.caption("Details zur Applikation & Version")
+        if st.button("Details anzeigen", use_container_width=True):
+            show_app_info_dialog()
+
     st.divider()
     
     # --- History Section ---
@@ -557,6 +659,42 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
     else:
         phase = "processing"
 
+    # Custom CSS to adjust dialog width based on phase
+    if phase == "results":
+        st.markdown("""
+            <style>
+            div[data-testid="stDialog"] div[role="dialog"] {
+                width: 98vw !important;
+                max-width: 100vw !important;
+            }
+            div[data-testid="stDialog"] div[role="dialog"] > div {
+                 width: 100% !important;
+                 max-width: 100% !important;
+                 padding-left: 1rem !important;
+                 padding-right: 1rem !important;
+            }
+            iframe {
+                width: 100% !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+    else:
+        # Processing phase - narrower width
+        st.markdown("""
+            <style>
+            div[data-testid="stDialog"] div[role="dialog"] {
+                width: 50vw !important;
+                max-width: 800px !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+    
+    # Determine Phase: 'processing' or 'results'
+    if "generation_results" in st.session_state and st.session_state.get("show_results_view"):
+        phase = "results"
+    else:
+        phase = "processing"
+
     if phase == "processing":
         st.subheader("Verarbeitung läuft...")
         progress_bar = st.progress(0)
@@ -661,7 +799,8 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 api_key=api_key,
                 progress_callback=update_progress,
                 custom_styles=custom_styles,
-                custom_logo_path=custom_logo_path
+                custom_logo_path=custom_logo_path,
+                pipeline_mode=mode
             )
             st.session_state.current_generation_results = results
             

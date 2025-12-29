@@ -21,13 +21,14 @@ def generate_matchmaking_json(cv_json_path, stellenprofil_json_path, output_path
         "Du bist ein kritischer Auditor für CV-Matching. Vergleiche das folgende Stellenprofil und den CV gemäß der JSON-Schema-Vorgabe.\n"
         "WICHTIGE REGELN ZUR VERMEIDUNG VON HALLUZINATIONEN:\n"
         "1. Nutze AUSSCHLIESSLICH die bereitgestellten JSON-Daten des CVs. Erfinde keine Informationen.\n"
-        "2. Wenn ein Skill oder Zertifikat (z.B. 'HERMES', 'Scrum', 'AWS') nicht explizit im CV steht, bewerte es als 'nicht erfüllt'.\n"
-        "3. Sei streng: 'Agiles Arbeiten' ist kein Beweis für 'Scrum Master Zertifizierung'.\n"
-        "4. Zitiere im Feld 'cv_evidenz' die exakte Textstelle aus dem CV, die das Kriterium belegt. Wenn keine Stelle existiert, lasse das Feld leer.\n"
-        "5. Fülle die Struktur exakt aus, keine Felder hinzufügen oder weglassen.\n"
-        "6. VOLLSTÄNDIGKEIT: Du musst JEDES einzelne Kriterium aus 'anforderungen.muss_kriterien' und 'anforderungen.soll_kriterien' des Stellenprofils prüfen und in die entsprechende Liste ('muss_kriterien_abgleich' bzw. 'soll_kriterien_abgleich') aufnehmen. Es darf kein Kriterium fehlen!\n"
-        "7. WEITERE KRITERIEN: Falls im Stellenprofil Anforderungen gefunden werden, die weder explizit als 'Muss' noch als 'Soll' markiert sind (z.B. aus dem Fließtext oder 'Aufgaben'), füge diese in die Liste 'weitere_kriterien_abgleich' ein.\n"
-        "8. SOFT SKILLS: Extrahiere persönliche Kompetenzen (z.B. Teamfähigkeit, Belastbarkeit, Kommunikation) in die Liste 'soft_skills_abgleich'. Diese sind oft schwer zu beweisen. Wenn sie im CV nicht explizit stehen, bewerte sie als 'nicht explizit erwähnt' (neutral) und ziehe KEINE Punkte vom Score ab. Wenn Hinweise existieren (z.B. in Projekten), bewerte als 'erfüllt'.\n\n"
+        "2. IMPLIZITE MATCHES: Wenn ein Skill oder Zertifikat nicht explizit im CV steht, aber durch den Kontext (z.B. Rolle, Aufgaben, Projekterfahrung) sehr wahrscheinlich vorhanden ist, bewerte es als 'potenziell erfüllt'. Begründe dies im Kommentar (z.B. 'Nicht explizit genannt, aber durch Rolle X impliziert').\n"
+        "3. Wenn absolut keine Hinweise existieren, bewerte es als 'nicht erfüllt'.\n"
+        "4. Sei streng: 'Agiles Arbeiten' ist kein Beweis für 'Scrum Master Zertifizierung'.\n"
+        "5. Zitiere im Feld 'cv_evidenz' die exakte Textstelle aus dem CV, die das Kriterium belegt. Wenn keine Stelle existiert, lasse das Feld leer.\n"
+        "6. Fülle die Struktur exakt aus, keine Felder hinzufügen oder weglassen.\n"
+        "7. VOLLSTÄNDIGKEIT: Du musst JEDES einzelne Kriterium aus 'anforderungen.muss_kriterien' und 'anforderungen.soll_kriterien' des Stellenprofils prüfen und in die entsprechende Liste ('muss_kriterien_abgleich' bzw. 'soll_kriterien_abgleich') aufnehmen. Es darf kein Kriterium fehlen!\n"
+        "8. WEITERE KRITERIEN: Falls im Stellenprofil Anforderungen gefunden werden, die weder explizit als 'Muss' noch als 'Soll' markiert sind (z.B. aus dem Fließtext oder 'Aufgaben'), füge diese in die Liste 'weitere_kriterien_abgleich' ein.\n"
+        "9. SOFT SKILLS: Extrahiere persönliche Kompetenzen (z.B. Teamfähigkeit, Belastbarkeit, Kommunikation) in die Liste 'soft_skills_abgleich'. Diese sind oft schwer zu beweisen. Wenn sie im CV nicht explizit stehen, bewerte sie als 'nicht explizit erwähnt' (neutral) und ziehe KEINE Punkte vom Score ab. Wenn Hinweise existieren (z.B. in Projekten), bewerte als 'erfüllt'.\n\n"
         "Schema (nur als Vorgabe, nicht ausgeben):\n" +
         json.dumps(schema, ensure_ascii=False, indent=2)
     )

@@ -67,7 +67,8 @@ class StreamlitCVGenerator:
             api_key: str = None, 
             progress_callback: Callable[[int, str, str], None] = None,
             custom_styles: Dict[str, Any] = None,
-            custom_logo_path: str = None) -> Dict[str, Any]:
+            custom_logo_path: str = None,
+            pipeline_mode: str = None) -> Dict[str, Any]:
         """
         Runs the CV generation pipeline.
         
@@ -78,6 +79,7 @@ class StreamlitCVGenerator:
             progress_callback: Function(progress_0_to_100, status_text, state)
             custom_styles: Dict with keys 'primary_color', 'secondary_color', 'font'
             custom_logo_path: Path to custom logo file
+            pipeline_mode: The selected pipeline mode (e.g. "Basic", "Full")
         """
         
         # Set API Key
@@ -189,7 +191,9 @@ class StreamlitCVGenerator:
                 match_json_path=matchmaking_json_path if matchmaking_json_path and os.path.exists(matchmaking_json_path) else None,
                 feedback_json_path=feedback_json_path,
                 output_dir=output_dir,
-                validation_warnings=info
+                validation_warnings=info,
+                model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
+                pipeline_mode=pipeline_mode
             )
             results["dashboard_path"] = dashboard_path
             

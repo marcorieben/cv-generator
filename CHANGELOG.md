@@ -1,0 +1,4 @@
+# Changelog
+
+Timestamp | Category | Text
+--- | --- | ---
