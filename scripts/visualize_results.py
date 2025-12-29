@@ -178,6 +178,59 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             }}
             .feedback-item.critical {{ border-left-color: var(--danger-color); background-color: #fff5f5; }}
             .feedback-item.warning {{ border-left-color: var(--warning-color); background-color: #fdfbf0; }}
+            
+            /* Modal Styles */
+            .modal {{
+                display: none; 
+                position: fixed; 
+                z-index: 1000; 
+                left: 0;
+                top: 0;
+                width: 100%; 
+                height: 100%; 
+                overflow: auto; 
+                background-color: rgba(0,0,0,0.4); 
+                backdrop-filter: blur(4px);
+            }}
+            .modal-content {{
+                background-color: #fefefe;
+                margin: 10% auto; 
+                padding: 25px;
+                border: 1px solid #888;
+                width: 90%; 
+                max-width: 600px;
+                border-radius: 12px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                animation: slideIn 0.3s ease-out;
+            }}
+            @keyframes slideIn {{
+                from {{ transform: translateY(-50px); opacity: 0; }}
+                to {{ transform: translateY(0); opacity: 1; }}
+            }}
+            .close {{
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: color 0.2s;
+            }}
+            .close:hover,
+            .close:focus {{
+                color: var(--primary-color);
+                text-decoration: none;
+                cursor: pointer;
+            }}
+            .info-icon {{
+                cursor: pointer;
+                font-size: 16px;
+                color: #95a5a6;
+                margin-left: 8px;
+                transition: color 0.2s;
+            }}
+            .info-icon:hover {{
+                color: var(--secondary-color);
+            }}
         </style>
     </head>
     <body>
@@ -202,6 +255,12 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         except (ValueError, TypeError):
             score = 0
             
+        # Extract weights for modal
+        weights = match_data.get("match_score", {}).get("gewichtung", {})
+        w_muss = weights.get("muss_kriterien", 60)
+        w_soll = weights.get("soll_kriterien", 30)
+        w_skill = weights.get("skill_abdeckung", 10)
+            
         fazit = match_data.get("gesamt_fazit", {})
         empfehlung = fazit.get("empfehlung", "N/A")
         
@@ -217,15 +276,20 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         html_content += f"""
             <div class="grid">
                 <div class="card">
-                    <div class="card-header">Match Score</div>
-                    <div style="position: relative; height: 160px; width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-                        <canvas id="scoreGauge"></canvas>
-                        <div style="position: absolute; bottom: 20px; width: 100%; text-align: center;">
-                            <div style="font-size: 36px; font-weight: bold; color: {score_color}; line-height: 1;">{score}%</div>
-                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Gesamt</div>
-                        </div>
+                    <div class="card-header">
+                        Match Score
+                        <span class="info-icon" onclick="document.getElementById('scoreInfoModal').style.display='block'" title="Wie wird der Score berechnet?">ℹ️</span>
                     </div>
-                    <div style="text-align: center; margin-top: 0px;">
+                    
+                    <div style="height: 150px; width: 100%; margin-bottom: 10px;">
+                        <canvas id="scoreBarChart"></canvas>
+                    </div>
+                    <div style="text-align: center; margin-top: 5px;">
+                         <span style="font-size: 14px; color: #7f8c8d;">Manuell Gesamt:</span>
+                         <span id="manualScoreValue" style="font-size: 24px; font-weight: bold; color: {score_color}; margin-left: 5px;">{score}%</span> 
+                    </div>
+
+                    <div style="text-align: center; margin-top: 10px;">
                         <span class="status-badge" style="background-color: {score_color}">{empfehlung}</span>
                     </div>
                     <p style="margin-top: 15px; font-size: 13px; color: #666; text-align: center;">
@@ -263,44 +327,53 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             </div>
             
             <div class="card" style="margin-bottom: 20px;">
-                <div class="card-header">Detaillierter Kriterien-Abgleich</div>
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Detaillierter Kriterien-Abgleich</span>
+                    <button onclick="downloadJSON()" style="background-color: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">💾 Änderungen speichern (JSON)</button>
+                </div>
                 <table>
                     <thead>
                         <tr>
-                            <th>Kriterium</th>
-                            <th>Status</th>
-                            <th>Evidenz im CV</th>
+                            <th style="width: 26.666%;">Kriterium</th>
+                            <th style="width: 10%;">KI Status</th>
+                            <th style="width: 10%;">Manuell</th>
+                            <th style="width: 26.666%;">Kommentar</th>
+                            <th style="width: 26.666%;">Evidenz im CV</th>
                         </tr>
                     </thead>
                     <tbody>
         """
         
         # Helper to render a section
-        def render_criteria_section(title, items, bg_color="#f8f9fa"):
+        def render_criteria_section(title, items, category_key, bg_color="#f8f9fa"):
             if not items: return ""
             
             section_html = f"""
                 <tr style="background-color: {bg_color}; border-bottom: 2px solid #ddd;">
-                    <td colspan="3" style="font-weight: bold; padding-top: 15px; padding-bottom: 10px; color: #2c3e50;">{title}</td>
+                    <td colspan="5" style="font-weight: bold; padding-top: 15px; padding-bottom: 10px; color: #2c3e50;">{title}</td>
                 </tr>
             """
             
-            for k in items:
+            for idx, k in enumerate(items):
                 status = k.get("bewertung", "").lower()
                 
-                # Determine Icon
-                if "nicht explizit" in status:
-                    icon = "⚪" # Neutral
-                elif "nicht" in status:
+                # Determine Icon & Standardized Status
+                std_status = "neutral"
+                if "nicht" in status and "explizit" not in status:
                     icon = "❌"
+                    std_status = "nicht erfüllt"
                 elif "potenziell" in status or "implizit" in status:
-                    icon = "🤔" # Potential / Review needed
+                    icon = "🤔"
+                    std_status = "potenziell"
                 elif "teilweise" in status or "unklar" in status:
                     icon = "⚠️"
+                    std_status = "potenziell"
                 elif "erfüllt" in status:
                     icon = "✅"
+                    std_status = "erfüllt"
                 else:
-                    icon = "❓"
+                    icon = "⚪"
+                    std_status = "neutral"
 
                 # Format Evidence
                 evidenz_raw = k.get("cv_evidenz", "")
@@ -316,19 +389,41 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                     else:
                         evidenz_html = "<span style='color: #999; font-style: italic;'>Keine Evidenz gefunden</span>"
 
+                # Check for Manual Overrides
+                manual_data = k.get("manuell", {})
+                current_status = manual_data.get("status", std_status)
+                current_comment = manual_data.get("kommentar", "")
+
+                # Dropdown Selection
+                sel_erfuellt = "selected" if current_status == "erfüllt" else ""
+                sel_potenziell = "selected" if current_status == "potenziell" else ""
+                sel_nicht = "selected" if current_status == "nicht erfüllt" else ""
+                sel_neutral = "selected" if current_status == "neutral" else ""
+
                 section_html += f"""
                     <tr>
                         <td style="padding-left: 20px;">{k.get("kriterium", "")}</td>
                         <td>{icon} {k.get("bewertung", "")}</td>
+                        <td>
+                            <select class="manual-status" data-category="{category_key}" data-index="{idx}" onchange="updateManualScore()" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="erfüllt" {sel_erfuellt}>✅ Erfüllt</option>
+                                <option value="potenziell" {sel_potenziell}>🤔 Potenziell</option>
+                                <option value="nicht erfüllt" {sel_nicht}>❌ Nicht Erfüllt</option>
+                                <option value="neutral" {sel_neutral}>⚪ Neutral</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" class="manual-comment" data-category="{category_key}" data-index="{idx}" value="{current_comment}" placeholder="Kommentar..." style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
+                        </td>
                         <td>{evidenz_html}</td>
                     </tr>
                 """
             return section_html
 
-        html_content += render_criteria_section("Muss-Kriterien (Pflicht)", match_data.get("muss_kriterien_abgleich", []), "#e8f6f3")
-        html_content += render_criteria_section("Soll-Kriterien (Wunsch)", match_data.get("soll_kriterien_abgleich", []), "#fef9e7")
-        html_content += render_criteria_section("Soft Skills & Persönlichkeit", match_data.get("soft_skills_abgleich", []), "#f4f6f7")
-        html_content += render_criteria_section("Weitere Kriterien", match_data.get("weitere_kriterien_abgleich", []), "#f4f6f7")
+        html_content += render_criteria_section("Muss-Kriterien (Pflicht)", match_data.get("muss_kriterien_abgleich", []), "muss", "#e8f6f3")
+        html_content += render_criteria_section("Soll-Kriterien (Wunsch)", match_data.get("soll_kriterien_abgleich", []), "soll", "#fef9e7")
+        html_content += render_criteria_section("Soft Skills & Persönlichkeit", match_data.get("soft_skills_abgleich", []), "soft", "#f4f6f7")
+        html_content += render_criteria_section("Weitere Kriterien", match_data.get("weitere_kriterien_abgleich", []), "weitere", "#f4f6f7")
             
         html_content += """
                     </tbody>
@@ -474,93 +569,278 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         weitere_total = len(match_data.get("weitere_kriterien_abgleich", []))
         weitere_ok, weitere_pot, weitere_neu = count_status(match_data.get("weitere_kriterien_abgleich", []))
 
+        # Serialize match_data for JS
+        match_data_json = json.dumps(match_data, ensure_ascii=False)
+
         html_content += f"""
         <script>
-            // Score Gauge
-            const ctxScore = document.getElementById('scoreGauge').getContext('2d');
-            new Chart(ctxScore, {{
-                type: 'doughnut',
+            // --- Global Data ---
+            const matchData = {match_data_json};
+
+            // --- Data & Weights ---
+            const weights = {{ 
+                muss: {w_muss}, 
+                soll: {w_soll}, 
+                skill: {w_skill} 
+            }};
+            
+            // Initial AI Counts (passed from Python)
+            const aiData = {{
+                muss: {{ ok: {muss_ok}, pot: {muss_pot}, neu: {muss_neu}, total: {muss_total} }},
+                soll: {{ ok: {soll_ok}, pot: {soll_pot}, neu: {soll_neu}, total: {soll_total} }},
+                soft: {{ ok: {soft_ok}, pot: {soft_pot}, neu: {soft_neu}, total: {soft_total} }},
+                weitere: {{ ok: {weitere_ok}, pot: {weitere_pot}, neu: {weitere_neu}, total: {weitere_total} }}
+            }};
+
+            // Helper: Calculate Score % for a category
+            function calcCatScore(ok, pot, total) {{
+                if (total === 0) return 0;
+                return ((ok * 1.0 + pot * 0.5) / total) * 100;
+            }}
+
+            // Calculate Initial AI Category Scores
+            const aiScores = {{
+                muss: calcCatScore(aiData.muss.ok, aiData.muss.pot, aiData.muss.total),
+                soll: calcCatScore(aiData.soll.ok, aiData.soll.pot, aiData.soll.total),
+                soft: calcCatScore(aiData.soft.ok, aiData.soft.pot, aiData.soft.total),
+                weitere: calcCatScore(aiData.weitere.ok, aiData.weitere.pot, aiData.weitere.total)
+            }};
+
+            // --- Charts ---
+            
+            // 1. Score Stacked Bar Chart (Horizontal)
+            const ctxScore = document.getElementById('scoreBarChart').getContext('2d');
+            
+            // Calculate initial contributions
+            const aiContrib = {{
+                muss: aiScores.muss * weights.muss / 100,
+                soll: aiScores.soll * weights.soll / 100,
+                skill: ((aiScores.soft + aiScores.weitere) / 2) * weights.skill / 100
+            }};
+
+            // Initial Manual is same as AI
+            const manContrib = {{ ...aiContrib }};
+
+            const scoreBarChart = new Chart(ctxScore, {{
+                type: 'bar',
                 data: {{
-                    labels: ['Score', 'Gap'],
-                    datasets: [{{
-                        data: [{score}, {100 - score}],
-                        backgroundColor: [
-                            '{gauge_hex}', 
-                            '#e0e0e0'
-                        ],
-                        borderWidth: 0,
-                        borderRadius: 5
-                    }}]
+                    labels: ['KI', 'Manuell'],
+                    datasets: [
+                        {{ 
+                            label: 'Muss-Kriterien (' + weights.muss + '%)', 
+                            data: [aiContrib.muss, manContrib.muss], 
+                            backgroundColor: '#2ecc71', 
+                            barPercentage: 0.6,
+                            stack: 'Stack 0'
+                        }},
+                        {{ 
+                            label: 'Soll-Kriterien (' + weights.soll + '%)', 
+                            data: [aiContrib.soll, manContrib.soll], 
+                            backgroundColor: '#3498db', 
+                            barPercentage: 0.6,
+                            stack: 'Stack 0'
+                        }},
+                        {{ 
+                            label: 'Skills & Weitere (' + weights.skill + '%)', 
+                            data: [aiContrib.skill, manContrib.skill], 
+                            backgroundColor: '#9b59b6', 
+                            barPercentage: 0.6,
+                            stack: 'Stack 0'
+                        }}
+                    ]
                 }},
                 options: {{
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    circumference: 180,
-                    rotation: 270,
-                    cutout: '75%',
+                    scales: {{
+                        x: {{ stacked: true, max: 100, title: {{ display: true, text: 'Score Beitrag' }} }},
+                        y: {{ stacked: true }}
+                    }},
                     plugins: {{
-                        legend: {{ display: false }},
-                        tooltip: {{ enabled: false }}
+                        legend: {{ position: 'bottom' }},
+                        tooltip: {{
+                            callbacks: {{
+                                label: function(context) {{
+                                    return context.dataset.label + ': ' + Math.round(context.raw) + ' Punkte';
+                                }}
+                            }}
+                        }}
                     }}
                 }}
             }});
 
-            // Criteria Chart
-            const ctx = document.getElementById('criteriaChart').getContext('2d');
-            new Chart(ctx, {{
+            // 2. Criteria Comparison Chart (Bar)
+            const ctxCriteria = document.getElementById('criteriaChart').getContext('2d');
+            const criteriaChart = new Chart(ctxCriteria, {{
                 type: 'bar',
                 data: {{
-                    labels: ['Muss', 'Soll', 'Soft Skills', 'Weitere'],
+                    labels: ['Muss-Kriterien', 'Soll-Kriterien', 'Soft Skills', 'Weitere'],
                     datasets: [
                         {{
-                            label: 'Erfüllt',
-                            data: [{muss_ok}, {soll_ok}, {soft_ok}, {weitere_ok}],
-                            backgroundColor: '#27ae60'
+                            label: 'KI Bewertung',
+                            data: [aiScores.muss, aiScores.soll, aiScores.soft, aiScores.weitere],
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: 'rgba(52, 152, 219, 1)',
+                            borderWidth: 1
                         }},
                         {{
-                            label: 'Potenziell / Teilweise',
-                            data: [{muss_pot}, {soll_pot}, {soft_pot}, {weitere_pot}],
-                            backgroundColor: '#f1c40f'
-                        }},
-                        {{
-                            label: 'Neutral / Nicht explizit',
-                            data: [{muss_neu}, {soll_neu}, {soft_neu}, {weitere_neu}],
-                            backgroundColor: '#95a5a6'
-                        }},
-                        {{
-                            label: 'Nicht Erfüllt',
-                            data: [
-                                {muss_total - muss_ok - muss_pot - muss_neu}, 
-                                {soll_total - soll_ok - soll_pot - soll_neu},
-                                {soft_total - soft_ok - soft_pot - soft_neu},
-                                {weitere_total - weitere_ok - weitere_pot - weitere_neu}
-                            ],
-                            backgroundColor: '#e74c3c'
+                            label: 'Manuelle Bewertung',
+                            data: [aiScores.muss, aiScores.soll, aiScores.soft, aiScores.weitere], // Start same as AI
+                            backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                            borderColor: 'rgba(46, 204, 113, 1)',
+                            borderWidth: 1
                         }}
                     ]
                 }},
                 options: {{
                     responsive: true,
-                    layout: {{
-                        padding: {{
-                            bottom: 10
-                        }}
+                    scales: {{
+                        y: {{ beginAtZero: true, max: 100, title: {{ display: true, text: 'Erfüllungsgrad (%)' }} }}
                     }},
                     plugins: {{
-                        legend: {{ 
-                            position: 'bottom',
-                            labels: {{
-                                padding: 20,
-                                boxWidth: 12
+                        legend: {{ position: 'bottom' }},
+                        tooltip: {{
+                            callbacks: {{
+                                label: function(context) {{
+                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                }}
                             }}
                         }}
-                    }},
-                    scales: {{
-                        x: {{ stacked: true }},
-                        y: {{ stacked: true, beginAtZero: true }}
                     }}
                 }}
             }});
+
+            // --- Logic ---
+
+            function updateManualScore() {{
+                // 1. Gather data from DOM
+                const selects = document.querySelectorAll('.manual-status');
+                const counts = {{
+                    muss: {{ ok: 0, pot: 0, total: 0 }},
+                    soll: {{ ok: 0, pot: 0, total: 0 }},
+                    soft: {{ ok: 0, pot: 0, total: 0 }},
+                    weitere: {{ ok: 0, pot: 0, total: 0 }}
+                }};
+
+                selects.forEach(sel => {{
+                    const cat = sel.getAttribute('data-category');
+                    const val = sel.value;
+                    
+                    if (counts[cat]) {{
+                        counts[cat].total++;
+                        if (val === 'erfüllt') counts[cat].ok++;
+                        else if (val === 'potenziell') counts[cat].pot++;
+                    }}
+                }});
+
+                // 2. Calculate Category Scores
+                const scores = {{
+                    muss: calcCatScore(counts.muss.ok, counts.muss.pot, counts.muss.total),
+                    soll: calcCatScore(counts.soll.ok, counts.soll.pot, counts.soll.total),
+                    soft: calcCatScore(counts.soft.ok, counts.soft.pot, counts.soft.total),
+                    weitere: calcCatScore(counts.weitere.ok, counts.weitere.pot, counts.weitere.total)
+                }};
+
+                // 3. Calculate Total Weighted Score
+                // Formula: (Muss * w_muss + Soll * w_soll + (Soft+Weitere)/2 * w_skill) / 100
+                
+                const skillAvg = (scores.soft + scores.weitere) / 2 || 0;
+                
+                let totalScore = (scores.muss * weights.muss + scores.soll * weights.soll + skillAvg * weights.skill) / 100;
+                totalScore = Math.round(totalScore);
+
+                // 4. Update UI
+                
+                // Update Label
+                document.getElementById('manualScoreValue').innerText = totalScore + '%';
+                
+                // Update Gauge Color
+                let color = '#c0392b'; // red
+                if (totalScore >= 80) color = '#27ae60'; // green
+                else if (totalScore >= 60) color = '#f39c12'; // orange
+                
+                document.getElementById('manualScoreValue').style.color = color;
+                
+                // Calculate Contributions for Manual
+                const manContrib = {{
+                    muss: scores.muss * weights.muss / 100,
+                    soll: scores.soll * weights.soll / 100,
+                    skill: skillAvg * weights.skill / 100
+                }};
+
+                // Update Bar Chart (Index 1 is 'Manuell')
+                scoreBarChart.data.datasets[0].data[1] = manContrib.muss;
+                scoreBarChart.data.datasets[1].data[1] = manContrib.soll;
+                scoreBarChart.data.datasets[2].data[1] = manContrib.skill;
+                scoreBarChart.update();
+
+                // Update Bar Chart
+                criteriaChart.data.datasets[1].data = [scores.muss, scores.soll, scores.soft, scores.weitere];
+                criteriaChart.update();
+            }}
+
+            function downloadJSON() {{
+                const data = JSON.parse(JSON.stringify(matchData)); // Deep copy
+                
+                const categories = {{
+                    'muss': 'muss_kriterien_abgleich',
+                    'soll': 'soll_kriterien_abgleich',
+                    'soft': 'soft_skills_abgleich',
+                    'weitere': 'weitere_kriterien_abgleich'
+                }};
+
+                for (const [shortKey, jsonKey] of Object.entries(categories)) {{
+                    const selects = document.querySelectorAll(`.manual-status[data-category="${{shortKey}}"]`);
+                    selects.forEach(select => {{
+                        const idx = select.getAttribute('data-index');
+                        const status = select.value;
+                        const commentInput = document.querySelector(`.manual-comment[data-category="${{shortKey}}"][data-index="${{idx}}"]`);
+                        const comment = commentInput ? commentInput.value : "";
+
+                        if (data[jsonKey] && data[jsonKey][idx]) {{
+                            if (!data[jsonKey][idx].manuell) data[jsonKey][idx].manuell = {{}};
+                            data[jsonKey][idx].manuell.status = status;
+                            data[jsonKey][idx].manuell.kommentar = comment;
+                        }}
+                    }});
+                }}
+                
+                // Trigger download
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "matchmaking.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            }}
+        </script>
+        
+        <!-- Modal for Score Explanation -->
+        <div id="scoreInfoModal" class="modal">
+          <div class="modal-content">
+            <span class="close" onclick="document.getElementById('scoreInfoModal').style.display='none'">&times;</span>
+            <h2 style="color: var(--primary-color); margin-top: 0;">Berechnung des Match Scores</h2>
+            <p>Der Gesamt-Score (0-100%) basiert auf einer gewichteten Analyse der Anforderungen:</p>
+            <ul>
+                <li><strong>Muss-Kriterien ({w_muss}%):</strong> Essenzielle Anforderungen. Werden diese nicht erfüllt, sinkt der Score drastisch.</li>
+                <li><strong>Soll-Kriterien ({w_soll}%):</strong> Wünschenswerte Qualifikationen, die den Kandidaten hervorheben.</li>
+                <li><strong>Skill-Abdeckung ({w_skill}%):</strong> Übereinstimmung der technischen und fachlichen Fähigkeiten.</li>
+            </ul>
+            <p style="font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 10px; margin-top: 15px;">
+                <strong>Hinweis:</strong> Der Score wird durch ein KI-Modell ermittelt, das nicht nur Stichworte zählt, sondern auch den Kontext (z.B. Projekterfahrung, Seniorität) bewertet.
+            </p>
+          </div>
+        </div>
+        <script>
+        // Close modal when clicking outside
+        window.onclick = function(event) {{
+          var modal = document.getElementById('scoreInfoModal');
+          if (event.target == modal) {{
+            modal.style.display = "none";
+          }}
+        }}
         </script>
         """
 
