@@ -175,6 +175,66 @@ def normalize_json_structure(data):
             if "Zeitraum" in item:
                 item["Zeitraum"] = normalize_date_format(item["Zeitraum"])
     
+    # Korrektur 5: Normalisiere Sprachen Level und Namen
+    if "Sprachen" in data and isinstance(data["Sprachen"], list):
+        # Mapping für gängige Sprachen (Englisch -> Deutsch)
+        language_mapping = {
+            "english": "Englisch",
+            "german": "Deutsch",
+            "french": "Französisch",
+            "italian": "Italienisch",
+            "spanish": "Spanisch",
+            "portuguese": "Portugiesisch",
+            "russian": "Russisch",
+            "chinese": "Chinesisch",
+            "japanese": "Japanisch"
+        }
+
+        for item in data["Sprachen"]:
+            # 5a: Sprache Name normalisieren
+            if "Sprache" in item and isinstance(item["Sprache"], str):
+                lang_lower = item["Sprache"].lower().strip()
+                # Direktes Match
+                if lang_lower in language_mapping:
+                    item["Sprache"] = language_mapping[lang_lower]
+                # "English (Native)" -> "Englisch"
+                elif any(k in lang_lower for k in language_mapping):
+                    for k, v in language_mapping.items():
+                        if k in lang_lower:
+                            item["Sprache"] = v
+                            break
+
+            # 5b: Level normalisieren
+            if "Level" in item:
+                level = item["Level"]
+                # Wenn String
+                if isinstance(level, str):
+                    # 1. Priorität: Sterne
+                    if "★" in level or "*" in level:
+                        # Zähle Sterne (ignoriere leere Sterne ☆ wenn möglich, aber hier zählen wir nur volle)
+                        count = level.count("★") + level.count("*")
+                        if count > 0:
+                            item["Level"] = min(count, 5)
+                    
+                    # 2. Priorität: Explizite Zahl im String (z.B. "Level 5", "5/5")
+                    # Aber Vorsicht vor "C1" (enthält 1) -> Regex muss isolierte Zahl oder X/5 sein
+                    elif re.search(r'\b[1-5]\s*/\s*5', level) or re.match(r'^\s*[1-5]\s*$', level):
+                         match = re.search(r'([1-5])', level)
+                         if match:
+                             item["Level"] = int(match.group(1))
+
+                    # 3. Priorität: Text-Beschreibung
+                    elif level.lower() in ["muttersprache", "native", "native speaker"]:
+                        item["Level"] = 5
+                    elif any(x in level.lower() for x in ["verhandlungssicher", "fluent", "business fluent", "c2", "c1"]):
+                        item["Level"] = 4
+                    elif any(x in level.lower() for x in ["sehr gute kenntnisse", "very good", "proficient", "b2"]):
+                        item["Level"] = 3
+                    elif any(x in level.lower() for x in ["gute kenntnisse", "good", "intermediate", "b1"]):
+                        item["Level"] = 2
+                    elif any(x in level.lower() for x in ["grundkenntnisse", "basic", "beginner", "a1", "a2"]):
+                        item["Level"] = 1
+
     return data
 
 
@@ -290,7 +350,8 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
             "OPENAI_API_KEY=sk-proj-your-key-here"
         )
     
-    print(f"📄 Lese PDF: {os.path.basename(pdf_path)}")
+    filename = os.path.basename(pdf_path) if isinstance(pdf_path, str) else "Uploaded File"
+    print(f"📄 Lese PDF: {filename}")
     cv_text = extract_text_from_pdf(pdf_path)
     print(f"   → {len(cv_text)} Zeichen extrahiert")
     
@@ -310,7 +371,14 @@ WICHTIGE REGELN:
 2. Bei fehlenden Informationen: Markiere mit "! fehlt – bitte prüfen!"
 3. Keine Informationen erfinden oder raten
 4. Halte dich strikt an die Feldnamen und Struktur des Schemas
-5. Sprachen nach Level sortieren (5=Muttersprache bis 1=Grundkenntnisse)
+5. Sprachen: Level 1-5 numerisch. Normalisiere unterschiedliche Skalen auf 1-5:
+   - WICHTIG: Wenn grafische Elemente (Sterne, Punkte, Balken) vorhanden sind, haben diese VORRANG vor Textbeschreibungen.
+   - Zähle die vollen Sterne/Punkte: ★★★★★ = 5, ★★★★☆ = 4.
+   - 5er-Skala (Standard): 1=1, ..., 5=5
+   - 3er-Skala: 1=1 (Grundkenntnisse), 2=3 (Gut), 3=5 (Exzellent/Muttersprache)
+   - 4er-Skala: 1=1, 2=2, 3=4, 4=5
+   - Text (A1-C2): A1/A2=1, B1=2, B2=3, C1=4, C2=5
+   Sortiere absteigend nach Level.
 6. Maximal 5 Bullet Points pro Referenzprojekt
 7. WICHTIG: Verwende "Inhalt" (NICHT "BulletList") für Fachwissen_und_Schwerpunkte
 8. WICHTIG: Fachwissen_und_Schwerpunkte ist direkt auf oberster Ebene (NICHT in "Expertise" verschachtelt)
@@ -332,15 +400,9 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
 
     user_content = f"Extrahiere die CV-Daten aus folgendem Text:\n\n{cv_text}"
 
-    # Wenn Stellenprofil-Kontext vorhanden ist, füge ihn zum Prompt hinzu
-    if job_profile_context:
-        print("🎯 Verwende Stellenprofil-Kontext für massgeschneiderte Extraktion...")
-        offer_str = json.dumps(job_profile_context, ensure_ascii=False, indent=2)
-        user_content += f"\n\nZUSATZ-INSTRUKTION (STELLENPROFIL-KONTEXT):\n" \
-                        f"Der Kandidat bewirbt sich auf folgendes Stellenprofil:\n{offer_str}\n\n" \
-                        f"Bitte hebe im 'Kurzprofil' und bei den 'Ausgewählte_Referenzprojekte' besonders jene Erfahrungen hervor, " \
-                        f"die für dieses Stellenprofil relevant sind. Erfinde NICHTS dazu, aber fokussiere dich auf die passenden Aspekte " \
-                        f"aus dem CV-Text, die zum Stellenprofil passen."
+    # HINWEIS: Wir übergeben KEINEN Stellenprofil-Kontext mehr, um Halluzinationen zu vermeiden.
+    # Die Extraktion soll rein objektiv auf Basis des PDFs erfolgen.
+    # Das Matching erfolgt in einem separaten Schritt.
 
     try:
         response = client.chat.completions.create(

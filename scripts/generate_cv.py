@@ -1047,7 +1047,7 @@ def add_header_with_logo(doc):
                 p_element.getparent().remove(p_element)
 
 
-def generate_cv(json_path, output_dir=None):
+def generate_cv(json_path, output_dir=None, interactive=True):
 
     json_path = abs_path(json_path)
 
@@ -1057,7 +1057,7 @@ def generate_cv(json_path, output_dir=None):
     
     # JSON-Struktur validieren
     critical, info = validate_json_structure(data)
-    if critical or info:
+    if (critical or info) and interactive:
         # Build warning message with explanation
         warning_msg = (
             "ℹ️  Die Validierung prüft, ob alle erforderlichen Felder vorhanden und korrekt formatiert sind.\n\n"

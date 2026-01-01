@@ -41,7 +41,7 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Konkrete Textstelle, Skill oder Erfahrung aus dem CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / ! bitte prüfen !",
+      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
       "kommentar": "",
       "_hint_kommentar": "Kurze Begründung der Bewertung"
     }
@@ -55,9 +55,36 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Konkrete Evidenz aus dem CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / ! bitte prüfen !",
+      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
       "kommentar": "",
       "_hint_kommentar": "Einordnung der Relevanz"
+    }
+  ],
+  "weitere_kriterien_abgleich": [
+    {
+      "kriterium": "",
+      "_hint_kriterium": "Weiteres Kriterium (weder explizit Muss noch Soll)",
+      "im_cv_gefunden": "",
+      "_hint_im_cv_gefunden": "true / false / ! bitte prüfen !",
+      "cv_evidenz": "",
+      "_hint_cv_evidenz": "Konkrete Evidenz aus dem CV",
+      "bewertung": "",
+      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
+      "kommentar": "",
+      "_hint_kommentar": "Einordnung der Relevanz"
+    }
+  ],
+  "soft_skills_abgleich": [
+    {
+      "kriterium": "",
+      "_hint_kriterium": "Soft Skill oder Persönlichkeitsmerkmal (z.B. Teamfähigkeit, Belastbarkeit)",
+      "im_cv_gefunden": "",
+      "_hint_im_cv_gefunden": "true / false",
+      "cv_evidenz": "",
+      "_hint_cv_evidenz": "Indirekte oder direkte Hinweise im CV",
+      "bewertung": "",
+      "_hint_bewertung": "erfüllt / nicht explizit erwähnt",
+      "kommentar": ""
     }
   ],
   "skill_abdeckung": {

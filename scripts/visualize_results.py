@@ -2,7 +2,7 @@ import os
 import json
 from datetime import datetime
 
-def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir):
+def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, validation_warnings=None, model_name=None, pipeline_mode=None):
     """
     Generates a professional HTML dashboard visualizing the results of the CV processing,
     matchmaking, and quality feedback.
@@ -22,11 +22,30 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         with open(feedback_json_path, 'r', encoding='utf-8') as f:
             feedback_data = json.load(f)
 
+    # Load Styles for CI/CD Color
+    primary_color_rgb = "44, 62, 80" # Default dark blue
+    try:
+        styles_path = os.path.join(os.path.dirname(__file__), "styles.json")
+        if os.path.exists(styles_path):
+            with open(styles_path, 'r', encoding='utf-8') as f:
+                styles = json.load(f)
+                rgb = styles.get("heading1", {}).get("color", [44, 62, 80])
+                primary_color_rgb = f"{rgb[0]}, {rgb[1]}, {rgb[2]}"
+    except Exception as e:
+        print(f"Warning: Could not load styles: {e}")
+
     # Extract Key Info
     vorname = cv_data.get("Vorname", "")
     nachname = cv_data.get("Nachname", "")
     candidate_name = f"{vorname} {nachname}".strip()
     timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
+    
+    subtitle_parts = [f"Generiert: {timestamp}"]
+    if model_name:
+        subtitle_parts.append(f"KI-Modell: {model_name}")
+    if pipeline_mode:
+        subtitle_parts.append(f"Modus: {pipeline_mode}")
+    subtitle_text = " &bull; ".join(subtitle_parts)
 
     # Prepare HTML Content
     html_content = f"""
@@ -39,7 +58,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
             :root {{
-                --primary-color: #2c3e50;
+                --primary-color: rgb({primary_color_rgb});
                 --secondary-color: #3498db;
                 --success-color: #27ae60;
                 --warning-color: #f39c12;
@@ -55,9 +74,10 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                 color: #333;
             }}
             .container {{
-                max-width: 1200px;
+                max-width: 100%;
                 margin: 0 auto;
                 padding: 20px;
+                box-sizing: border-box;
             }}
             header {{
                 background-color: #fff;
@@ -164,8 +184,8 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         <div class="container">
             <header>
                 <div>
-                    <h1>CV Analyse Dashboard</h1>
-                    <div class="meta">Kandidat: <strong>{candidate_name}</strong> | Generiert: {timestamp}</div>
+                    <h1>Dashboard - CV Analyse - {candidate_name}</h1>
+                    <div class="meta">{subtitle_text}</div>
                 </div>
                 <div>
                     <a href="#" onclick="window.print()" style="text-decoration: none; color: var(--secondary-color); font-weight: bold;">🖨️ Drucken / PDF</a>
@@ -176,22 +196,36 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     # --- MATCHING SECTION ---
     if match_data:
         score = match_data.get("match_score", {}).get("score_gesamt", 0)
+        # Ensure score is a number
+        try:
+            score = float(score)
+        except (ValueError, TypeError):
+            score = 0
+            
         fazit = match_data.get("gesamt_fazit", {})
         empfehlung = fazit.get("empfehlung", "N/A")
         
         score_color = "var(--danger-color)"
-        if score >= 80: score_color = "var(--success-color)"
-        elif score >= 60: score_color = "var(--warning-color)"
+        gauge_hex = "#c0392b" # danger
+        if score >= 80: 
+            score_color = "var(--success-color)"
+            gauge_hex = "#27ae60"
+        elif score >= 60: 
+            score_color = "var(--warning-color)"
+            gauge_hex = "#f39c12"
         
         html_content += f"""
             <div class="grid">
                 <div class="card">
                     <div class="card-header">Match Score</div>
-                    <div class="score-display">
-                        <div class="score-value" style="color: {score_color}">{score}%</div>
-                        <div class="score-label">Gesamtübereinstimmung</div>
+                    <div style="position: relative; height: 160px; width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+                        <canvas id="scoreGauge"></canvas>
+                        <div style="position: absolute; bottom: 20px; width: 100%; text-align: center;">
+                            <div style="font-size: 36px; font-weight: bold; color: {score_color}; line-height: 1;">{score}%</div>
+                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Gesamt</div>
+                        </div>
                     </div>
-                    <div style="text-align: center; margin-top: 10px;">
+                    <div style="text-align: center; margin-top: 0px;">
                         <span class="status-badge" style="background-color: {score_color}">{empfehlung}</span>
                     </div>
                     <p style="margin-top: 15px; font-size: 13px; color: #666; text-align: center;">
@@ -241,33 +275,106 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                     <tbody>
         """
         
-        for k in match_data.get("muss_kriterien_abgleich", []):
-            status = k.get("bewertung", "").lower()
-            icon = "✅" if "erfüllt" in status and "nicht" not in status else "❌"
-            html_content += f"""
-                <tr>
-                    <td><strong>[MUSS]</strong> {k.get("kriterium", "")}</td>
-                    <td>{icon} {k.get("bewertung", "")}</td>
-                    <td>{k.get("cv_evidenz", "")}</td>
+        # Helper to render a section
+        def render_criteria_section(title, items, bg_color="#f8f9fa"):
+            if not items: return ""
+            
+            section_html = f"""
+                <tr style="background-color: {bg_color}; border-bottom: 2px solid #ddd;">
+                    <td colspan="3" style="font-weight: bold; padding-top: 15px; padding-bottom: 10px; color: #2c3e50;">{title}</td>
                 </tr>
             """
             
-        for k in match_data.get("soll_kriterien_abgleich", []):
-            status = k.get("bewertung", "").lower()
-            icon = "✅" if "erfüllt" in status and "nicht" not in status else "⚠️"
-            html_content += f"""
-                <tr>
-                    <td><strong>[SOLL]</strong> {k.get("kriterium", "")}</td>
-                    <td>{icon} {k.get("bewertung", "")}</td>
-                    <td>{k.get("cv_evidenz", "")}</td>
-                </tr>
-            """
+            for k in items:
+                status = k.get("bewertung", "").lower()
+                
+                # Determine Icon
+                if "nicht explizit" in status:
+                    icon = "⚪" # Neutral
+                elif "nicht" in status:
+                    icon = "❌"
+                elif "potenziell" in status or "implizit" in status:
+                    icon = "🤔" # Potential / Review needed
+                elif "teilweise" in status or "unklar" in status:
+                    icon = "⚠️"
+                elif "erfüllt" in status:
+                    icon = "✅"
+                else:
+                    icon = "❓"
+
+                # Format Evidence
+                evidenz_raw = k.get("cv_evidenz", "")
+                if evidenz_raw:
+                    parts = [p.strip() for p in evidenz_raw.replace(";", "\n").split("\n") if p.strip()]
+                    if len(parts) > 1:
+                        evidenz_html = "<ol style='margin: 0; padding-left: 20px;'>" + "".join([f"<li>{p}</li>" for p in parts]) + "</ol>"
+                    else:
+                        evidenz_html = parts[0]
+                else:
+                    if "nicht explizit" in status:
+                        evidenz_html = "<span style='color: #999; font-style: italic;'>Keine explizite Evidenz</span>"
+                    else:
+                        evidenz_html = "<span style='color: #999; font-style: italic;'>Keine Evidenz gefunden</span>"
+
+                section_html += f"""
+                    <tr>
+                        <td style="padding-left: 20px;">{k.get("kriterium", "")}</td>
+                        <td>{icon} {k.get("bewertung", "")}</td>
+                        <td>{evidenz_html}</td>
+                    </tr>
+                """
+            return section_html
+
+        html_content += render_criteria_section("Muss-Kriterien (Pflicht)", match_data.get("muss_kriterien_abgleich", []), "#e8f6f3")
+        html_content += render_criteria_section("Soll-Kriterien (Wunsch)", match_data.get("soll_kriterien_abgleich", []), "#fef9e7")
+        html_content += render_criteria_section("Soft Skills & Persönlichkeit", match_data.get("soft_skills_abgleich", []), "#f4f6f7")
+        html_content += render_criteria_section("Weitere Kriterien", match_data.get("weitere_kriterien_abgleich", []), "#f4f6f7")
             
         html_content += """
                     </tbody>
                 </table>
             </div>
         """
+
+    # --- VALIDATION SECTION ---
+    # Always show validation section, even if empty
+    html_content += f"""
+        <h2 style="color: var(--primary-color); margin-top: 30px;">Technische Validierung</h2>
+        <div class="grid">
+            <div class="card" style="grid-column: 1 / -1;">
+                <div class="card-header">
+                    <span>{'⚠️ Validierungshinweise' if validation_warnings else '✅ Validierung erfolgreich'}</span>
+                </div>
+                <div style="margin-bottom: 10px; color: #666; font-size: 14px;">
+                    Ergebnis der technischen Prüfung der CV-Struktur (Pflichtfelder, Datentypen, Längen).
+                </div>
+                <div style="max-height: 300px; overflow-y: auto;">
+    """
+    
+    if validation_warnings:
+        for warning in validation_warnings:
+             html_content += f"""
+                <div class="feedback-item warning">
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>Struktur-Check</strong>
+                        <span style="font-size: 11px; text-transform: uppercase; opacity: 0.7;">Info</span>
+                    </div>
+                    <div>{warning}</div>
+                </div>
+            """
+    else:
+        html_content += """
+            <div style="text-align: center; padding: 20px; color: #27ae60;">
+                <div style="font-size: 24px; margin-bottom: 10px;">✨</div>
+                <div>Keine strukturellen Fehler oder Warnungen gefunden.</div>
+            </div>
+        """
+        
+    html_content += """
+                </div>
+            </div>
+        </div>
+    """
 
     # --- FEEDBACK SECTION ---
     if feedback_data:
@@ -294,7 +401,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                     </div>
                 </div>
                 
-                <div class="card" style="grid-column: span 2;">
+                <div class="card" style="grid-column: 2 / -1;">
                     <div class="card-header">Handlungsbedarf & Feedback</div>
                     <div style="max-height: 250px; overflow-y: auto;">
         """
@@ -339,34 +446,115 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
 
     # --- JAVASCRIPT FOR CHARTS ---
     if match_data:
+        def count_status(items):
+            ok = 0
+            potential = 0
+            neutral = 0
+            for k in items:
+                s = k.get("bewertung", "").lower()
+                if "nicht explizit" in s:
+                    neutral += 1
+                elif "nicht" in s: # "nicht erfüllt"
+                    continue
+                elif "potenziell" in s or "implizit" in s or "teilweise" in s:
+                    potential += 1
+                elif "erfüllt" in s:
+                    ok += 1
+            return ok, potential, neutral
+
         muss_total = len(match_data.get("muss_kriterien_abgleich", []))
-        muss_ok = sum(1 for k in match_data.get("muss_kriterien_abgleich", []) if "erfüllt" in k.get("bewertung", "").lower() and "nicht" not in k.get("bewertung", "").lower())
+        muss_ok, muss_pot, muss_neu = count_status(match_data.get("muss_kriterien_abgleich", []))
         
         soll_total = len(match_data.get("soll_kriterien_abgleich", []))
-        soll_ok = sum(1 for k in match_data.get("soll_kriterien_abgleich", []) if "erfüllt" in k.get("bewertung", "").lower() and "nicht" not in k.get("bewertung", "").lower())
+        soll_ok, soll_pot, soll_neu = count_status(match_data.get("soll_kriterien_abgleich", []))
+
+        soft_total = len(match_data.get("soft_skills_abgleich", []))
+        soft_ok, soft_pot, soft_neu = count_status(match_data.get("soft_skills_abgleich", []))
+
+        weitere_total = len(match_data.get("weitere_kriterien_abgleich", []))
+        weitere_ok, weitere_pot, weitere_neu = count_status(match_data.get("weitere_kriterien_abgleich", []))
 
         html_content += f"""
         <script>
+            // Score Gauge
+            const ctxScore = document.getElementById('scoreGauge').getContext('2d');
+            new Chart(ctxScore, {{
+                type: 'doughnut',
+                data: {{
+                    labels: ['Score', 'Gap'],
+                    datasets: [{{
+                        data: [{score}, {100 - score}],
+                        backgroundColor: [
+                            '{gauge_hex}', 
+                            '#e0e0e0'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 5
+                    }}]
+                }},
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    circumference: 180,
+                    rotation: 270,
+                    cutout: '75%',
+                    plugins: {{
+                        legend: {{ display: false }},
+                        tooltip: {{ enabled: false }}
+                    }}
+                }}
+            }});
+
+            // Criteria Chart
             const ctx = document.getElementById('criteriaChart').getContext('2d');
             new Chart(ctx, {{
                 type: 'bar',
                 data: {{
-                    labels: ['Muss-Kriterien', 'Soll-Kriterien'],
+                    labels: ['Muss', 'Soll', 'Soft Skills', 'Weitere'],
                     datasets: [
                         {{
                             label: 'Erfüllt',
-                            data: [{muss_ok}, {soll_ok}],
+                            data: [{muss_ok}, {soll_ok}, {soft_ok}, {weitere_ok}],
                             backgroundColor: '#27ae60'
                         }},
                         {{
+                            label: 'Potenziell / Teilweise',
+                            data: [{muss_pot}, {soll_pot}, {soft_pot}, {weitere_pot}],
+                            backgroundColor: '#f1c40f'
+                        }},
+                        {{
+                            label: 'Neutral / Nicht explizit',
+                            data: [{muss_neu}, {soll_neu}, {soft_neu}, {weitere_neu}],
+                            backgroundColor: '#95a5a6'
+                        }},
+                        {{
                             label: 'Nicht Erfüllt',
-                            data: [{muss_total - muss_ok}, {soll_total - soll_ok}],
+                            data: [
+                                {muss_total - muss_ok - muss_pot - muss_neu}, 
+                                {soll_total - soll_ok - soll_pot - soll_neu},
+                                {soft_total - soft_ok - soft_pot - soft_neu},
+                                {weitere_total - weitere_ok - weitere_pot - weitere_neu}
+                            ],
                             backgroundColor: '#e74c3c'
                         }}
                     ]
                 }},
                 options: {{
                     responsive: true,
+                    layout: {{
+                        padding: {{
+                            bottom: 10
+                        }}
+                    }},
+                    plugins: {{
+                        legend: {{ 
+                            position: 'bottom',
+                            labels: {{
+                                padding: 20,
+                                boxWidth: 12
+                            }}
+                        }}
+                    }},
                     scales: {{
                         x: {{ stacked: true }},
                         y: {{ stacked: true, beginAtZero: true }}

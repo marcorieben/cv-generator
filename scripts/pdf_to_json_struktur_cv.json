@@ -145,7 +145,7 @@
       "_hint_Sprache": "Name der Sprache",
 
       "Level": 0,
-      "_hint_Level": "Sprachniveau als Zahl 1-5: 5=Muttersprache, 4=Verhandlungssicher, 3=Sehr gute Kenntnisse, 2=Gute Kenntnisse, 1=Grundkenntnisse"
+      "_hint_Level": "Sprachniveau als Zahl 1-5. Normalisiere Skalen: 3 Sterne -> 5 (max), 2 Sterne -> 3 (mid), 1 Stern -> 1 (min). Text-Mapping: 5=Muttersprache/C2, 4=Verhandlungssicher/C1, 3=Sehr gut/B2, 2=Gut/B1, 1=Grundkenntnisse/A1-A2"
     }
   ],
   "_hint_Sprachen": "Liste aller Sprachen mit numerischem Level (1-5)",

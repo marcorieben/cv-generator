@@ -347,7 +347,9 @@ class CVPipeline:
                 cv_json_path=cv_json_path,
                 match_json_path=matchmaking_json_path if stellenprofil_json_path and os.path.exists(stellenprofil_json_path) else None,
                 feedback_json_path=feedback_json_path,
-                output_dir=output_dir
+                output_dir=output_dir,
+                model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
+                pipeline_mode="CLI Pipeline"
             )
             self.update_progress(7, "completed")
 
