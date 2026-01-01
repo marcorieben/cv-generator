@@ -1047,7 +1047,7 @@ def add_header_with_logo(doc):
                 p_element.getparent().remove(p_element)
 
 
-def generate_cv(json_path, output_dir=None):
+def generate_cv(json_path, output_dir=None, interactive=True):
 
     json_path = abs_path(json_path)
 
@@ -1057,7 +1057,7 @@ def generate_cv(json_path, output_dir=None):
     
     # JSON-Struktur validieren
     critical, info = validate_json_structure(data)
-    if critical or info:
+    if (critical or info) and interactive:
         # Build warning message with explanation
         warning_msg = (
             "ℹ️  Die Validierung prüft, ob alle erforderlichen Felder vorhanden und korrekt formatiert sind.\n\n"
@@ -1205,9 +1205,9 @@ def generate_cv(json_path, output_dir=None):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     if output_dir is None:
         # Fallback to old structure if not provided
-        out_docx = abs_path(f"../output/word/{firstname}_{lastname}_{timestamp}.docx")
+        out_docx = abs_path(f"../output/word/cv_{firstname}_{lastname}_{timestamp}.docx")
     else:
-        out_docx = os.path.join(output_dir, f"{firstname}_{lastname}_{timestamp}.docx")
+        out_docx = os.path.join(output_dir, f"cv_{firstname}_{lastname}_{timestamp}.docx")
 
     # Vor dem Speichern: Highlight alle fehlenden Daten im gesamten Dokument
     highlight_missing_data_in_document(doc)

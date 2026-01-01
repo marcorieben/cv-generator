@@ -21,9 +21,6 @@ if platform.system() == "Windows":
     except Exception:
         pass
 
-from tkinter import filedialog
-from tkinter.font import Font
-
 
 class ModernDialog:
     """Base class for modern corporate-styled dialogs"""
@@ -107,9 +104,6 @@ class ModernDialog:
         """Create styled button"""
         if bg_color is None:
             bg_color = self.ORANGE if is_primary else self.DARK_GRAY
-    def create_button(self, parent, text, command, is_primary=True, width=15):
-        """Create styled button"""
-        bg_color = self.ORANGE if is_primary else self.DARK_GRAY
         
         btn = tk.Button(
             parent,
@@ -166,13 +160,6 @@ class SuccessDialog(ModernDialog):
         self.file_path = file_path
         self.dashboard_path = dashboard_path
         self.angebot_json_path = angebot_json_path
-    def __init__(self, title="Erfolg", message="", details=None, file_path=None):
-        # Increase height if we have both details and file button
-        height = 420 if (details and file_path) else 380
-        super().__init__(title, width=600, height=height)
-        
-        # Store file path for opening
-        self.file_path = file_path
         
         # Header
         self.create_header(title, self.ICON_SUCCESS, self.SUCCESS_GREEN)
@@ -194,12 +181,6 @@ class SuccessDialog(ModernDialog):
         # Main message (Left)
         msg_label = tk.Label(
             top_frame,
-        # Content
-        content = self.create_content_frame()
-        
-        # Main message
-        msg_label = tk.Label(
-            content,
             text=message,
             bg=self.WHITE,
             fg=self.DARK_GRAY,
@@ -212,9 +193,6 @@ class SuccessDialog(ModernDialog):
         # Meter (Right) if score exists
         if match_score is not None:
             self.create_meter(top_frame, match_score)
-            wraplength=540
-        )
-        msg_label.pack(anchor='w', pady=(0, 15))
         
         # Details section if provided
         if details:
@@ -329,38 +307,6 @@ class SuccessDialog(ModernDialog):
         canvas.create_text(canvas_size/2, canvas_size/2, text=f"{score}%", font=('Segoe UI', 16, 'bold'), fill=self.DARK_GRAY)
         
         tk.Label(meter_frame, text="Match Score", bg=self.WHITE, fg="#777777", font=('Segoe UI', 9)).pack()
-            details_label = tk.Label(
-                details_frame,
-                text=details,
-                bg=self.LIGHT_GRAY,
-                fg=self.DARK_GRAY,
-                font=('Segoe UI', 9),
-                justify='left',
-                wraplength=520
-            )
-            details_label.pack(anchor='w', padx=15, pady=15)
-        
-        # Button area
-        btn_frame = tk.Frame(self.root, bg=self.WHITE)
-        btn_frame.pack(side='bottom', fill='x', pady=20)
-        
-        btn_container = tk.Frame(btn_frame, bg=self.WHITE)
-        btn_container.pack(side='right', padx=30)
-        
-        def close():
-            self.result = None  # Just close without opening
-            self.root.destroy()
-        
-        def open_file():
-            self.result = 'open'  # Signal to open file
-            self.root.destroy()
-        
-        # Show "Open Document" button if file_path is provided
-        if self.file_path:
-            self.create_button(btn_container, "Schließen", close, is_primary=False, width=15).pack(side='left', padx=5)
-            self.create_button(btn_container, "📝 Dokument öffnen", open_file, is_primary=True, width=20).pack(side='left', padx=5)
-        else:
-            self.create_button(btn_container, "OK", close, is_primary=True)
 
 
 class ErrorDialog(ModernDialog):
@@ -371,8 +317,6 @@ class ErrorDialog(ModernDialog):
     
     def __init__(self, title="Fehler", message="", details=None):
         super().__init__(title, width=self.DEFAULT_WIDTH, height=self.DEFAULT_HEIGHT)
-    def __init__(self, title="Fehler", message="", details=None):
-        super().__init__(title, width=600, height=380)
         
         # Header
         self.create_header(title, self.ICON_ERROR, self.ERROR_RED)
@@ -419,13 +363,6 @@ class ErrorDialog(ModernDialog):
             text_widget.insert('1.0', details)
             text_widget.config(state='disabled')
         
-        # Button area
-        btn_frame = tk.Frame(self.root, bg=self.WHITE)
-        btn_frame.pack(side='bottom', fill='x', pady=20)
-        
-        btn_container = tk.Frame(btn_frame, bg=self.WHITE)
-        btn_container.pack(side='right', padx=30)
-        
         def close():
             self.result = False
             self.root.destroy()
@@ -444,10 +381,6 @@ class WarningDialog(ModernDialog):
         # Dynamic height: larger if details present
         dialog_height = self.EXPANDED_HEIGHT if details else self.DEFAULT_HEIGHT
         super().__init__(title, width=self.DEFAULT_WIDTH, height=dialog_height)
-    def __init__(self, title="Warnung", message="", details=None):
-        # Dynamic height: larger if details present
-        dialog_height = 650 if details else 400
-        super().__init__(title, width=650, height=dialog_height)
         
         # Header
         self.create_header(title, self.ICON_WARNING, self.WARNING_YELLOW)
@@ -531,13 +464,6 @@ class WarningDialog(ModernDialog):
             
             text_widget.config(state='disabled')
         
-        # Button area (pack first so it's at bottom)
-        btn_frame = tk.Frame(self.root, bg=self.WHITE)
-        btn_frame.pack(side='bottom', fill='x', pady=(0, 20))
-        
-        btn_container = tk.Frame(btn_frame, bg=self.WHITE)
-        btn_container.pack(side='right', padx=30)
-        
         # Question label above buttons (pack after so it's above)
         question_label = tk.Label(
             self.root,
@@ -570,8 +496,6 @@ class ConfirmDialog(ModernDialog):
     
     def __init__(self, title="Bestätigung", message="", icon_type="question"):
         super().__init__(title, width=self.DEFAULT_WIDTH, height=self.DEFAULT_HEIGHT)
-    def __init__(self, title="Bestätigung", message="", icon_type="question"):
-        super().__init__(title, width=550, height=250)
         
         # Select icon and color
         icon_map = {
@@ -605,13 +529,6 @@ class ConfirmDialog(ModernDialog):
             wraplength=490
         )
         msg_label.pack(anchor='w', pady=20)
-        
-        # Button area
-        btn_frame = tk.Frame(self.root, bg=self.WHITE)
-        btn_frame.pack(side='bottom', fill='x', pady=20)
-        
-        btn_container = tk.Frame(btn_frame, bg=self.WHITE)
-        btn_container.pack(side='right', padx=30)
         
         def yes():
             self.result = True
@@ -942,18 +859,6 @@ class WelcomeDialog(ModernDialog):
         # --- 4. Content Area ---
         content = tk.Frame(self.root, bg=self.WHITE)
         content.pack(fill='both', expand=True, padx=30, pady=(20, 10), side='top')
-class WelcomeDialog(ModernDialog):
-    """Welcome dialog explaining the CV generation process"""
-    
-    def __init__(self):
-        super().__init__("CV Generator - Pipeline", width=750, height=650)
-        
-        # Header
-        self.create_header("CV Generator", self.ICON_FILE, self.ORANGE)
-        
-        # Content
-        content = tk.Frame(self.root, bg=self.WHITE)
-        content.pack(fill='both', expand=False, padx=30, pady=20, side='top')
         
         # Welcome message
         welcome = tk.Label(

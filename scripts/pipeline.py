@@ -230,7 +230,7 @@ class CVPipeline:
             output_dir = os.path.join(self.base_dir, "output", f"{vorname}_{nachname}_{self.timestamp}")
             os.makedirs(output_dir, exist_ok=True)
             
-            cv_json_filename = f"{vorname}_{nachname}_{self.timestamp}.json"
+            cv_json_filename = f"cv_{vorname}_{nachname}_{self.timestamp}.json"
             cv_json_path = os.path.join(output_dir, cv_json_filename)
             self.save_json(cv_data, cv_json_path)
 
@@ -347,7 +347,9 @@ class CVPipeline:
                 cv_json_path=cv_json_path,
                 match_json_path=matchmaking_json_path if stellenprofil_json_path and os.path.exists(stellenprofil_json_path) else None,
                 feedback_json_path=feedback_json_path,
-                output_dir=output_dir
+                output_dir=output_dir,
+                model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
+                pipeline_mode="CLI Pipeline"
             )
             self.update_progress(7, "completed")
 

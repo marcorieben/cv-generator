@@ -14,11 +14,6 @@ input/angebot/pdf/*.pdf
 input/angebot/json/*.json
 !input/**/.gitkeep
 
-# Input files (PDFs and generated JSONs - local working files)
-input/pdf/*.pdf
-input/json/*.json
-!input/**/.gitkeep
-
 # Python
 __pycache__/
 *.py[cod]
