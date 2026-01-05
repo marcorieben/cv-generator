@@ -98,6 +98,7 @@ class StreamlitCVGenerator:
             "match_score": None,
             "stellenprofil_json": None,
             "match_json": None,
+            "model_name": os.environ.get("MODEL_NAME", "gpt-4o-mini"),
             "error": None
         }
 
@@ -193,7 +194,9 @@ class StreamlitCVGenerator:
                 output_dir=output_dir,
                 validation_warnings=info,
                 model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
-                pipeline_mode=pipeline_mode
+                pipeline_mode=pipeline_mode,
+                cv_filename=cv_file.name if hasattr(cv_file, 'name') else os.path.basename(str(cv_file)),
+                job_filename=job_file.name if job_file and hasattr(job_file, 'name') else (os.path.basename(str(job_file)) if job_file else None)
             )
             results["dashboard_path"] = dashboard_path
             

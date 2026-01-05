@@ -159,11 +159,11 @@ with col2:
     authenticator.login('main')
 
     if st.session_state["authentication_status"] is False:
-        st.error('Username/password is incorrect')
-        st.info('Forgot your password? Please contact the administrator.')
+        st.error('Benutzername/Passwort ist falsch')
+        st.info('Passwort vergessen? Bitte kontaktieren Sie den Administrator.')
         st.stop()
     elif st.session_state["authentication_status"] is None:
-        st.warning('Please enter your username and password')
+        st.warning('Bitte geben Sie Ihren Benutzernamen und Ihr Passwort ein')
         st.stop()
 
 # If we get here, the user is authenticated
@@ -425,10 +425,11 @@ with st.sidebar:
                 except:
                     display_time = timestamp
 
-                name = item.get("candidate_name", "Unbekannt")
+                candidate_name = item.get("candidate_name", "Unbekannt")
                 
-                with st.expander(f"{display_time} - {name}", expanded=False):
-                    st.caption(f"Modus: {item.get('mode')}")
+                with st.expander(f"{display_time} - {candidate_name}", expanded=False):
+                    model_used = item.get("model_name", "Unbekannt")
+                    st.caption(f"Modus: {item.get('mode')} | Modell: {model_used}")
                     
                     # 1. Visual Score Bar
                     score = item.get("match_score")
@@ -465,8 +466,8 @@ with st.sidebar:
     st.divider()
     
     # --- User Info & Logout (Bottom) ---
-    st.write(f'Welcome *{name}*')
-    authenticator.logout('Logout', 'sidebar')
+    st.write(f'Willkommen *{name}*')
+    authenticator.logout('Abmelden', 'sidebar')
 
 # --- Main Content ---
 st.title("📄 CV Generator")
@@ -814,6 +815,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     "cv_json": results.get("cv_json"),
                     "dashboard_path": results.get("dashboard_path"),
                     "match_score": results.get("match_score"),
+                    "model_name": results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
                     "stellenprofil_json": results.get("stellenprofil_json"),
                     "match_json": results.get("match_json"),
                     "offer_word_path": results.get("offer_word_path")
@@ -845,6 +847,9 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 parts = filename.split('_')
                 if len(parts) >= 3: candidate_name = f"{parts[1]} {parts[2]}"
             except: pass
+        
+        model_used = results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini"))
+        st.caption(f"Modus: {results.get('mode', 'Unbekannt')} | KI-Modell: {model_used}")
             
         # Format button label with truncation
         cv_btn_label = f"📄 Word-CV - {candidate_name}"

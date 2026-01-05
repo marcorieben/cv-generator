@@ -2,7 +2,7 @@ import os
 import json
 from datetime import datetime
 
-def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, validation_warnings=None, model_name=None, pipeline_mode=None):
+def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, validation_warnings=None, model_name=None, pipeline_mode=None, cv_filename=None, job_filename=None):
     """
     Generates a professional HTML dashboard visualizing the results of the CV processing,
     matchmaking, and quality feedback.
@@ -40,12 +40,30 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     candidate_name = f"{vorname} {nachname}".strip()
     timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
     
-    subtitle_parts = [f"Generiert: {timestamp}"]
+    # Build metadata matrix (table)
+    meta_cols = []
+    meta_cols.append(("Generiert", timestamp))
     if model_name:
-        subtitle_parts.append(f"KI-Modell: {model_name}")
+        meta_cols.append(("KI-Modell", f"<b>{model_name}</b>"))
     if pipeline_mode:
-        subtitle_parts.append(f"Modus: {pipeline_mode}")
-    subtitle_text = " &bull; ".join(subtitle_parts)
+        meta_cols.append(("Modus", pipeline_mode))
+    
+    input_files = []
+    if cv_filename: input_files.append(f"CV: {cv_filename}")
+    if job_filename: input_files.append(f"SP: {job_filename}")
+    if input_files:
+        meta_cols.append(("Input Dateien", "<br>".join(input_files)))
+
+    # Construct HTML table for metadata
+    table_html = '<table class="meta-table"><thead><tr>'
+    for header_text, _ in meta_cols:
+        table_html += f'<th>{header_text}</th>'
+    table_html += '</tr></thead><tbody><tr>'
+    for _, content in meta_cols:
+        table_html += f'<td>{content}</td>'
+    table_html += '</tr></tbody></table>'
+    
+    subtitle_text = table_html
 
     # Prepare HTML Content
     html_content = f"""
@@ -85,13 +103,40 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                 border-radius: 8px;
                 box-shadow: var(--card-shadow);
                 margin-bottom: 20px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
             }}
             h1 {{ margin: 0; color: var(--primary-color); font-size: 24px; }}
-            .meta {{ color: #7f8c8d; font-size: 14px; }}
+            .meta {{ color: #7f8c8d; font-size: 14px; width: 100%; }}
             
+            .meta-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                background-color: #fcfcfc;
+                border: 1px solid #eee;
+                border-radius: 4px;
+            }}
+            .meta-table th {{
+                background-color: #f8f9fa;
+                color: #7f8c8d;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                padding: 8px 15px;
+                border-bottom: 1px solid #eee;
+                border-right: 1px solid #eee;
+                text-align: left;
+            }}
+            .meta-table th:last-child {{ border-right: none; }}
+            .meta-table td {{
+                padding: 10px 15px;
+                font-size: 13px;
+                color: #2c3e50;
+                vertical-align: top;
+                border-right: 1px solid #eee;
+                text-align: left;
+            }}
+            .meta-table td:last-child {{ border-right: none; }}
+
             .grid {{
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -183,13 +228,11 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     <body>
         <div class="container">
             <header>
-                <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h1>Dashboard - CV Analyse - {candidate_name}</h1>
-                    <div class="meta">{subtitle_text}</div>
-                </div>
-                <div>
                     <a href="#" onclick="window.print()" style="text-decoration: none; color: var(--secondary-color); font-weight: bold;">🖨️ Drucken / PDF</a>
                 </div>
+                <div class="meta">{subtitle_text}</div>
             </header>
     """
 

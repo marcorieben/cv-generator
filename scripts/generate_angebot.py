@@ -48,73 +48,69 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         # Create a mock offer based on the schema structure
         angebot_json = {
             "angebots_metadata": {
-                "angebots_id": "OFFER-2025-001",
-                "anbieter": "Ihre Firma AG",
-                "kunde": "Bundesamt für Informatik und Telekommunikation BIT",
+                "angebots_id": stellenprofil_data.get("metadata", {}).get("document_id", "OFFER-2025-001"),
+                "anbieter": "Orange Business",
+                "kunde": stellenprofil_data.get("projekt_kontext", {}).get("auftraggeber", "! bitte prüfen !"),
                 "datum": datetime.now().strftime("%d.%m.%Y"),
                 "ansprechpartner": {
-                    "name": "Hans Muster",
-                    "rolle": "Key Account Manager",
-                    "kontakt": "hans.muster@ihrefirma.ch | +41 79 123 45 67"
+                    "name": stellenprofil_data.get("kontakt", {}).get("name", "! bitte prüfen !"),
+                    "rolle": stellenprofil_data.get("kontakt", {}).get("rolle", "! bitte prüfen !"),
+                    "kontakt": "! bitte prüfen !"
                 }
             },
             "stellenbezug": {
-                "rollenbezeichnung": "Senior Software Engineer (Java/Spring)",
-                "organisationseinheit": "Abteilung Entwicklung",
-                "kurzkontext": "Unterstützung bei der Modernisierung der Fachanwendung 'SuperApp' im Rahmen des Programms 'Digitalisierung 2025'."
+                "rollenbezeichnung": stellenprofil_data.get("rolle", {}).get("titel", "! bitte prüfen !"),
+                "organisationseinheit": stellenprofil_data.get("projekt_kontext", {}).get("organisationseinheit", "! bitte prüfen !"),
+                "kurzkontext": stellenprofil_data.get("projekt_kontext", {}).get("kurzbeschreibung", "! bitte prüfen !")
             },
             "kandidatenvorschlag": {
-                "name": "Marco Rieben",
-                "angebotene_rolle": "Senior Software Engineer & Architect",
-                "eignungs_summary": "Marco Rieben ist ein erfahrener Software Engineer mit über 10 Jahren Erfahrung in der Entwicklung komplexer Enterprise-Anwendungen. Er verfügt über tiefgehende Expertise im geforderten Tech-Stack (Java, Spring Boot, Angular) und hat in ähnlichen Projekten beim Bund (z.B. Projekt 'Phoenix') bereits erfolgreich Architekturen modernisiert. Seine Stärke liegt in der Verbindung von technischer Exzellenz mit methodischer Kompetenz (Scrum, SAFe)."
+                "name": f"{cv_data.get('Vorname', '')} {cv_data.get('Nachname', '')}".strip(),
+                "angebotene_rolle": cv_data.get("Hauptrolle", {}).get("Beschreibung", "! bitte prüfen !"),
+                "eignungs_summary": "Der Kandidat verfügt über die relevanten Erfahrungen für diese Position."
             },
             "profil_und_kompetenzen": {
                 "methoden_und_technologien": [
-                    "Java / JEE (Expert Level, >10 Jahre)",
-                    "Spring Boot / Spring Cloud (Expert Level)",
-                    "Angular / TypeScript (Advanced Level)",
-                    "Docker / Kubernetes / OpenShift",
-                    "CI/CD (Jenkins, GitLab CI)",
-                    "Datenbanken (PostgreSQL, Oracle)"
+                    item.get("Inhalt", [])[0] if isinstance(item.get("Inhalt"), list) and item.get("Inhalt") else "! bitte prüfen !"
+                    for item in cv_data.get("Fachwissen_und_Schwerpunkte", [])
                 ],
                 "operative_und_fuehrungserfahrung": [
-                    "Langjährige Erfahrung als Lead Developer in agilen Teams",
-                    "Erfahrung in der technischen Projektleitung",
-                    "Coaching von Junior-Entwicklern",
-                    "Anforderungsanalyse und Solution Design in enger Zusammenarbeit mit dem Fachbereich"
+                    "Erfahrung in der Umsetzung komplexer Projekte",
+                    "Fundierte Fachkenntnisse im relevanten Bereich"
                 ]
             },
             "einsatzkonditionen": {
-                "pensum": "80-100%",
-                "verfuegbarkeit": "ab 01.02.2026",
+                "pensum": stellenprofil_data.get("einsatzrahmen", {}).get("pensum", "100%"),
+                "verfuegbarkeit": stellenprofil_data.get("einsatzrahmen", {}).get("zeitraum", {}).get("start", "ab sofort"),
                 "stundensatz": "165.00 CHF (exkl. MWST)",
-                "subunternehmen": "Nein, direkter Mitarbeiter"
+                "subunternehmen": "Nein"
             },
             "kriterien_abgleich": {
                 "muss_kriterien": [
-                    {"kriterium": "Hochschulabschluss in Informatik oder vergleichbar", "erfuellt": True, "begruendung": "Master of Science in Computer Science, ETH Zürich (2015)"},
-                    {"kriterium": "Mind. 5 Jahre Erfahrung mit Java/Spring", "erfuellt": True, "begruendung": "Über 8 Jahre nachgewiesene Projekterfahrung mit Java Enterprise und Spring Framework."},
-                    {"kriterium": "Erfahrung mit Container-Technologien", "erfuellt": True, "begruendung": "Einsatz von Docker und OpenShift in den letzten 3 Projekten."}
+                    {
+                        "kriterium": k.get("kriterium", k) if isinstance(k, dict) else k,
+                        "erfuellt": True,
+                        "begruendung": "Gemäss CV vorhanden."
+                    } for k in stellenprofil_data.get("anforderungen", {}).get("muss_kriterien", [])[:3]
                 ],
                 "soll_kriterien": [
-                    {"kriterium": "Erfahrung im öffentlichen Sektor", "erfuellt": True, "begruendung": "Diverse Mandate beim BIT und BAZG."},
-                    {"kriterium": "Zertifizierung in SAFe", "erfuellt": True, "begruendung": "SAFe 5 Architect Zertifizierung vorhanden."},
-                    {"kriterium": "Französischkenntnisse", "erfuellt": False, "begruendung": "Grundkenntnisse vorhanden, Projektsprache Deutsch bevorzugt."}
+                    {
+                        "kriterium": k.get("kriterium", k) if isinstance(k, dict) else k,
+                        "erfuellt": True,
+                        "begruendung": "Gemäss CV vorhanden."
+                    } for k in stellenprofil_data.get("anforderungen", {}).get("soll_kriterien", [])[:2]
                 ]
             },
             "gesamtbeurteilung": {
-                "zusammenfassung": "Marco Rieben erfüllt alle Muss-Kriterien und die meisten Soll-Kriterien in hohem Masse. Durch seine Kombination aus technischer Tiefe und Verständnis für behördliche Prozesse ist er die ideale Besetzung für diese Schlüsselposition.",
+                "zusammenfassung": f"{cv_data.get('Vorname', '')} {cv_data.get('Nachname', '')} passt hervorragend auf das Profil.",
                 "mehrwert_fuer_kunden": [
-                    "Sofortige Produktivität durch bekannten Tech-Stack",
-                    "Risikominimierung durch Erfahrung im Bundesumfeld",
-                    "Wissenstransfer ins interne Team durch Coaching-Erfahrung",
-                    "Pragmatische und lösungsorientierte Arbeitsweise"
+                    "Schnelle Einarbeitung",
+                    "Hohe Fachkompetenz"
                 ],
-                "empfehlung": "Aufgrund der hohen Übereinstimmung mit dem Anforderungsprofil und der nachgewiesenen Erfolgsbilanz empfehlen wir Marco Rieben ausdrücklich für diese Position."
+                "empfehlung": "Wir empfehlen den Kandidaten für die Besetzung der Stelle."
             },
             "abschluss": {
-                "verfuegbarkeit_gespraech": "Für ein Vorstellungsgespräch steht Herr Rieben ab sofort zur Verfügung (bevorzugt Di/Do).",
-                "kontakt_hinweis": "Wir freuen uns auf Ihre Rückmeldung und stehen für Rückfragen jederzeit gerne zur Verfügung."
+                "verfuegbarkeit_gespraech": "Nach Absprache kurzfristig möglich.",
+                "kontakt_hinweis": "Wir freuen uns auf Ihre Rückmeldung."
             }
         }
     else:

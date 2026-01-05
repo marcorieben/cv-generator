@@ -349,7 +349,9 @@ class CVPipeline:
                 feedback_json_path=feedback_json_path,
                 output_dir=output_dir,
                 model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
-                pipeline_mode="CLI Pipeline"
+                pipeline_mode="CLI Pipeline",
+                cv_filename=cv_filename,
+                job_filename=stellenprofil_filename
             )
             self.update_progress(7, "completed")
 

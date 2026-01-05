@@ -68,7 +68,7 @@ def optimize_logo(input_path, output_path=None, max_width=800, max_height=300, d
     
 
 if __name__ == "__main__":
-    logo_path = os.path.join(os.path.dirname(__file__), "..", "templates", "logo.png")
+    logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "templates", "logo.png")
     
     if not os.path.exists(logo_path):
         print(f"❌ Logo nicht gefunden: {logo_path}")
