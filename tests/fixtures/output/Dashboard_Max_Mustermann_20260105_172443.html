@@ -1,0 +1,355 @@
+
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CV Analyse Dashboard - Max Mustermann</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            :root {
+                --primary-color: rgb(255, 121, 0);
+                --secondary-color: #3498db;
+                --success-color: #27ae60;
+                --warning-color: #f39c12;
+                --danger-color: #c0392b;
+                --light-bg: #ecf0f1;
+                --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f7f6;
+                color: #333;
+            }
+            .container {
+                max-width: 100%;
+                margin: 0 auto;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+            header {
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: var(--card-shadow);
+                margin-bottom: 20px;
+            }
+            h1 { margin: 0; color: var(--primary-color); font-size: 24px; }
+            .meta { color: #7f8c8d; font-size: 14px; width: 100%; }
+            
+            .meta-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                background-color: #fcfcfc;
+                border: 1px solid #eee;
+                border-radius: 4px;
+            }
+            .meta-table th {
+                background-color: #f8f9fa;
+                color: #7f8c8d;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                padding: 8px 15px;
+                border-bottom: 1px solid #eee;
+                border-right: 1px solid #eee;
+                text-align: left;
+            }
+            .meta-table th:last-child { border-right: none; }
+            .meta-table td {
+                padding: 10px 15px;
+                font-size: 13px;
+                color: #2c3e50;
+                vertical-align: top;
+                border-right: 1px solid #eee;
+                text-align: left;
+            }
+            .meta-table td:last-child { border-right: none; }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .card {
+                background: #fff;
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: var(--card-shadow);
+            }
+            
+            .card-header {
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+                font-weight: bold;
+                color: var(--primary-color);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .score-display {
+                text-align: center;
+                padding: 20px 0;
+            }
+            .score-value {
+                font-size: 48px;
+                font-weight: bold;
+                color: var(--secondary-color);
+            }
+            .score-label {
+                font-size: 14px;
+                color: #7f8c8d;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            .status-badge {
+                padding: 5px 10px;
+                border-radius: 15px;
+                font-size: 12px;
+                font-weight: bold;
+                color: #fff;
+            }
+            .status-success { background-color: var(--success-color); }
+            .status-warning { background-color: var(--warning-color); }
+            .status-danger { background-color: var(--danger-color); }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 14px;
+            }
+            th, td {
+                padding: 10px;
+                text-align: left;
+                border-bottom: 1px solid #eee;
+            }
+            th { color: #7f8c8d; font-weight: 600; }
+            
+            .progress-bar {
+                background-color: #eee;
+                border-radius: 4px;
+                height: 8px;
+                width: 100%;
+                overflow: hidden;
+            }
+            .progress-fill {
+                height: 100%;
+                border-radius: 4px;
+                transition: width 0.5s ease;
+            }
+            
+            .feedback-item {
+                margin-bottom: 10px;
+                padding: 10px;
+                background-color: #f9f9f9;
+                border-left: 3px solid var(--secondary-color);
+                border-radius: 0 4px 4px 0;
+            }
+            .feedback-item.critical { border-left-color: var(--danger-color); background-color: #fff5f5; }
+            .feedback-item.warning { border-left-color: var(--warning-color); background-color: #fdfbf0; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h1>Dashboard - CV Analyse - Max Mustermann</h1>
+                    <a href="#" onclick="window.print()" style="text-decoration: none; color: var(--secondary-color); font-weight: bold;">🖨️ Drucken / PDF</a>
+                </div>
+                <div class="meta"><table class="meta-table"><thead><tr><th>Generiert</th></tr></thead><tbody><tr><td>05.01.2026 17:24</td></tr></tbody></table></div>
+            </header>
+    
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">Match Score</div>
+                    <div style="position: relative; height: 160px; width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+                        <canvas id="scoreGauge"></canvas>
+                        <div style="position: absolute; bottom: 20px; width: 100%; text-align: center;">
+                            <div style="font-size: 36px; font-weight: bold; color: var(--success-color); line-height: 1;">85.0%</div>
+                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Gesamt</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 0px;">
+                        <span class="status-badge" style="background-color: var(--success-color)">N/A</span>
+                    </div>
+                    <p style="margin-top: 15px; font-size: 13px; color: #666; text-align: center;">
+                        
+                    </p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">Kriterien Abdeckung</div>
+                    <canvas id="criteriaChart"></canvas>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">Risiken & Lücken</div>
+                    <div style="max-height: 200px; overflow-y: auto;">
+        <p style='color: #999; text-align: center;'>Keine Risiken identifiziert.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">Detaillierter Kriterien-Abgleich</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kriterium</th>
+                            <th>Status</th>
+                            <th>Evidenz im CV</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        
+                    </tbody>
+                </table>
+            </div>
+        
+        <h2 style="color: var(--primary-color); margin-top: 30px;">Technische Validierung</h2>
+        <div class="grid">
+            <div class="card" style="grid-column: 1 / -1;">
+                <div class="card-header">
+                    <span>✅ Validierung erfolgreich</span>
+                </div>
+                <div style="margin-bottom: 10px; color: #666; font-size: 14px;">
+                    Ergebnis der technischen Prüfung der CV-Struktur (Pflichtfelder, Datentypen, Längen).
+                </div>
+                <div style="max-height: 300px; overflow-y: auto;">
+    
+            <div style="text-align: center; padding: 20px; color: #27ae60;">
+                <div style="font-size: 24px; margin-bottom: 10px;">✨</div>
+                <div>Keine strukturellen Fehler oder Warnungen gefunden.</div>
+            </div>
+        
+                </div>
+            </div>
+        </div>
+    
+            <h2 style="color: var(--primary-color); margin-top: 30px;">CV Qualitäts-Check</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">Qualitätseinschätzung</div>
+                    <div class="score-display">
+                        <div class="score-value" style="font-size: 32px; color: var(--primary-color)">Unbekannt</div>
+                        <div class="score-label">Datenqualität & Struktur</div>
+                    </div>
+                    <div style="padding: 10px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Kritische Punkte:</span>
+                            <span style="font-weight: bold; color: var(--danger-color)">0</span>
+                        </div>
+                        <div style="font-size: 13px; margin-top: 10px;">
+                            <strong>Empfehlung:</strong> 
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="grid-column: 2 / -1;">
+                    <div class="card-header">Handlungsbedarf & Feedback</div>
+                    <div style="max-height: 250px; overflow-y: auto;">
+        <p style='color: #999; text-align: center;'>Keine nennenswerten Qualitätsprobleme gefunden.</p>
+                    </div>
+                </div>
+            </div>
+        
+        <script>
+            // Score Gauge
+            const ctxScore = document.getElementById('scoreGauge').getContext('2d');
+            new Chart(ctxScore, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Score', 'Gap'],
+                    datasets: [{
+                        data: [85.0, 15.0],
+                        backgroundColor: [
+                            '#27ae60', 
+                            '#e0e0e0'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    circumference: 180,
+                    rotation: 270,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+
+            // Criteria Chart
+            const ctx = document.getElementById('criteriaChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Muss', 'Soll', 'Soft Skills', 'Weitere'],
+                    datasets: [
+                        {
+                            label: 'Erfüllt',
+                            data: [0, 0, 0, 0],
+                            backgroundColor: '#27ae60'
+                        },
+                        {
+                            label: 'Potenziell / Teilweise',
+                            data: [0, 0, 0, 0],
+                            backgroundColor: '#f1c40f'
+                        },
+                        {
+                            label: 'Neutral / Nicht explizit',
+                            data: [0, 0, 0, 0],
+                            backgroundColor: '#95a5a6'
+                        },
+                        {
+                            label: 'Nicht Erfüllt',
+                            data: [
+                                0, 
+                                0,
+                                0,
+                                0
+                            ],
+                            backgroundColor: '#e74c3c'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    layout: {
+                        padding: {
+                            bottom: 10
+                        }
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                boxWidth: 12
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+        </script>
+        
+        </div>
+    </body>
+    </html>
+    

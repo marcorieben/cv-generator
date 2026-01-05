@@ -35,13 +35,8 @@ def get_git_history(limit=10):
         # Get commit hash, date, author, subject, and body
         # Format: %h|%cd|%an|%s|%b
         # %b is the body of the commit message
-        cmd = ["git", "log", f"-n {limit}", "--pretty=format:%h|%cd|%an|%s|%b", "--date=short"]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
-        
-        commits = []
-        # Split by newline but handle the fact that %b might contain newlines
-        # A better way is to use a unique delimiter for commits
-        cmd = ["git", "log", f"-n {limit}", "--pretty=format:COMMIT_START%h|%cd|%an|%s|%bCOMMIT_END", "--date=short"]
+        # Using --date=format:"%Y-%m-%d %H:%M:%S" for full timestamp
+        cmd = ["git", "log", f"-n {limit}", "--pretty=format:COMMIT_START%h|%cd|%an|%s|%bCOMMIT_END", "--date=format:%Y-%m-%d %H:%M:%S"]
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
         
         raw_commits = result.stdout.split("COMMIT_START")
