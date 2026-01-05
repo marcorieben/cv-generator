@@ -29,27 +29,39 @@ def show_model_info_dialog():
     """)
 
 def get_git_history(limit=10):
-    """Fetches the recent git commit history."""
+    """Fetches the recent git commit history with detailed body."""
     try:
         import subprocess
-        # Get commit hash, date, author, and message
-        # Format: %h|%cd|%an|%s
-        cmd = ["git", "log", f"-n {limit}", "--pretty=format:%h|%cd|%an|%s", "--date=short"]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        # Get commit hash, date, author, subject, and body
+        # Format: %h|%cd|%an|%s|%b
+        # %b is the body of the commit message
+        cmd = ["git", "log", f"-n {limit}", "--pretty=format:%h|%cd|%an|%s|%b", "--date=short"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
         
         commits = []
-        for line in result.stdout.splitlines():
-            parts = line.split("|")
+        # Split by newline but handle the fact that %b might contain newlines
+        # A better way is to use a unique delimiter for commits
+        cmd = ["git", "log", f"-n {limit}", "--pretty=format:COMMIT_START%h|%cd|%an|%s|%bCOMMIT_END", "--date=short"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
+        
+        raw_commits = result.stdout.split("COMMIT_START")
+        for raw in raw_commits:
+            if not raw.strip():
+                continue
+            
+            content = raw.replace("COMMIT_END", "").strip()
+            parts = content.split("|", 4)
             if len(parts) >= 4:
                 commits.append({
                     "hash": parts[0],
                     "date": parts[1],
                     "author": parts[2],
-                    "message": parts[3]
+                    "message": parts[3],
+                    "body": parts[4] if len(parts) > 4 else ""
                 })
         return commits
     except Exception as e:
-        return [{"hash": "-", "date": "-", "author": "System", "message": f"Konnte Git-History nicht laden: {str(e)}"}]
+        return [{"hash": "-", "date": "-", "author": "System", "message": f"Konnte Git-History nicht laden: {str(e)}", "body": ""}]
 
 @st.dialog("Applikations-Informationen", width="large")
 def show_app_info_dialog():
@@ -113,13 +125,22 @@ def show_app_info_dialog():
 
         if is_relevant:
             visible_count += 1
-            st.markdown(f"""
-            <div style="display: flex; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;">
-                <div style="width: 85px; color: #888; font-family: monospace; flex-shrink: 0;">{commit['date']}</div>
-                <div style="width: 130px; font-weight: 600; color: #2c3e50; flex-shrink: 0;">{category}</div>
-                <div style="color: #333; flex-grow: 1;">{clean_msg}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            
+            # Use st.expander for detailed view
+            with st.expander(f"{commit['date']} | {category} | {clean_msg}"):
+                st.markdown(f"**Commit Hash:** `{commit['hash']}`")
+                st.markdown(f"**Autor:** {commit['author']}")
+                
+                if commit.get('body'):
+                    st.markdown("**Details:**")
+                    # Clean up body (remove leading/trailing whitespace and handle markdown)
+                    body = commit['body'].strip()
+                    if body:
+                        st.info(body)
+                    else:
+                        st.caption("Keine weiteren Details vorhanden.")
+                else:
+                    st.caption("Keine weiteren Details vorhanden.")
             
     if visible_count == 0:
         st.caption("Keine relevanten Änderungen in den letzten Commits gefunden.")
