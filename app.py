@@ -176,6 +176,10 @@ def show_app_info_dialog():
                         st.markdown(body)
                     else:
                         st.caption("Keine weiteren Details vorhanden.")
+                elif "localization" in clean_msg.lower() or "language selectors" in clean_msg.lower():
+                    # Fallback for the multi-language update
+                    st.markdown("**Details des Commits:**")
+                    st.info("• Vollständige Internationalisierung (DE, EN, FR)\n• Umzug aller UI-Texte in zentrale `translations.json`\n• Integration Sprach-Steuerung in Word-Generierung (Lebenslauf & Angebot)\n• Fix: Streamlit Absturz bei App-Initialisierung\n• Sprachumschalter DE/EN/FR in der Sidebar")
                 elif "harmonize status values" in clean_msg.lower():
                     # Fallback for the current complex commit if body is empty but info is in title
                     st.markdown("**Details des Commits:**")
