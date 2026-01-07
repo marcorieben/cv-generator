@@ -11,6 +11,26 @@ from dotenv import load_dotenv
 import re
 
 
+def get_text(translations, section, key, lang="de"):
+    """Helper to get translated text from the dictionary."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, key)
+    except:
+        return key
+
+
+def load_translations():
+    """Loads translations from scripts/translations.json."""
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    trans_path = os.path.join(base_dir, "scripts", "translations.json")
+    try:
+        with open(trans_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"⚠️ Warning: Could not load translations: {e}")
+        return {}
+
+
 def normalize_date_format(date_str):
     """
     Konvertiert verschiedene Datumsformate zu MM/YYYY
@@ -26,23 +46,23 @@ def normalize_date_format(date_str):
         return date_str
     
     # Wenn "heute", "Heute", "today" etc. -> unverändert
-    if date_str.strip().lower() in ['heute', 'today', 'present', 'aktuell']:
+    if date_str.strip().lower() in ['heute', 'today', 'present', 'aktuell', 'aujourd\'hui', 'maintenant']:
         return date_str
     
-    # Monatsnamen Mapping (Deutsch und Englisch)
-    months_de = {
-        'januar': '01', 'jan': '01', 'jan.': '01',
-        'februar': '02', 'feb': '02', 'feb.': '02',
-        'märz': '03', 'mrz': '03', 'mar': '03', 'mar.': '03', 'mär': '03', 'mär.': '03',
-        'april': '04', 'apr': '04', 'apr.': '04',
-        'mai': '05',
-        'juni': '06', 'jun': '06', 'jun.': '06',
-        'juli': '07', 'jul': '07', 'jul.': '07',
-        'august': '08', 'aug': '08', 'aug.': '08',
-        'september': '09', 'sep': '09', 'sep.': '09', 'sept': '09', 'sept.': '09',
-        'oktober': '10', 'okt': '10', 'okt.': '10', 'oct': '10', 'oct.': '10',
-        'november': '11', 'nov': '11', 'nov.': '11',
-        'dezember': '12', 'dez': '12', 'dez.': '12', 'dec': '12', 'dec.': '12'
+    # Monatsnamen Mapping (Deutsch, Englisch und Französisch)
+    months_map = {
+        'januar': '01', 'jan': '01', 'jan.': '01', 'january': '01', 'janvier': '01', 'janv': '01',
+        'februar': '02', 'feb': '02', 'feb.': '02', 'february': '02', 'février': '02', 'fév': '02',
+        'märz': '03', 'mrz': '03', 'mar': '03', 'mar.': '03', 'mär': '03', 'mär.': '03', 'march': '03', 'mars': '03',
+        'april': '04', 'apr': '04', 'apr.': '04', 'avril': '04', 'avr': '04',
+        'mai': '05', 'may': '05',
+        'juni': '06', 'jun': '06', 'jun.': '06', 'june': '06', 'juin': '06',
+        'juli': '07', 'jul': '07', 'jul.': '07', 'july': '07', 'juillet': '07', 'juil': '07',
+        'august': '08', 'aug': '08', 'aug.': '08', 'août': '08',
+        'september': '09', 'sep': '09', 'sep.': '09', 'sept': '09', 'sept.': '09', 'septembre': '09',
+        'oktober': '10', 'okt': '10', 'okt.': '10', 'oct': '10', 'oct.': '10', 'october': '10', 'octobre': '10',
+        'november': '11', 'nov': '11', 'nov.': '11', 'novembre': '11',
+        'dezember': '12', 'dez': '12', 'dez.': '12', 'dec': '12', 'dec.': '12', 'december': '12', 'décembre': '12', 'déc': '12'
     }
     
     # Pattern: "YYYY - YYYY" oder ähnliche Ranges - ZUERST behandeln!
@@ -70,18 +90,21 @@ def normalize_date_format(date_str):
         month_part = parts[0].strip('.').lower()
         year_part = parts[-1]  # Last part is usually year
         
-        # Check if month is in German names
-        if month_part in months_de and re.match(r'^\d{4}$', year_part):
-            return f"{months_de[month_part]}/{year_part}"
+        # Check if month is in our names map
+        if month_part in months_map and re.match(r'^\d{4}$', year_part):
+            return f"{months_map[month_part]}/{year_part}"
     
     # Fallback: unverändert zurückgeben
     return date_str
 
 
-def normalize_json_structure(data):
+def normalize_json_structure(data, language="de"):
     """
     Korrigiert verschachtelte Strukturen von OpenAI zum erwarteten Format
     """
+    translations = load_translations()
+    missing_marker = get_text(translations, "system", "missing_data_marker", language)
+
     # Korrektur 0: Hauptausbildung -> Ausbildung (Abwärtskompatibilität)
     if "Hauptausbildung" in data and "Ausbildung" not in data:
         data["Ausbildung"] = data["Hauptausbildung"]
@@ -138,17 +161,17 @@ def normalize_json_structure(data):
         
         # Falls Kategorien leer sind, Platzhalter einfügen
         if not projektmethodik_items:
-            projektmethodik_items = ["! fehlt – bitte prüfen!"]
+            projektmethodik_items = [missing_marker]
         if not tech_stack_items:
-            tech_stack_items = ["! fehlt – bitte prüfen!"]
+            tech_stack_items = [missing_marker]
         if not weitere_skills_items:
-            weitere_skills_items = ["! fehlt – bitte prüfen!"]
+            weitere_skills_items = [missing_marker]
         
         # Ersetze mit fester Struktur
         data["Fachwissen_und_Schwerpunkte"] = [
-            {"Kategorie": "Projektmethodik", "Inhalt": projektmethodik_items},
-            {"Kategorie": "Tech Stack", "Inhalt": tech_stack_items},
-            {"Kategorie": "Weitere Skills", "Inhalt": weitere_skills_items}
+            {"Kategorie": get_text(translations, "skills_categories", "methodology", language), "Inhalt": projektmethodik_items},
+            {"Kategorie": get_text(translations, "skills_categories", "tech_stack", language), "Inhalt": tech_stack_items},
+            {"Kategorie": get_text(translations, "skills_categories", "other_skills", language), "Inhalt": weitere_skills_items}
         ]
     
     # Korrektur 3: Verschachtelte Referenzprojekte
@@ -291,7 +314,7 @@ def load_schema(schema_path="scripts/pdf_to_json_struktur_cv.json"):
         return json.load(f)
 
 
-def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_struktur_cv.json", job_profile_context=None):
+def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_struktur_cv.json", job_profile_context=None, target_language="de"):
     """
     Konvertiert eine PDF-CV zu strukturiertem JSON via OpenAI API
     
@@ -300,6 +323,7 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
         output_path: Optionaler Pfad für JSON-Output (wenn None, nur zurückgeben)
         schema_path: Pfad zur Schema-Datei
         job_profile_context: Optionales Dictionary mit Stellenprofildaten zur Kontextualisierung
+        target_language: Zielsprache für die Extraktion (de, en, fr)
         
     Returns:
         Dictionary mit den extrahierten CV-Daten
@@ -365,14 +389,19 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
     print("🤖 Sende Anfrage an OpenAI API...")
     client = OpenAI(api_key=api_key)
     
+    # Load translations
+    translations = load_translations()
+    missing_marker = get_text(translations, "system", "missing_data_marker", target_language)
+    
     # System Prompt mit Schema
     system_prompt = f"""Du bist ein Experte für CV-Extraktion und arbeitest für eine IT-Beratungsfirma.
 
 Deine Aufgabe: Extrahiere alle Informationen aus dem bereitgestellten CV-Text und erstelle ein strukturiertes JSON gemäss dem folgenden Schema.
+Zielsprache für die Extraktion ist: {target_language.upper()} (de=Deutsch, en=Englisch, fr=Französisch).
 
 WICHTIGE REGELN:
 1. Verwende NUR Felder, die im Schema definiert sind - KEINE zusätzlichen Felder
-2. Bei fehlenden Informationen: Markiere mit "! bitte prüfen !"
+2. Bei fehlenden Informationen: Markiere mit "{missing_marker}"
 3. Keine Informationen erfinden oder raten
 4. Halte dich strikt an die Feldnamen und Struktur des Schemas
 5. Sprachen: Level 1-5 numerisch. Normalisiere unterschiedliche Skalen auf 1-5:
@@ -400,13 +429,14 @@ WICHTIGE REGELN:
 12. KURZPROFIL: Verwende den Vornamen der Person und schreibe in der 3. Person. Sei sachlich, hebe nur echte Stärken hervor, die aus dem CV ersichtlich sind. KEINE Übertreibungen oder Erfindungen!
 13. ROLLE in Referenzprojekten: Maximal 8 Wörter! Kurz und prägnant formulieren.
 14. SCHWEIZER RECHTSCHREIBUNG: Nutze ausschliesslich die Schweizer Schreibweise. Ersetze jedes 'ß' durch 'ss' (z.B. 'gross' statt 'groß', 'gemäss' statt 'gemäß').
+15. ZIELSPRACHE: Extrahiere und übersetze den gesamten Inhalt (alle Felder) in die Zielsprache: {target_language.upper()}. Dies gilt insbesondere für Profile, Tätigkeiten und Projekterfolge. Fachbegriffe (z.B. 'Scrum', 'Cloud Architecture') sollten in ihrer üblichen Fachsprache bleiben, wenn dies in der Zielsprache üblich ist.
 
 SCHEMA:
 {json.dumps(schema, ensure_ascii=False, indent=2)}
 
 Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
 
-    user_content = f"Extrahiere die CV-Daten aus folgendem Text:\n\n{cv_text}"
+    user_content = f"Extrahiere die CV-Daten (Zielsprache: {target_language.upper()}) aus folgendem Text:\n\n{cv_text}"
     
     # Falls Stellenprofil-Kontext vorhanden ist, diesen hinzufügen um die Extraktion zu fokussieren
     if job_profile_context:
@@ -433,7 +463,7 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
         print(f"✅ JSON erfolgreich erstellt")
         
         # Post-Processing: Struktur korrigieren falls nötig
-        json_data = normalize_json_structure(json_data)
+        json_data = normalize_json_structure(json_data, target_language)
         
         # Optional: In Datei speichern
         if output_path:

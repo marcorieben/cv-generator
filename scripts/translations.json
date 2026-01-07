@@ -1,0 +1,1326 @@
+{
+  "ui": {
+    "sidebar_title": {
+      "de": "⚙️ Einstellungen",
+      "en": "⚙️ Settings",
+      "fr": "⚙️ Paramètres"
+    },
+    "language_label": {
+      "de": "🌐 Sprache",
+      "en": "🌐 Language",
+      "fr": "🌐 Langue"
+    },
+    "personal_settings": {
+      "de": "👤 Persönliche Einstellungen",
+      "en": "👤 Personal Settings",
+      "fr": "👤 Paramètres personnels"
+    },
+    "design_settings": {
+      "de": "🎨 Design & Farben",
+      "en": "🎨 Design & Colors",
+      "fr": "🎨 Design & Couleurs"
+    },
+    "model_settings": {
+      "de": "🤖 KI-Modell",
+      "en": "🤖 AI Model",
+      "fr": "🤖 Modèle IA"
+    },
+    "design_desc": {
+      "de": "Passen Sie das Erscheinungsbild an:",
+      "en": "Adjust the appearance:",
+      "fr": "Ajustez l'apparence :"
+    },
+    "primary_color": {
+      "de": "Primärfarbe (Überschriften)",
+      "en": "Primary Color (Headings)",
+      "fr": "Couleur primaire (en-têtes)"
+    },
+    "secondary_color": {
+      "de": "Sekundärfarbe (Text)",
+      "en": "Secondary Color (Text)",
+      "fr": "Couleur secondaire (texte)"
+    },
+    "font_label": {
+      "de": "Schriftart",
+      "en": "Font",
+      "fr": "Police"
+    },
+    "logo_label": {
+      "de": "Firmenlogo (PNG/JPG)",
+      "en": "Company Logo (PNG/JPG)",
+      "fr": "Logo de l'entreprise (PNG/JPG)"
+    },
+    "select_model": {
+      "de": "Modell auswählen:",
+      "en": "Select Model:",
+      "fr": "Sélectionner le modèle :"
+    },
+    "model_info_btn_help": {
+      "de": "Details zu Kosten & Modellen",
+      "en": "Details on Costs & Models",
+      "fr": "Détails sur les coûts et les modèles"
+    },
+    "app_title": {
+      "de": "📄 CV Generator",
+      "en": "📄 CV Generator",
+      "fr": "📄 Générateur de CV"
+    },
+    "app_subtitle": {
+      "de": "Generieren Sie massgeschneiderte Lebensläufe basierend auf PDF-Inputs.",
+      "en": "Generate tailored CVs based on PDF inputs.",
+      "fr": "Générez des CV personnalisés à partir d'entrées PDF."
+    },
+    "mode_select_title": {
+      "de": "Wählen Sie Ihren Modus",
+      "en": "Select Your Mode",
+      "fr": "Sélectionnez votre mode"
+    },
+    "mode_basic": {
+      "de": "🚀 Basic\n(Nur CV)",
+      "en": "🚀 Basic\n(CV only)",
+      "fr": "🚀 Basique\n(CV uniquement)"
+    },
+    "mode_basic_desc": {
+      "de": "Extrahiert Daten aus dem CV und erstellt ein Word-Dokument.",
+      "en": "Extracts data from the CV and creates a Word document.",
+      "fr": "Extrait les données du CV et crée un document Word."
+    },
+    "mode_analysis": {
+      "de": "🔍 Analysis\n(CV + Profil)",
+      "en": "🔍 Analysis\n(CV + Profile)",
+      "fr": "🔍 Analyse\n(CV + profil)"
+    },
+    "mode_analysis_desc": {
+      "de": "Optimiert den CV basierend auf einem Stellenprofil.",
+      "en": "Optimizes the CV based on a job profile.",
+      "fr": "Optimise le CV en fonction d'un profil de poste."
+    },
+    "mode_full": {
+      "de": "✨ Full Suite\n(All-in-One)",
+      "en": "✨ Full Suite\n(All-in-One)",
+      "fr": "✨ Suite complète\n(Tout-en-un)"
+    },
+    "mode_full_desc": {
+      "de": "Kompletter Workflow inkl. Matchmaking und Feedback.",
+      "en": "Complete workflow including matchmaking and feedback.",
+      "fr": "Flux de travail complet incluant le matchmaking et le feedback."
+    },
+    "welcome_msg": {
+      "de": "Willkommen",
+      "en": "Welcome",
+      "fr": "Bienvenue"
+    },
+    "logout_btn": {
+      "de": "Abmelden",
+      "en": "Logout",
+      "fr": "Déconnexion"
+    },
+    "history_details_btn": {
+      "de": "🔎 Details anzeigen",
+      "en": "🔎 Show Details",
+      "fr": "🔎 Afficher les détails"
+    },
+    "history_unknown": {
+      "de": "Unbekannt",
+      "en": "Unknown",
+      "fr": "Inconnu"
+    },
+    "file_active": {
+      "de": "✅ Datei aktiv:",
+      "en": "✅ File active:",
+      "fr": "✅ Fichier actif :"
+    },
+    "cv_title": {
+      "de": "📄 1. Lebenslauf (CV)",
+      "en": "📄 1. Curriculum Vitae (CV)",
+      "fr": "📄 1. Curriculum Vitae (CV)"
+    },
+    "job_title": {
+      "de": "📝 2. Stellenprofil",
+      "en": "📝 2. Job Profile",
+      "fr": "📝 2. Profil de poste"
+    },
+    "test_mode_active": {
+      "de": "🧪 **Test-Modus aktiv**",
+      "en": "🧪 **Test mode active**",
+      "fr": "🧪 **Mode test actif**"
+    },
+    "test_mode_desc": {
+      "de": "Es wird ein beispielhafter Lebenslauf verwendet.",
+      "en": "A sample CV will be used.",
+      "fr": "Un exemple de CV sera utilisé."
+    },
+    "history_mode": {
+      "de": "Modus",
+      "en": "Mode",
+      "fr": "Mode"
+    },
+    "history_model": {
+      "de": "Modell",
+      "en": "Model",
+      "fr": "Modèle"
+    },
+    "privacy_title": {
+      "de": "🔒 Datenschutz & Hinweise",
+      "en": "🔒 Privacy & Notes",
+      "fr": "🔒 Confidentialité et notes"
+    },
+    "privacy_desc": {
+      "de": "Dokumente werden zur Analyse an OpenAI gesendet und nicht dauerhaft gespeichert. Keine Firmengeheimnisse hochladen.",
+      "en": "Documents are sent to OpenAI for analysis and are not stored permanently. Do not upload company secrets.",
+      "fr": "Les documents sont envoyés à OpenAI pour analyse et ne sont pas stockés de manière permanente. Ne téléchargez pas de secrets d'entreprise."
+    },
+    "privacy_accept": {
+      "de": "Ich bestätige, dass ich die Datenschutzhinweise gelesen habe und zustimme.",
+      "en": "I confirm that I have read and agree to the privacy notice.",
+      "fr": "Je confirme avoir lu et accepté l'avis de confidentialité."
+    },
+    "generate_btn": {
+      "de": "🚀 Analyse & Dokumente generieren",
+      "en": "🚀 Generate Analysis & Documents",
+      "fr": "🚀 Générer l'analyse et les documents"
+    },
+    "results_title": {
+      "de": "🎉 Ergebnisse",
+      "en": "🎉 Results",
+      "fr": "🎉 Résultats"
+    },
+    "downloads_title": {
+      "de": "📥 Downloads",
+      "en": "📥 Downloads",
+      "fr": "📥 Téléchargements"
+    },
+    "json_data_btn": {
+      "de": "📋 JSON-Daten",
+      "en": "📋 JSON Data",
+      "fr": "📋 Données JSON"
+    },
+    "dashboard_btn": {
+      "de": "📊 Dashboard",
+      "en": "📊 Dashboard",
+      "fr": "📊 Tableau de bord"
+    },
+    "word_cv_btn": {
+      "de": "📄 Word-CV",
+      "en": "📄 Word CV",
+      "fr": "📄 CV Word"
+    },
+    "error_status": {
+      "de": "❌ Fehler",
+      "en": "❌ Error",
+      "fr": "❌ Erreur"
+    },
+    "close_btn": {
+      "de": "Schließen",
+      "en": "Close",
+      "fr": "Fermer"
+    },
+    "status_extract_job": {
+      "de": "Analysiere Stellenprofil...",
+      "en": "Analyzing Job Profile...",
+      "fr": "Analyse du profil de poste..."
+    },
+    "status_extract_cv": {
+      "de": "Analysiere CV...",
+      "en": "Analyzing CV...",
+      "fr": "Analyse du CV..."
+    },
+    "status_validate": {
+      "de": "Validiere Daten...",
+      "en": "Validating data...",
+      "fr": "Validation des données..."
+    },
+    "status_generate": {
+      "de": "Generiere Dokumente...",
+      "en": "Generating documents...",
+      "fr": "Génération des documents..."
+    },
+    "status_offer": {
+      "de": "Erstelle Angebot...",
+      "en": "Creating offer...",
+      "fr": "Création de l'offre..."
+    },
+    "status_dashboard": {
+      "de": "Erstelle Dashboard...",
+      "en": "Creating Dashboard...",
+      "fr": "Création du tableau de bord..."
+    },
+    "status_complete": {
+      "de": "Fertig!",
+      "en": "Done!",
+      "fr": "Terminé !"
+    },
+    "auth_error": {
+      "de": "Benutzername/Passwort ist falsch",
+      "en": "Username/password is incorrect",
+      "fr": "Le nom d'utilisateur/mot de passe est incorrect"
+    },
+    "auth_missing": {
+      "de": "Bitte geben Sie Ihren Benutzernamen und Ihr Passwort ein",
+      "en": "Please enter your username and password",
+      "fr": "Veuillez entrer votre nom d'utilisateur et votre mot de passe"
+    },
+    "auth_forgot": {
+      "de": "Passwort vergessen? Bitte kontaktieren Sie den Administrator.",
+      "en": "Forgot password? Please contact the administrator.",
+      "fr": "Mot de passe oublié ? Veuillez contacter l'administrateur."
+    },
+    "password_changed": {
+      "de": "Passwort erfolgreich geändert",
+      "en": "Password changed successfully",
+      "fr": "Mot de passe modifié avec succès"
+    },
+    "change_api_key": {
+      "de": "API Key ändern",
+      "en": "Change API Key",
+      "fr": "Modifier la clé API"
+    },
+    "show_details": {
+      "de": "Details anzeigen",
+      "en": "Show details",
+      "fr": "Afficher les détails"
+    },
+    "dialog_model_overview": {
+      "de": "KI-Modell Übersicht",
+      "en": "AI Model Overview",
+      "fr": "Aperçu du modèle d'IA"
+    },
+    "model_overview_markdown": {
+      "de": "### 🤖 Modell-Empfehlungen & Kosten\n\nDie Kosten sind Schätzungen pro CV-Generierung (Input + Output Tokens).\n\n| Modell | Empfehlung | Kosten | Beschreibung |\n| :--- | :--- | :--- | :--- |\n| **gpt-4o-mini** | ✅ **Standard** | **~$0.01** | Schnell & günstig. Für 95% der Fälle. |\n| **gpt-4o** | 💎 **High-End** | **~$0.15** | Besser bei komplexen Layouts. |\n| **gpt-3.5-turbo** | ⚠️ **Legacy** | **~$0.005** | Nicht empfohlen (Formatierungsfehler). |\n| **mock** | 🧪 **Test** | **Gratis** | Nur für Entwicklung (Dummy-Daten). |\n\n**Empfehlung:** Nutzen Sie standardmässig `gpt-4o-mini`. Wechseln Sie nur zu `gpt-4o`, wenn die Extraktion ungenau ist.",
+      "en": "### 🤖 Model Recommendations & Costs\n\nCosts are estimates per CV generation (Input + Output Tokens).\n\n| Model | Recommendation | Cost | Description |\n| :--- | :--- | :--- | :--- |\n| **gpt-4o-mini** | ✅ **Standard** | **~$0.01** | Fast & cheap. For 95% of cases. |\n| **gpt-4o** | 💎 **High-End** | **~$0.15** | Better for complex layouts. |\n| **gpt-3.5-turbo** | ⚠️ **Legacy** | **~$0.005** | Not recommended (formatting errors). |\n| **mock** | 🧪 **Test** | **Free** | Only for development (dummy data). |\n\n**Recommendation:** Use `gpt-4o-mini` by default. Switch to `gpt-4o` only if extraction is inaccurate.",
+      "fr": "### 🤖 Recommandations de modèles et coûts\n\nLes coûts sont des estimations par génération de CV (Input + Output Tokens).\n\n| Modèle | Recommandation | Coût | Description |\n| :--- | :--- | :--- | :--- |\n| **gpt-4o-mini** | ✅ **Standard** | **~$0.01** | Rapide et bon marché. Pour 95 % des cas. |\n| **gpt-4o** | 💎 **Haut de gamme** | **~$0.15** | Meilleur pour les mises en page complexes. |\n| **gpt-3.5-turbo** | ⚠️ **Hérité** | **~$0.005** | Non recommandé (erreurs de formatage). |\n| **mock** | 🧪 **Test** | **Gratuit** | Uniquement pour le développement (données factices). |\n\n**Recommandation :** Utilisez `gpt-4o-mini` par défaut. Passez à `gpt-4o` uniquement si l'extraction est imprécise."
+    },
+    "dialog_app_info": {
+      "de": "Applikations-Informationen",
+      "en": "Application Information",
+      "fr": "Informations sur l'application"
+    },
+    "details_label": {
+      "de": "Details:",
+      "en": "Details:",
+      "fr": "Détails :"
+    },
+    "no_details": {
+      "de": "Keine weiteren Details vorhanden.",
+      "en": "No further details available.",
+      "fr": "Aucun détail supplémentaire disponible."
+    },
+    "commit_details_label": {
+      "de": "Details des Commits:",
+      "en": "Commit details:",
+      "fr": "Détails du commit :"
+    },
+    "no_changes": {
+      "de": "Keine relevanten Änderungen in den letzten Commits gefunden.",
+      "en": "No relevant changes found in the last commits.",
+      "fr": "Aucun changement pertinent trouvé dans les derniers commits."
+    },
+    "test_mode_notice": {
+      "de": "🧪 Test-Modus aktiv: Es werden keine echten API-Calls gemacht.",
+      "en": "🧪 Test mode active: No real API calls will be made.",
+      "fr": "🧪 Mode test activé : Aucun appel API réel ne sera effectué."
+    },
+    "missing_api_key": {
+      "de": "Kein API Key gefunden!",
+      "en": "No API Key found!",
+      "fr": "Clé API introuvable !"
+    },
+    "dialog_pipeline": {
+      "de": "CV Generator Pipeline",
+      "en": "CV Generator Pipeline",
+      "fr": "Pipeline du générateur de CV"
+    },
+    "generation_success": {
+      "de": "✅ Generierung erfolgreich abgeschlossen!",
+      "en": "✅ Generation completed successfully!",
+      "fr": "✅ Génération terminée avec succès !"
+    },
+    "offer_success": {
+      "de": "✅ Angebot erfolgreich erstellt!",
+      "en": "✅ Offer created successfully!",
+      "fr": "✅ Offre créée avec succès !"
+    },
+    "file_not_found_on_disk": {
+      "de": "Datei wurde generiert, aber nicht im Dateisystem gefunden.",
+      "en": "File was generated but not found on disk.",
+      "fr": "Le fichier a été generé mais n'a pas été trouvé sur le disque."
+    },
+    "offer_button_caption": {
+      "de": "Erstellt ein Angebot basierend auf den Analysedaten.",
+      "en": "Creates an offer based on analytical data.",
+      "fr": "Crée une offre basée sur les données d'analyse."
+    },
+    "offer_ready_caption": {
+      "de": "Das Angebot wurde erfolgreich generiert und steht zum Download bereit.",
+      "en": "The offer has been successfully generated and is available for download.",
+      "fr": "L'offre a été générée avec succès et est prête à être téléchargée."
+    },
+    "error_prefix_colon": {
+      "de": "Fehler:",
+      "en": "Error:",
+      "fr": "Erreur :"
+    },
+    "unexpected_error": {
+      "de": "Unerwarteter Fehler:",
+      "en": "Unexpected error:",
+      "fr": "Erreur inattendue :"
+    },
+    "offer_error": {
+      "de": "Fehler bei der Angebotserstellung:",
+      "en": "Error during offer creation:",
+      "fr": "Erreur lors de la création de l'offre :"
+    },
+    "processing_complete_label": {
+      "de": "✅ Verarbeitung abgeschlossen!",
+      "en": "✅ Processing complete!",
+      "fr": "✅ Traitement terminé !"
+    },
+    "processing_error_label": {
+      "de": "❌ Fehler aufgetreten",
+      "en": "❌ Error occurred",
+      "fr": "❌ Une erreur s'est produite"
+    },
+    "offer_ready_label": {
+      "de": "✅ Angebot bereit!",
+      "en": "✅ Offer ready!",
+      "fr": "✅ Offre prête !"
+    },
+    "error_label": {
+      "de": "❌ Fehler",
+      "en": "❌ Error",
+      "fr": "❌ Erreur"
+    },
+    "show_results": {
+      "de": "Ergebnisse anzeigen",
+      "en": "Show results",
+      "fr": "Afficher les résultats"
+    },
+    "offer_ready": {
+      "de": "✅ Angebot fertiggestellt",
+      "en": "✅ Offer completed",
+      "fr": "✅ Offre terminée"
+    },
+    "matchmaking": {
+      "fulfilled": {
+        "de": "✅ Erfüllt",
+        "en": "✅ Fulfilled",
+        "fr": "✅ Rempli"
+      },
+      "partially_fulfilled": {
+        "de": "⚠️ Teilweise",
+        "en": "⚠️ Partially",
+        "fr": "⚠️ Partiel"
+      },
+      "not_fulfilled": {
+        "de": "❌ Nicht erfüllt",
+        "en": "❌ Not fulfilled",
+        "fr": "❌ Pas rempli"
+      },
+      "not_mentioned": {
+        "de": "⚪ Nicht erwähnt",
+        "en": "⚪ Not mentioned",
+        "fr": "⚪ Pas mentionné"
+      },
+      "check_manual": {
+        "de": "❓ Prüfen",
+        "en": "❓ Check",
+        "fr": "❓ À vérifier"
+      }
+    },
+    "offer_create_title": {
+      "de": "💼 Angebot erstellen",
+      "en": "💼 Create offer",
+      "fr": "💼 Créer une offre"
+    },
+    "offer_create_btn": {
+      "de": "Angebot erstellen",
+      "en": "Create offer",
+      "fr": "Créer une offre"
+    },
+    "offer_download_btn": {
+      "de": "📄 Angebot herunterladen",
+      "en": "📄 Download offer",
+      "fr": "📄 Télécharger l'offre"
+    },
+    "start_generation_btn": {
+      "de": "🚀 Generierung starten",
+      "en": "🚀 Start generation",
+      "fr": "🚀 Lancer la génération"
+    },
+    "api_key_active": {
+      "de": "API Key aktiv ✅",
+      "en": "API Key active ✅",
+      "fr": "Clé API active ✅"
+    },
+    "current_mode": {
+      "de": "Aktueller Modus",
+      "en": "Current Mode",
+      "fr": "Mode actuel"
+    },
+    "app_info": {
+      "de": "ℹ️ Applikations-Infos",
+      "en": "ℹ️ App Info",
+      "fr": "ℹ️ Infos sur l'application"
+    },
+    "app_info_desc": {
+      "de": "Details zur Applikation & Version",
+      "en": "Details about application & version",
+      "fr": "Détails sur l'application et la version"
+    },
+    "history_tab": {
+      "de": "📜 Verlauf",
+      "en": "📜 History",
+      "fr": "📜 Historique"
+    },
+    "history_empty": {
+      "de": "Noch keine Läufe gespeichert.",
+      "en": "No runs saved yet.",
+      "fr": "Aucune exécution enregistrée pour le moment."
+    },
+    "processing_title": {
+      "de": "🚀 Dokumente werden verarbeitet...",
+      "en": "🚀 Processing documents...",
+      "fr": "🚀 Traitement des documents..."
+    },
+    "current_step": {
+      "de": "**Aktueller Schritt:**",
+      "en": "**Current step:**",
+      "fr": "**Étape actuelle :**"
+    },
+    "app_info_title": {
+      "de": "### 🏢 Geschäftszweck & Nutzen",
+      "en": "### 🏢 Business Purpose & Benefits",
+      "fr": "### 🏢 Objectif commercial et avantages"
+    },
+    "app_info_name": {
+      "de": "**CV Generator & Matchmaking Suite**",
+      "en": "**CV Generator & Matchmaking Suite**",
+      "fr": "**CV Generator & Matchmaking Suite**"
+    },
+    "app_info_main_desc": {
+      "de": "Diese Applikation dient der automatisierten Verarbeitung, Analyse und Optimierung von Kandidatenprofilen. Sie unterstützt HR-Teams und Recruiter dabei, den manuellen Aufwand bei der CV-Erstellung und dem Abgleich mit Stellenprofilen drastisch zu reduzieren.",
+      "en": "This application is used for the automated processing, analysis, and optimization of candidate profiles. It supports HR teams and recruiters in drastically reducing the manual effort of CV creation and matching with job profiles.",
+      "fr": "Cette application est utilisée pour le traitement, l'analyse et l'optimisation automatisés des profils de candidats. Elle aide les équipes RH et les recruteurs à réduire considérablement l'effort manuel de création de CV et de correspondance avec les profils de poste."
+    },
+    "app_info_features_title": {
+      "de": "**Kernfunktionen:**",
+      "en": "**Core Features:**",
+      "fr": "**Fonctions clés :**"
+    },
+    "app_info_feature1": {
+      "de": "*   **CV Parsing:** Extraktion strukturierter Daten aus PDF-Lebensläufen mittels KI.",
+      "en": "*   **CV Parsing:** Extraction of structured data from PDF CVs using AI.",
+      "fr": "*   **CV Parsing :** Extraction de données structurées à partir de CV PDF à l'aide de l'IA."
+    },
+    "app_info_feature2": {
+      "de": "*   **Standardisierung:** Generierung von einheitlichen, gebrandeten Word-CVs.",
+      "en": "*   **Standardization:** Generation of uniform, branded Word CVs.",
+      "fr": "*   **Standardisation :** Génération de CV Word uniformes et aux couleurs de la marque."
+    },
+    "app_info_feature3": {
+      "de": "*   **Matchmaking:** Intelligenter Abgleich von Kandidatenprofilen gegen Stellenbeschreibungen.",
+      "en": "*   **Matchmaking:** Intelligent matching of candidate profiles against job descriptions.",
+      "fr": "*   **Matchmaking :** Mise en correspondance intelligente des profils de candidats avec les descriptions de poste."
+    },
+    "app_info_feature4": {
+      "de": "*   **Qualitätssicherung:** Automatische Prüfung auf Lücken, Inkonsistenzen und fehlende Skills.",
+      "en": "*   **Quality Assurance:** Automatic check for gaps, inconsistencies, and missing skills.",
+      "fr": "*   **Assurance qualité :** Vérification automatique des lacunes, des incohérences et des compétences manquantes."
+    },
+    "changelog_title": {
+      "de": "📜 Änderungshistorie (Changelog)",
+      "en": "📜 Change History (Changelog)",
+      "fr": "📜 Historique des modifications (Changelog)"
+    },
+    "changelog_general": {
+      "de": "📝 Allgemein",
+      "en": "📝 General",
+      "fr": "📝 Général"
+    }
+  },
+  "commit_types": {
+    "feat": {
+      "de": "✨ Neue Funktion",
+      "en": "✨ New Feature",
+      "fr": "✨ Nouvelle fonction"
+    },
+    "feature": {
+      "de": "✨ Neue Funktion",
+      "en": "✨ New Feature",
+      "fr": "✨ Nouvelle fonction"
+    },
+    "fix": {
+      "de": "🐛 Fehlerbehebung",
+      "en": "🐛 Bug Fix",
+      "fr": "🐛 Correction de bug"
+    },
+    "ui": {
+      "de": "🎨 Design & UI",
+      "en": "🎨 Design & UI",
+      "fr": "🎨 Design et UI"
+    },
+    "perf": {
+      "de": "⚡ Performance",
+      "en": "⚡ Performance",
+      "fr": "⚡ Performance"
+    },
+    "docs": {
+      "de": "📚 Dokumentation",
+      "en": "📚 Documentation",
+      "fr": "📚 Documentation"
+    },
+    "refactor": {
+      "de": "🔧 Refactoring",
+      "en": "🔧 Refactoring",
+      "fr": "🔧 Refactoring"
+    },
+    "chore": {
+      "de": "⚙️ Wartung",
+      "en": "⚙️ Maintenance",
+      "fr": "⚙️ Maintenance"
+    }
+  },
+  "dashboard_modals": {
+    "score_title": {
+      "de": "Berechnung des Match-Scores",
+      "en": "Match Score Calculation",
+      "fr": "Calcul du score de correspondance"
+    },
+    "score_desc": {
+      "de": "Der Score wird durch eine dynamische, gewichtete Analyse ermittelt:",
+      "en": "The score is determined through a dynamic, weighted analysis:",
+      "fr": "Le score est déterminé par une analyse dynamique et pondérée :"
+    },
+    "score_must": {
+      "de": "Muss-Kriterien",
+      "en": "Must Criteria",
+      "fr": "Critères obligatoires"
+    },
+    "score_should": {
+      "de": "Soll-Kriterien",
+      "en": "Should Criteria",
+      "fr": "Critères souhaités"
+    },
+    "score_soft_skills": {
+      "de": "Soft Skills",
+      "en": "Soft Skills",
+      "fr": "Compétences douces"
+    },
+    "score_basis_90": {
+      "de": "90% Basis",
+      "en": "90% Basis",
+      "fr": "Base 90%"
+    },
+    "score_basis_10": {
+      "de": "10% Basis",
+      "en": "10% Basis",
+      "fr": "Base 10%"
+    },
+    "score_basis_0": {
+      "de": "0% (qualitativ)",
+      "en": "0% (qualitative)",
+      "fr": "0 % (qualitatif)"
+    },
+    "score_must_desc": {
+      "de": "Höchste Priorität. Fehlende Muss-Punkte führen zu hohen Abzügen (-20% pro Punkt).",
+      "en": "Highest priority. Missing must-points lead to high deductions (-20% per point).",
+      "fr": "Priorité absolue. Les points obligatoires manquants entraînent des déductions importantes (-20 % par point)."
+    },
+    "score_should_desc": {
+      "de": "Wichtige Zusatzerwartungen, die den Score massgeblich stützen.",
+      "en": "Important additional expectations that significantly support the score.",
+      "fr": "Attentes supplémentaires importantes qui soutiennent de manière significative le score."
+    },
+    "score_soft_skills_desc": {
+      "de": "Persönliche Kompetenzen fliessen nicht in den numerischen Score ein.",
+      "en": "Personal skills are not included in the numerical score.",
+      "fr": "Les compétences personnelles ne sont pas incluses dans le score numérique."
+    },
+    "score_weighting_title": {
+      "de": "Gewichtung der Status-Werte:",
+      "en": "Weighting of status values:",
+      "fr": "Pondération des valeurs de statut :"
+    },
+    "score_fulfilled": {
+      "de": "Erfüllt: 100%",
+      "en": "Fulfilled: 100%",
+      "fr": "Rempli : 100 %"
+    },
+    "score_partial": {
+      "de": "Teilweise: 50%",
+      "en": "Partial: 50%",
+      "fr": "Partiel : 50 %"
+    },
+    "score_potential": {
+      "de": "Potenziell: 40%",
+      "en": "Potential: 40%",
+      "fr": "Potentiel : 40 %"
+    },
+    "score_not_fulfilled_val": {
+      "de": "Nicht erfüllt: 0%",
+      "en": "Not fulfilled: 0%",
+      "fr": "Non rempli : 0 %"
+    },
+    "score_example_title": {
+      "de": "💡 Beispiel-Rechnung:",
+      "en": "💡 Example Calculation:",
+      "fr": "💡 Exemple de calcul :"
+    },
+    "score_example_scenario": {
+      "de": "Angenommen, ein Profil hat 5 Muss- und 5 Soll-Kriterien:",
+      "en": "Suppose a profile has 5 must and 5 should criteria:",
+      "fr": "Supposons qu'un profil ait 5 critères obligatoires et 5 critères souhaités :"
+    },
+    "score_example_1": {
+      "de": "5/5 Muss erfüllt",
+      "en": "5/5 Must fulfilled",
+      "fr": "5/5 obligatoires remplis"
+    },
+    "score_example_1_soll": {
+      "de": "3/5 Soll erfüllt",
+      "en": "3/5 Should fulfilled",
+      "fr": "3/5 souhaités remplis"
+    },
+    "score_example_2": {
+      "de": "1/5 Muss <u>nicht</u> erfüllt",
+      "en": "1/5 Must <u>not</u> fulfilled",
+      "fr": "1/5 obligatoire <u>non</u> rempli"
+    },
+    "score_example_2_desc": {
+      "de": "Max. 80% möglich (da -20% Abzug vom Gesamtwert).",
+      "en": "Max. 80% possible (due to -20% deduction from the total value).",
+      "fr": "Max. 80 % possible (en raison d'une déduction de -20 % de la valeur totale)."
+    },
+    "score_dynamic_title": {
+      "de": "*Dynamische Gewichtung:",
+      "en": "*Dynamic Weighting:",
+      "fr": "*Pondération dynamique :"
+    },
+    "score_dynamic_desc": {
+      "de": "Falls Kategorien fehlen (z.B. keine Soll-Kriterien im Profil), wird deren Gewichtung automatisch auf die vorhandenen Sektionen verteilt. 100% sind somit immer erreichbar.",
+      "en": "If categories are missing (e.g., no should criteria in the profile), their weighting is automatically distributed to the existing sections. 100% is thus always achievable.",
+      "fr": "Si des catégories sont manquantes (par exemple, aucun critère souhaité dans le profil), leur pondération est automatiquement répartie sur les sections existantes. Un score de 100 % est donc toujours réalisable."
+    },
+    "score_excellent": {
+      "de": "Hervorragend",
+      "en": "Excellent",
+      "fr": "Excellent"
+    },
+    "score_good": {
+      "de": "Gute Passung",
+      "en": "Good Match",
+      "fr": "Bonne correspondance"
+    },
+    "score_critical": {
+      "de": "Kritisch",
+      "en": "Critical",
+      "fr": "Critique"
+    },
+    "status_title": {
+      "de": "Legende: Status-Werte",
+      "en": "Legend: Status Values",
+      "fr": "Légende : Valeurs de statut"
+    },
+    "status_desc": {
+      "de": "Übersicht der verwendeten Symbole und deren Bedeutung im Matching-Prozess:",
+      "en": "Overview of the symbols used and their meaning in the matching process:",
+      "fr": "Aperçu des symboles utilisés et de leur signification dans le processus de correspondance :"
+    },
+    "status_fulfilled": {
+      "de": "Erfüllt",
+      "en": "Fulfilled",
+      "fr": "Rempli"
+    },
+    "status_fulfilled_desc": {
+      "de": "Das Kriterium ist im CV eindeutig belegt.",
+      "en": "The criterion is clearly documented in the CV.",
+      "fr": "Le critère est clairement documenté dans le CV."
+    },
+    "status_partial": {
+      "de": "Teilweise",
+      "en": "Partial",
+      "fr": "Partiel"
+    },
+    "status_partial_desc": {
+      "de": "Das Kriterium ist bedingt vorhanden oder aufgrund der Erfahrung sehr wahrscheinlich (potenziell erfüllt).",
+      "en": "The criterion is partially present or very likely based on experience (potentially fulfilled).",
+      "fr": "Le critère est partiellement présent ou très probable sur la base de l'expérience (potentiellement rempli)."
+    },
+    "status_not_fulfilled": {
+      "de": "Nicht erfüllt",
+      "en": "Not fulfilled",
+      "fr": "Non rempli"
+    },
+    "status_not_fulfilled_desc": {
+      "de": "Keine Anhaltspunkte im CV gefunden.",
+      "en": "No evidence found in the CV.",
+      "fr": "Aucune preuve trouvée dans le CV."
+    },
+    "status_not_mentioned": {
+      "de": "Nicht erwähnt",
+      "en": "Not mentioned",
+      "fr": "Non mentionné"
+    },
+    "status_not_mentioned_desc": {
+      "de": "Weder belegt noch widerlegt (Standardwert für Soft Skills).",
+      "en": "Neither documented nor refuted (default for soft skills).",
+      "fr": "Ni documenté ni réfuté (par défaut pour les soft skills)."
+    },
+    "status_check": {
+      "de": "Prüfen",
+      "en": "Check",
+      "fr": "À vérifier"
+    },
+    "status_check_desc": {
+      "de": "Information fehlt oder ist unklar.",
+      "en": "Information is missing or unclear.",
+      "fr": "L'information est manquante ou peu claire."
+    },
+    "ai_note": {
+      "de": "Hinweis: Das Matching erfolgt KI-gestützt auf Basis der extrahierten JSON-Daten. Eine manuelle Prüfung der kritischen Punkte wird empfohlen.",
+      "en": "Note: Matching is AI-assisted based on extracted JSON data. Manual verification of critical points is recommended.",
+      "fr": "Note : La correspondance est assistée par l'intelligence artificielle sur la base des données JSON extraites. Une vérification manuelle des points critiques est recommandée."
+    }
+  },
+  "cv": {
+    "personal_data": {
+      "de": "Personalien",
+      "en": "Personal Information",
+      "fr": "Données personnelles"
+    },
+    "profile": {
+      "de": "Kurzprofil",
+      "en": "Short Profile",
+      "fr": "Bref profil"
+    },
+    "expertise": {
+      "de": "Expertise",
+      "en": "Expertise",
+      "fr": "Expertise"
+    },
+    "role_label": {
+      "de": "Hauptrolle:",
+      "en": "Main Role:",
+      "fr": "Rôle principal :"
+    },
+    "nationality_label": {
+      "de": "Nationalität:",
+      "en": "Nationality:",
+      "fr": "Nationalité :"
+    },
+    "education_label": {
+      "de": "Ausbildung:",
+      "en": "Education:",
+      "fr": "Formation :"
+    },
+    "role_description": {
+      "de": "Hauptrolle & Beschreibung",
+      "en": "Main Role & Description",
+      "fr": "Rôle principal et description"
+    },
+    "skills": {
+      "de": "Fachwissen & Schwerpunkte",
+      "en": "Skills & Expertise",
+      "fr": "Connaissances et points forts"
+    },
+    "education": {
+      "de": "Aus- und Weiterbildung",
+      "en": "Education & Training",
+      "fr": "Formation et perfectionnement"
+    },
+    "certifications": {
+      "de": "Trainings & Zertifizierungen",
+      "en": "Trainings & Certifications",
+      "fr": "Formations et certifications"
+    },
+    "languages": {
+      "de": "Sprachkenntnisse 🌐",
+      "en": "Languages 🌐",
+      "fr": "Langues 🌐"
+    },
+    "projects": {
+      "de": "Ausgewählte Referenzprojekte",
+      "en": "Selected Reference Projects",
+      "fr": "Projets de référence sélectionnés"
+    },
+    "tech_label": {
+      "de": "Technologien",
+      "en": "Technologies",
+      "fr": "Technologies"
+    },
+    "methodology_label": {
+      "de": "Methodik",
+      "en": "Methodology",
+      "fr": "Méthodologie"
+    }
+  },
+  "offer": {
+    "sender_name": {
+      "de": "Orange Business Digital",
+      "en": "Orange Business Digital",
+      "fr": "Orange Business Digital"
+    },
+    "sender_city": {
+      "de": "Ittigen",
+      "en": "Ittigen",
+      "fr": "Ittigen"
+    },
+    "direct_contact_tel": {
+      "de": "<Direkte Tel Nr.>",
+      "en": "<Direct Tel No.>",
+      "fr": "<N° de tél. direct>"
+    },
+    "title": {
+      "de": "Angebot",
+      "en": "Offer",
+      "fr": "Offre"
+    },
+    "criterion_label": {
+      "de": "Kriterium",
+      "en": "Criterion",
+      "fr": "Critère"
+    },
+    "status_label": {
+      "de": "Status",
+      "en": "Status",
+      "fr": "Statut"
+    },
+    "hint_label": {
+      "de": "Hinweis",
+      "en": "Hint",
+      "fr": "Remarque"
+    },
+    "engagement_terms": {
+      "de": "Einsatzkonditionen",
+      "en": "Engagement Terms",
+      "fr": "Conditions d'engagement"
+    },
+    "criteria_match": {
+      "de": "Abgleich mit Anforderungskriterien",
+      "en": "Matching with Requirement Criteria",
+      "fr": "Comparaison avec les critères d'exigence"
+    },
+    "added_value": {
+      "de": "Mehrwert für den Kunden",
+      "en": "Added Value for the Customer",
+      "fr": "Valeur ajoutée pour le client"
+    },
+    "direct_contact": {
+      "de": "Ihr direkter Ansprechpartner:",
+      "en": "Your direct contact person:",
+      "fr": "Votre interlocuteur direct :"
+    },
+    "customer_placeholder": {
+      "de": "<bitte falls bekannt Ansprechpartner Kunde ergänzen>",
+      "en": "<please add customer contact person if known>",
+      "fr": "<veuillez ajouter l'interlocuteur client si connu>"
+    },
+    "salutation": {
+      "de": "Sehr geehrter",
+      "en": "Dear",
+      "fr": "Madame, Monsieur,"
+    },
+    "salutation_placeholder": {
+      "de": "<Nachname Ansprechperson - bitte prüfen>",
+      "en": "<Last name contact person - please check>",
+      "fr": "<Nom de famille de l'interlocuteur - à vérifier>"
+    },
+    "conditions_intro": {
+      "de": "Dieses Angebot basiert auf folgenden Konditionen:",
+      "en": "This offer is based on the following conditions:",
+      "fr": "Cette offre est basée sur les conditions suivantes :"
+    },
+    "pensum_label": {
+      "de": "Pensum:",
+      "en": "Workload:",
+      "fr": "Taux d'occupation :"
+    },
+    "availability_label": {
+      "de": "Verfügbarkeit:",
+      "en": "Availability:",
+      "fr": "Disponibilité :"
+    },
+    "hourly_rate_label": {
+      "de": "Stundensatz (CHF):",
+      "en": "Hourly rate (CHF):",
+      "fr": "Tarif horaire (CHF) :"
+    },
+    "subcontractor_label": {
+      "de": "Subunternehmen:",
+      "en": "Subcontractor:",
+      "fr": "Sous-traitant :"
+    },
+    "validity_label": {
+      "de": "Angebot Gültigkeit:",
+      "en": "Offer validity:",
+      "fr": "Validité de l'offre :"
+    },
+    "criteria_intro": {
+      "de": "Die Muss- und Soll-Kriterien werden erfüllt, mit folgenden ergänzenden Hinweisen:",
+      "en": "The must and should criteria are met, with the following additional notes:",
+      "fr": "Les critères obligatoires et souhaitables sont remplis, avec les notes complémentaires suivantes :"
+    },
+    "muss_criteria": {
+      "de": "Muss-Kriterien",
+      "en": "Must Criteria",
+      "fr": "Critères obligatoires"
+    },
+    "soll_criteria": {
+      "de": "Soll-Kriterien",
+      "en": "Should Criteria",
+      "fr": "Critères souhaitables"
+    },
+    "other_criteria": {
+      "de": "Weitere Anforderungen",
+      "en": "Further Requirements",
+      "fr": "Autres exigences"
+    },
+    "soft_skills": {
+      "de": "Persönliche Kompetenzen / Soft Skills",
+      "en": "Personal Competencies / Soft Skills",
+      "fr": "Compétences personnelles / Soft Skills"
+    },
+    "assessment_title": {
+      "de": "Gesamtbeurteilung & Mehrwert",
+      "en": "Overall Assessment & Added Value",
+      "fr": "Évaluation globale et valeur ajoutée"
+    },
+    "questions_footer": {
+      "de": "Für Fragen zu diesem Angebot stehen wir jederzeit gerne zur Verfügung.",
+      "en": "We are at your disposal at any time for questions regarding this offer.",
+      "fr": "Nous restons à votre entière disposition pour toute question relative à cette offre."
+    },
+    "best_regards": {
+      "de": "Beste Grüsse",
+      "en": "Best regards",
+      "fr": "Meilleures salutations"
+    }
+  },
+  "dashboard": {
+    "title": {
+      "de": "Dashboard - CV Analyse",
+      "en": "Dashboard - CV Analysis",
+      "fr": "Tableau de bord - Analyse de CV"
+    },
+    "generated_at": {
+      "de": "Generiert",
+      "en": "Generated",
+      "fr": "Généré"
+    },
+    "ai_model": {
+      "de": "KI-Modell",
+      "en": "AI Model",
+      "fr": "Modèle IA"
+    },
+    "mode": {
+      "de": "Modus",
+      "en": "Mode",
+      "fr": "Mode"
+    },
+    "input_files": {
+      "de": "Input Dateien",
+      "en": "Input Files",
+      "fr": "Fichiers d'entrée"
+    },
+    "print_pdf": {
+      "de": "🖨️ Drucken / PDF",
+      "en": "🖨️ Print / PDF",
+      "fr": "🖨️ Imprimer / PDF"
+    },
+    "overall": {
+      "de": "Gesamt",
+      "en": "Overall",
+      "fr": "Total"
+    },
+    "risks_gaps": {
+      "de": "Risiken & Lücken",
+      "en": "Risks & Gaps",
+      "fr": "Risques et lacunes"
+    },
+    "no_risks_found": {
+      "de": "Keine Risiken identifiziert.",
+      "en": "No risks identified.",
+      "fr": "Aucun risque identifié."
+    },
+    "matching_score": {
+      "de": "Matching Score",
+      "en": "Matching Score",
+      "fr": "Score de correspondance"
+    },
+    "risks": {
+      "de": "Risiken & Warnhinweise",
+      "en": "Risks & Warnings",
+      "fr": "Risques et avertissements"
+    },
+    "no_risks": {
+      "de": "Keine Risiken identifiziert",
+      "en": "No risks identified",
+      "fr": "Aucun risque identifié"
+    },
+    "criteria_matching": {
+      "de": "Kriterien-Abgleich",
+      "en": "Criteria Matching",
+      "fr": "Comparaison des critères"
+    },
+    "feedback_summary": {
+      "de": "Feedback Zusammenfassung",
+      "en": "Feedback Summary",
+      "fr": "Résumé des commentaires"
+    },
+    "offer_argumentation": {
+      "de": "Angebots-Argumentation & Mehrwert",
+      "en": "Offer Argumentation & Added Value",
+      "fr": "Argumentation de l'offre et valeur ajoutée"
+    },
+    "suitability_summary": {
+      "de": "Zusammenfassung der Eignung",
+      "en": "Suitability Summary",
+      "fr": "Résumé de l'adéquation"
+    },
+    "methods_tech": {
+      "de": "Methoden & Technologien",
+      "en": "Methods & Technologies",
+      "fr": "Méthodes et technologies"
+    },
+    "suitability_focus": {
+      "de": "Eignungs-Fokus",
+      "en": "Suitability Focus",
+      "fr": "Focus sur l'adéquation"
+    },
+    "no_summary": {
+      "de": "Keine Zusammenfassung verfügbar.",
+      "en": "No summary available.",
+      "fr": "Aucun résumé disponible."
+    },
+    "no_criteria": {
+      "de": "Keine Kriterien in dieser Kategorie definiert.",
+      "en": "No criteria defined in this category.",
+      "fr": "Aucun critère défini dans cette catégorie."
+    },
+    "criterion": {
+      "de": "Kriterium",
+      "en": "Criterion",
+      "fr": "Critère"
+    },
+    "status": {
+      "de": "Status",
+      "en": "Status",
+      "fr": "Statut"
+    },
+    "evidence": {
+      "de": "Evidenz im CV",
+      "en": "Evidence in CV",
+      "fr": "Preuve dans le CV"
+    },
+    "muss": {
+      "de": "Muss",
+      "en": "Mandatory",
+      "fr": "Obligatoire"
+    },
+    "soll": {
+      "de": "Soll",
+      "en": "Desired",
+      "fr": "Souhaité"
+    },
+    "soft_skills": {
+      "de": "Soft Skills",
+      "en": "Soft Skills",
+      "fr": "Compétences douces"
+    },
+    "weitere": {
+      "de": "Weitere",
+      "en": "Additional",
+      "fr": "Autres"
+    },
+    "chart_ok": {
+      "de": "Erfüllt",
+      "en": "Fulfilled",
+      "fr": "Rempli"
+    },
+    "chart_potential": {
+      "de": "Potenziell / Teilweise",
+      "en": "Potential / Partial",
+      "fr": "Potentiel / Partiel"
+    },
+    "chart_neutral": {
+      "de": "Neutral / Nicht explizit",
+      "en": "Neutral / Not explicit",
+      "fr": "Neutre / Pas explicite"
+    },
+    "chart_not_ok": {
+      "de": "Nicht Erfüllt",
+      "en": "Not Fulfilled",
+      "fr": "Non rempli"
+    }
+  },
+  "levels": {
+    "level_5": {
+      "de": "Muttersprache",
+      "en": "Native speaker",
+      "fr": "Langue maternelle"
+    },
+    "level_4": {
+      "de": "Verhandlungssicher",
+      "en": "Full professional proficiency",
+      "fr": "Capacité professionnelle complète"
+    },
+    "level_3": {
+      "de": "Sehr gute Kenntnisse",
+      "en": "Very good knowledge",
+      "fr": "Très bonnes connaissances"
+    },
+    "level_2": {
+      "de": "Gute Kenntnisse",
+      "en": "Good knowledge",
+      "fr": "Bonnes connaissances"
+    },
+    "level_1": {
+      "de": "Grundkenntnisse",
+      "en": "Basic knowledge",
+      "fr": "Connaissances de base"
+    }
+  },
+  "skills_categories": {
+    "methodology": {
+      "de": "Projektmethodik",
+      "en": "Project Methodology",
+      "fr": "Méthodologie de projet"
+    },
+    "tech_stack": {
+      "de": "Tech Stack",
+      "en": "Tech Stack",
+      "fr": "Stack technique"
+    },
+    "other_skills": {
+      "de": "Weitere Skills",
+      "en": "Other Skills",
+      "fr": "Autres compétences"
+    }
+  },
+  "validation": {
+    "missing_field": {
+      "de": "Fehlendes Feld",
+      "en": "Missing field",
+      "fr": "Champ manquant"
+    },
+    "field_is_none": {
+      "de": "Feld ist None",
+      "en": "Field is None",
+      "fr": "Champ est None"
+    },
+    "hauptrolle_invalid": {
+      "de": "Feld 'Hauptrolle' muss ein Objekt mit 'Titel' und 'Beschreibung' sein",
+      "en": "Field 'Main Role' must be an object with 'Title' and 'Description'",
+      "fr": "Le champ 'Rôle principal' doit être un objet avec 'Titre' et 'Description'"
+    },
+    "hauptrolle_desc_length": {
+      "de": "Hauptrolle.Beschreibung sollte 5-10 Wörter haben",
+      "en": "Main Role.Description should have 5-10 words",
+      "fr": "Rôle principal.Description devrait avoir 5-10 mots"
+    },
+    "should_be_string": {
+      "de": "sollte ein String sein",
+      "en": "should be a string",
+      "fr": "devrait être une chaîne"
+    },
+    "must_be_array": {
+      "de": "muss ein Array sein",
+      "en": "must be an array",
+      "fr": "doit être un tableau"
+    },
+    "must_be_object": {
+      "de": "Muss ein Objekt sein",
+      "en": "Must be an object",
+      "fr": "Doit être un objet"
+    },
+    "invalid_level": {
+      "de": "Ungültiges oder fehlendes Feld 'Level' (muss 1-5 sein)",
+      "en": "Invalid or missing field 'Level' (must be 1-5)",
+      "fr": "Champ 'Level' non valide ou manquant (doit être 1-5)"
+    },
+    "warning_msg": {
+      "de": "ℹ️ Die Validierung prüft, ob alle erforderlichen Felder vorhanden und korrekt formatiert sind.\n\nDie JSON-Datei weist Strukturprobleme auf, die die Qualität des generierten CVs beeinträchtigen können. \nNachstehend eine Auflistung der entdeckten Strukturprobleme nach Kritikalität klassifiziert.",
+      "en": "ℹ️ Validation checks if all required fields are present and correctly formatted.\n\nThe JSON file has structural problems that may affect the quality of the generated CV.\nBelow is a list of detected structural issues classified by criticality.",
+      "fr": "ℹ️ La validation vérifie si tous les champs requis sont présents et correctement formatés.\n\nLe fichier JSON présente des problèmes structurels qui peuvent affecter la qualité du CV généré.\nCi-dessous une liste des problèmes structurels détectés classés par criticité."
+    },
+    "warning_title": {
+      "de": "JSON-Validierung",
+      "en": "JSON Validation",
+      "fr": "Validation JSON"
+    },
+    "critical_problems": {
+      "de": "🔴 KRITISCHE PROBLEME:",
+      "en": "🔴 CRITICAL PROBLEMS:",
+      "fr": "🔴 PROBLÈMES CRITIQUES :"
+    },
+    "info_problems": {
+      "de": "🟡 WENIGER KRITISCHE HINWEISE:",
+      "en": "🟡 MINOR HINTS:",
+      "fr": "🟡 REMARQUES MOINS CRITIQUES :"
+    },
+    "user_cancelled": {
+      "de": "Benutzer hat abgebrochen.",
+      "en": "User cancelled.",
+      "fr": "L'utilisateur a annulé."
+    },
+    "proceed_anyway": {
+      "de": "Trotzdem fortfahren? (j/n): ",
+      "en": "Proceed anyway? (y/n): ",
+      "fr": "Continuer quand même ? (o/n) : "
+    },
+    "no_template": {
+      "de": "Warnung: Template nicht gefunden. Erstelle leeres Dokument.",
+      "en": "Warning: Template not found. Creating empty document.",
+      "fr": "Attention : Modèle non trouvé. Création d'un document vide."
+    },
+    "error_prefix": {
+      "de": "Validierungsfehler",
+      "en": "Validation error",
+      "fr": "Erreur de validation"
+    }
+  },
+  "status": {
+    "fulfilled": {
+      "de": "erfüllt",
+      "en": "fulfilled",
+      "fr": "rempli"
+    },
+    "partial": {
+      "de": "teilweise erfüllt",
+      "en": "partially fulfilled",
+      "fr": "partiellement rempli"
+    },
+    "not_fulfilled": {
+      "de": "nicht erfüllt",
+      "en": "not fulfilled",
+      "fr": "non rempli"
+    },
+    "potential": {
+      "de": "potenziell erfüllt",
+      "en": "potentially fulfilled",
+      "fr": "potentiellement rempli"
+    },
+    "not_mentioned": {
+      "de": "nicht explizit erwähnt",
+      "en": "not explicitly mentioned",
+      "fr": "pas explicitement mentionné"
+    }
+  },
+  "system": {
+    "missing_data_marker": {
+      "de": "! bitte prüfen !",
+      "en": "! please check !",
+      "fr": "! à vérifier !"
+    },
+    "feedback_prompt": {
+      "de": "Du bist ein CV-Qualitätsprüfer. Analysiere das folgende CV-JSON (und optional das Stellenprofil) gemäss der Feedback-Schema-Vorgabe. Antworte ausschliesslich in der Sprache: {target_language}. Fülle die Struktur exakt aus, keine Felder hinzufügen oder weglassen. Nutze ausschliesslich die bereitgestellten JSON-Daten. Nutze ausschliesslich die Schweizer Rechtschreibung (kein 'ß', sondern 'ss') für deutsche Texte.",
+      "en": "You are a CV quality reviewer. Analyze the following CV JSON (and optionally the job profile) according to the feedback schema specification. Respond exclusively in the language: {target_language}. Fill out the structure exactly, do not add or omit any fields. Use only the provided JSON data.",
+      "fr": "Vous êtes un réviseur de qualité de CV. Analysez le CV JSON suivant (et éventuellement le profil de poste) conformément à la spécification du schéma de rétroaction. Répondez exclusivement dans la langue : {target_language}. Remplissez exactement la structure, n'ajoutez ni ne omettez aucun champ. Utilisez uniquement les données JSON fournies."
+    },
+    "matchmaking_prompt": {
+      "de": "Du bist ein kritischer Auditor für CV-Matching. Vergleiche das folgende Stellenprofil und den CV gemäss der JSON-Schema-Vorgabe in der ZIELSPRACHE: {lang_name}.\nALLE TEXTE (BEGRÜNDUNGEN, EVIDENZ, KOMMENTARE) MÜSSEN AUF {lang_name} VERFASST SEIN.\nWICHTIGE REGELN ZUR VERMEIDUNG VON HALLUZINATIONEN UND FÜR STRUKTURELLE TREUE:\n1. Nutze AUSSCHLIESSLICH die bereitgestellten JSON-Daten des CVs. Erfinde keine Informationen.\n2. EXAKTE KONTINUITÄT & VOLLSTÄNDIGKEIT: Übernehme JEDES EINZELNE Kriterium aus dem Stellenprofil (anforderungen.muss_kriterien und anforderungen.soll_kriterien) ABSOLUT VOLLSTÄNDIG und WÖRTLICH. Es darf KEIN Wort ausgelassen, gekürzt oder zusammengefasst werden. Auch Aufzählungen innerhalb eines Kriteriums (z.B. 'SAFe, Kenntnisse als Coach' oder 'Deutsch- und Englischkenntnisse') müssen 1:1 übernommen werden. Das Kriterium im Match-JSON muss identisch mit dem Text im Stellenprofil-JSON sein.\n3. KEINE AUSLASSUNGEN: Jedes Kriterium aus der Profil-Liste muss ein entsprechendes Gegenstück im Abgleich haben.\n4. STRIKTES CLUSTERING: Alle Kriterien aus 'anforderungen.muss_kriterien' müssen zwingend in 'muss_kriterien_abgleich' landen. Alle Kriterien aus 'anforderungen.soll_kriterien' zwingend in 'soll_kriterien_abgleich'.\n5. ZERTIFIZIERUNGEN: Scanne explizit das Feld 'Trainings_und_Zertifizierungen' sowie 'Aus_und_Weiterbildung' nach Übereinstimmungen.\n6. IMPLIZITE MATCHES: Wenn ein Skill nicht explizit steht, aber durch den Kontext wahrscheinlich vorhanden ist, bewerte es als 'potenziell erfüllt'.\n7. LOGISCHE KONSISTENZ: Falls 'im_cv_gefunden' = false ist, darf die 'bewertung' NIEMALS 'erfüllt' oder 'teilweise erfüllt' sein.\n8. CV-EVIDENZ & NACHWEIS: Formuliere im Feld 'cv_evidenz' eine prägnante Begründung basierend auf Fakten aus dem CV. Nutze Telegramm-Stil: keine Füllwörter, keine Personalpronomen.\n9. RECHTSCHREIBUNG: Nutze die Standard-Rechtschreibung der ZIELSPRACHE: {lang_name} (für Deutsch: Schweizer Rechtschreibung, kein 'ß').",
+      "en": "You are a critical auditor for CV matching. Compare the following job profile and CV according to the JSON schema specification in the TARGET LANGUAGE: {lang_name}.\nALL TEXTS (JUSTIFICATIONS, EVIDENCE, COMMENTS) MUST BE WRITTEN IN {lang_name}.\nIMPORTANT RULES TO AVOID HALLUCINATIONS AND FOR STRUCTURAL FIDELITY:\n1. Use ONLY the provided JSON data of the CV. Do not invent information.\n2. EXACT CONTINUITY & COMPLETENESS: Transfer EVERY SINGLE criterion from the job profile (anforderungen.muss_kriterien and anforderungen.soll_kriterien) ABSOLUTELY COMPLETELY and LITERALLY. No word may be omitted, shortened, or summarized. Criteria in the match JSON must be identical to the text in the job profile JSON.\n3. NO OMISSIONS: Every bacterium from the profile list must have a corresponding counterpart in the comparison.\n4. STRICT CLUSTERING: All criteria from 'anforderungen.muss_kriterien' must necessarily end up in 'muss_kriterien_abgleich'. All criteria from 'anforderungen.soll_kriterien' necessarily in 'soll_kriterien_abgleich'.\n5. CERTIFICATIONS: Explicitly scan the fields 'Trainings_und_Zertifizierungen' and 'Aus_und_Weiterbildung' for matches.\n6. IMPLICIT MATCHES: If a skill is not explicitly stated but is likely present due to context, evaluate it as 'potentially fulfilled'.\n7. LOGICAL CONSISTENCY: If 'im_cv_gefunden' = false, the 'bewertung' must NEVER be 'fulfilled' or 'partially fulfilled'.\n8. CV EVIDENCE & PROOF: Formulate a concise justification based on facts from the CV in the 'cv_evidenz' field. Use telegram style: no filler words, no personal pronouns.\n9. SPELLING: Use the standard spelling of the TARGET LANGUAGE: {lang_name}.",
+      "fr": "Vous êtes un auditeur critique pour l'appariement de CV. Comparez le profil de poste et le CV suivants selon la spécification du schéma JSON dans la LANGUE CIBLE : {lang_name}.\nTOUS LES TEXTES (JUSTIFICATIONS, PREUVES, COMMENTAIRES) DOIVENT ÊTRE RÉDIGÉS EN {lang_name}.\nRÈGLES IMPORTANTES POUR ÉVITER LES HALLUCINATIONS ET POUR LA FIDÉLITÉ STRUCTURELLE :\n1. Utilisez UNIQUEMENT les données JSON fournies du CV. N'inventez pas d'informations.\n2. CONTINUITÉ ET EXHAUSTIVITÉ EXACTES : Transférez CHAQUE CRITÈRE du profil de poste (anforderungen.muss_kriterien et anforderungen.soll_kriterien) de manière ABSOLUMENT COMPLÈTE et LITTÉRALE. Aucun mot ne peut être omis, raccourci ou résumé. Le critère dans le JSON de correspondance doit être identique au texte dans le JSON du profil de poste.\n3. AUCUNE OMISSION : Chaque critère de la liste de profil doit avoir un pendant correspondant dans la comparaison.\n4. REGROUPEMENT STRICT : Tous les critères de 'anforderungen.muss_kriterien' doivent impérativement se retrouver dans 'muss_kriterien_abgleich'. Tous les critères de 'anforderungen.soll_kriterien' impérativement dans 'soll_kriterien_abgleich'.\n5. CERTIFICATIONS : Scannez explicitement les champs 'Trainings_und_Zertifizierungen' et 'Aus_und_Weiterbildung' pour les correspondances.\n6. CORRESPONDANCES IMPLICITES : Si une compétence n'est pas explicitement mentionnée mais est probablement présente selon le contexte, évaluez-la comme 'potentiellement remplie'.\n7. COHÉRENCE LOGIQUE : Si 'im_cv_gefunden' = false, la 'bewertung' ne doit JAMAIS être 'remplie' ou 'partiellement remplie'.\n8. PREUVE ET JUSTIFICATION DU CV : Formulez une justification concise basée sur les faits du CV dans le champ 'cv_evidenz'. Utilisez le style télégraphique : pas de mots de remplissage, pas de pronoms personnels.\n9. ORTHOGRAPHE : Utilisez l'orthographe standard de la LANGUE CIBLE : {lang_name}."
+    }
+  }
+}

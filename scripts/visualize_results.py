@@ -2,13 +2,38 @@ import os
 import json
 from datetime import datetime
 
+def load_translations():
+    """Lädt die Übersetzungen aus der translations.json Datei."""
+    try:
+        paths = [
+            os.path.join(os.path.dirname(__file__), "translations.json"),
+            os.path.join("scripts", "translations.json"),
+            "translations.json"
+        ]
+        for path in paths:
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        return {}
+    except:
+        return {}
+
+def get_text(translations, section, key, lang="de"):
+    """Holt einen übersetzten Text."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
+    except:
+        return f"[{key}]"
+
 def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, 
                        validation_warnings=None, model_name=None, pipeline_mode=None, 
-                       cv_filename=None, job_filename=None, angebot_json_path=None):
+                       cv_filename=None, job_filename=None, angebot_json_path=None,
+                       language="de"):
     """
     Generates a professional HTML dashboard visualizing the results of the CV processing,
     matchmaking, and quality feedback.
     """
+    translations = load_translations()
     
     # Load Data
     with open(cv_json_path, 'r', encoding='utf-8') as f:
@@ -52,17 +77,22 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     
     # Build metadata matrix (table)
     meta_cols = []
-    meta_cols.append(("Generiert", timestamp))
+    meta_cols.append((get_text(translations, 'dashboard', 'generated_at', language), timestamp))
     if model_name:
-        meta_cols.append(("KI-Modell", f"<b>{model_name}</b>"))
+        meta_cols.append((get_text(translations, 'dashboard', 'ai_model', language), f"<b>{model_name}</b>"))
+    
+    # Add target language with flag
+    lang_flags = {"de": "🇩🇪", "en": "�🇸", "fr": "🇫🇷"}
+    meta_cols.append((get_text(translations, 'ui', 'language_label', language), lang_flags.get(language, language.upper())))
+
     if pipeline_mode:
-        meta_cols.append(("Modus", pipeline_mode))
+        meta_cols.append((get_text(translations, 'dashboard', 'mode', language), pipeline_mode))
     
     input_files = []
     if cv_filename: input_files.append(f"CV: {cv_filename}")
     if job_filename: input_files.append(f"SP: {job_filename}")
     if input_files:
-        meta_cols.append(("Input Dateien", "<br>".join(input_files)))
+        meta_cols.append((get_text(translations, 'dashboard', 'input_files', language), "<br>".join(input_files)))
 
     # Construct HTML table for metadata
     table_html = '<table class="meta-table"><thead><tr>'
@@ -76,13 +106,14 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     subtitle_text = table_html
 
     # Prepare HTML Content
+    dashboard_title = get_text(translations, 'dashboard', 'title', language)
     html_content = f"""
     <!DOCTYPE html>
-    <html lang="de">
+    <html lang="{language}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CV Analyse Dashboard - {candidate_name}</title>
+        <title>{dashboard_title} - {candidate_name}</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
             :root {{
@@ -283,8 +314,8 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         <div class="container">
             <header>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h1>Dashboard - CV Analyse - {candidate_name}</h1>
-                    <a href="#" onclick="window.print()" style="text-decoration: none; color: var(--secondary-color); font-weight: bold;">🖨️ Drucken / PDF</a>
+                    <h1>{get_text(translations, 'dashboard', 'title', language)} - {candidate_name}</h1>
+                    <a href="#" onclick="window.print()" style="text-decoration: none; color: var(--secondary-color); font-weight: bold;">{get_text(translations, 'dashboard', 'print_pdf', language)}</a>
                 </div>
                 <div class="meta">{subtitle_text}</div>
             </header>
@@ -315,14 +346,14 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             <div class="grid">
                 <div class="card">
                     <div class="card-header">
-                        <span>Match Score</span>
+                        <span>{get_text(translations, 'dashboard', 'matching_score', language)}</span>
                         <button class="info-btn" onclick="document.getElementById('scoreModal').style.display='block'" title="Erklärung der Score-Berechnung">i</button>
                     </div>
                     <div style="position: relative; height: 160px; width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
                         <canvas id="scoreGauge"></canvas>
                         <div style="position: absolute; bottom: 20px; width: 100%; text-align: center;">
                             <div style="font-size: 36px; font-weight: bold; color: {score_color}; line-height: 1;">{score}%</div>
-                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Gesamt</div>
+                            <div style="font-size: 12px; color: #7f8c8d; text-transform: uppercase;">{get_text(translations, 'dashboard', 'overall', language)}</div>
                         </div>
                     </div>
                     <div style="text-align: center; margin-top: 0px;">
@@ -334,18 +365,18 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                 </div>
                 
                 <div class="card">
-                    <div class="card-header">Kriterien Abdeckung</div>
+                    <div class="card-header">{get_text(translations, 'dashboard', 'criteria_matching', language)}</div>
                     <canvas id="criteriaChart"></canvas>
                 </div>
                 
                 <div class="card">
-                    <div class="card-header">Risiken & Lücken</div>
+                    <div class="card-header">{get_text(translations, 'dashboard', 'risks_gaps', language)}</div>
                     <div style="max-height: 200px; overflow-y: auto;">
         """
         
         risiken = match_data.get("risiken_und_luecken", [])
         if not risiken:
-            html_content += "<p style='color: #999; text-align: center;'>Keine Risiken identifiziert.</p>"
+            html_content += f"<p style='color: #999; text-align: center;'>{get_text(translations, 'dashboard', 'no_risks_found', language)}</p>"
         else:
             for risiko in risiken:
                 krit = risiko.get("kritikalitaet", "niedrig").lower()
@@ -381,24 +412,24 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             erfahrung_list = get_as_list(kompetenzen.get("operative_und_fuehrungserfahrung", []))
 
             html_content += f"""
-            <h2 style="color: var(--primary-color); margin-top: 30px;">Angebots-Argumentation & Mehrwert</h2>
+            <h2 style="color: var(--primary-color); margin-top: 30px;">{get_text(translations, 'dashboard', 'offer_argumentation', language)}</h2>
             <div class="grid">
                 <div class="card">
-                    <div class="card-header">Zusammenfassung der Eignung</div>
+                    <div class="card-header">{get_text(translations, 'dashboard', 'suitability_summary', language)}</div>
                     <p style="font-size: 14px; line-height: 1.6;">
-                        {beurteilung.get("zusammenfassung", "Keine Zusammenfassung verfügbar.")}
+                        {beurteilung.get("zusammenfassung", get_text(translations, 'dashboard', 'no_summary', language))}
                     </p>
                 </div>
                 
                 <div class="card">
-                    <div class="card-header">Methoden & Technologien</div>
+                    <div class="card-header">{get_text(translations, 'dashboard', 'methods_tech', language)}</div>
                     <ul style="font-size: 13px; line-height: 1.5; padding-left: 20px;">
                         {"".join([f"<li style='margin-bottom: 4px;'>{item.replace('**', '<b>').replace('**', '</b>')}</li>" for item in methoden_list])}
                     </ul>
                 </div>
 
                 <div class="card">
-                    <div class="card-header">Eignungs-Fokus</div>
+                    <div class="card-header">{get_text(translations, 'dashboard', 'suitability_focus', language)}</div>
                     <ul style="font-size: 13px; line-height: 1.5; padding-left: 20px;">
                         {"".join([f"<li style='margin-bottom: 4px;'>{item.replace('**', '<b>').replace('**', '</b>')}</li>" for item in erfahrung_list])}
                     </ul>
@@ -406,7 +437,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             </div>
 
             <div class="card" style="margin-top: 20px;">
-                <div class="card-header">Mehrwert für den Kunden</div>
+                <div class="card-header">{get_text(translations, 'offer', 'added_value', language)}</div>
                 <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
             """
             
@@ -424,8 +455,8 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             """
 
         # --- CRITERIA TABLES (Split into Muss/Soll) ---
-        html_content += """
-            <h2 style="color: var(--primary-color); margin-top: 30px;">Kriterien-Abgleich</h2>
+        html_content += f"""
+            <h2 style="color: var(--primary-color); margin-top: 30px;">{get_text(translations, 'dashboard', 'criteria_matching', language)}</h2>
         """
 
         # Helper to render a specific section as separate table
@@ -436,7 +467,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                     <div class="card-header" style="background-color: {bg_color}; border-radius: 4px 4px 0 0; margin-bottom: 0; padding: 10px;">
                         <span>{title} (0)</span>
                     </div>
-                    <p style="text-align: center; padding: 20px; color: #999;">Keine Kriterien in dieser Kategorie definiert.</p>
+                    <p style="text-align: center; padding: 20px; color: #999;">{get_text(translations, 'dashboard', 'no_criteria', language)}</p>
                 </div>
                 """
             
@@ -448,36 +479,47 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                 <table style="margin: 0;">
                     <thead>
                         <tr style="background-color: #fafafa;">
-                            <th style="width: 35%; padding-left: 20px;">Kriterium</th>
-                            <th style="width: 15%;">Status</th>
-                            <th style="width: 50%;">Evidenz im CV</th>
+                            <th style="width: 35%; padding-left: 20px;">{get_text(translations, 'dashboard', 'criterion', language)}</th>
+                            <th style="width: 15%;">{get_text(translations, 'dashboard', 'status', language)}</th>
+                            <th style="width: 50%;">{get_text(translations, 'dashboard', 'evidence', language)}</th>
                         </tr>
                     </thead>
                     <tbody>
             """
             
+            # Map canonical statuses to translations
+            s_fulfilled = get_text(translations, 'status', 'fulfilled', language)
+            s_partial = get_text(translations, 'status', 'partial', language)
+            s_not_fulfilled = get_text(translations, 'status', 'not_fulfilled', language)
+            s_not_mentioned = get_text(translations, 'status', 'not_mentioned', language)
+            s_potential = get_text(translations, 'status', 'potential', language)
+
             for k in items:
-                status = k.get("bewertung", "").lower().strip()
+                status_raw = k.get("bewertung", "").lower().strip()
                 
-                # Consistent mapping with Word output
-                status_display = status
+                # Consistent mapping with Word output and multi-language support
+                status_display = status_raw
                 icon = "❓"
                 
-                if status in ["erfüllt", "true"]:
+                # Fulfilled
+                if any(x in status_raw for x in ["erfüllt", "fulfilled", "rempli"]) and "nicht" not in status_raw and "teilweise" not in status_raw and "pas" not in status_raw:
                     icon = "✅"
-                    status_display = "Erfüllt"
-                elif "teilweise" in status or "potenziell" in status:
+                    status_display = s_fulfilled
+                # Partial / Potential
+                elif any(x in status_raw for x in ["teilweise", "partial", "partiellement", "potenziell", "potential", "potentiellement"]):
                     icon = "⚠️"
-                    status_display = "Teilweise"
-                elif status in ["nicht erfüllt", "false"]:
+                    status_display = s_partial if "teilweise" in status_raw else s_potential
+                # Not fulfilled
+                elif any(x in status_raw for x in ["nicht erfüllt", "not fulfilled", "non rempli", "pas rempli"]):
                     icon = "❌"
-                    status_display = "Nicht erfüllt"
-                elif "nicht explizit" in status:
-                    icon = "⚪"
-                    status_display = "Nicht erwähnt"
-                elif "! bitte prüfen !" in status:
+                    status_display = s_not_fulfilled
+                # Not mentioned
+                elif any(x in status_raw for x in ["nicht explizit", "explicitly", "mention"]):
+                    icon = "➖"
+                    status_display = s_not_mentioned
+                elif "! bitte prüfen !" in status_raw or "! please check !" in status_raw or "! à vérifier !" in status_raw:
                     icon = "❓"
-                    status_display = "! bitte prüfen !"
+                    status_display = get_text(translations, 'system', 'missing_data_marker', language)
 
                 evidenz_raw = k.get("cv_evidenz", "")
                 kommentar_raw = k.get("kommentar", "")
@@ -698,25 +740,30 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             new Chart(ctx, {{
                 type: 'bar',
                 data: {{
-                    labels: ['Muss', 'Soll', 'Soft Skills', 'Weitere'],
+                    labels: [
+                        '{get_text(translations, "dashboard", "muss", language)}', 
+                        '{get_text(translations, "dashboard", "soll", language)}', 
+                        '{get_text(translations, "dashboard", "soft_skills", language)}', 
+                        '{get_text(translations, "dashboard", "weitere", language)}'
+                    ],
                     datasets: [
                         {{
-                            label: 'Erfüllt',
+                            label: '{get_text(translations, "dashboard", "chart_ok", language)}',
                             data: [{muss_ok}, {soll_ok}, {soft_ok}, {weitere_ok}],
                             backgroundColor: '#27ae60'
                         }},
                         {{
-                            label: 'Potenziell / Teilweise',
+                            label: '{get_text(translations, "dashboard", "chart_potential", language)}',
                             data: [{muss_pot}, {soll_pot}, {soft_pot}, {weitere_pot}],
                             backgroundColor: '#f1c40f'
                         }},
                         {{
-                            label: 'Neutral / Nicht explizit',
+                            label: '{get_text(translations, "dashboard", "chart_neutral", language)}',
                             data: [{muss_neu}, {soll_neu}, {soft_neu}, {weitere_neu}],
                             backgroundColor: '#95a5a6'
                         }},
                         {{
-                            label: 'Nicht Erfüllt',
+                            label: '{get_text(translations, "dashboard", "chart_not_ok", language)}',
                             data: [
                                 {muss_total - muss_ok - muss_pot - muss_neu}, 
                                 {soll_total - soll_ok - soll_pot - soll_neu},
@@ -757,56 +804,56 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         <div id="scoreModal" class="modal">
             <div class="modal-content" style="max-width: 700px;">
                 <span class="close" onclick="document.getElementById('scoreModal').style.display='none'">&times;</span>
-                <h3>Berechnung des Match-Scores</h3>
-                <p>Der Score wird durch eine dynamische, gewichtete Analyse ermittelt:</p>
+                <h3>{get_text("dashboard_modals", "score_title", language)}</h3>
+                <p>{get_text("dashboard_modals", "score_desc", language)}</p>
                 
                 <table class="status-info-table" style="margin-bottom: 20px;">
                     <tr style="background-color: #e8f6f3;">
-                        <td style="width: 150px;"><strong>Muss-Kriterien</strong></td>
-                        <td><strong>90% Basis</strong></td>
-                        <td>Höchste Priorität. Fehlende Muss-Punkte führen zu hohen Abzügen (-20% pro Punkt).</td>
+                        <td style="width: 150px;"><strong>{get_text("dashboard_modals", "score_must", language)}</strong></td>
+                        <td><strong>{get_text("dashboard_modals", "score_basis_90", language)}</strong></td>
+                        <td>{get_text("dashboard_modals", "score_must_desc", language)}</td>
                     </tr>
                     <tr style="background-color: #fef9e7;">
-                        <td><strong>Soll-Kriterien</strong></td>
-                        <td><strong>10% Basis</strong></td>
-                        <td>Wichtige Zusatzerwartungen, die den Score massgeblich stützen.</td>
+                        <td><strong>{get_text("dashboard_modals", "score_should", language)}</strong></td>
+                        <td><strong>{get_text("dashboard_modals", "score_basis_10", language)}</strong></td>
+                        <td>{get_text("dashboard_modals", "score_should_desc", language)}</td>
                     </tr>
                     <tr style="background-color: #f4f6f7;">
-                        <td><strong>Soft Skills</strong></td>
-                        <td><strong>0% (qualitativ)</strong></td>
-                        <td>Persönliche Kompetenzen fliessen nicht in den numerischen Score ein.</td>
+                        <td><strong>{get_text("dashboard_modals", "score_soft_skills", language)}</strong></td>
+                        <td><strong>{get_text("dashboard_modals", "score_basis_0", language)}</strong></td>
+                        <td>{get_text("dashboard_modals", "score_soft_skills_desc", language)}</td>
                     </tr>
                 </table>
 
-                <h4 style="margin-top: 20px; font-size: 14px;">Gewichtung der Status-Werte:</h4>
+                <h4 style="margin-top: 20px; font-size: 14px;">{get_text("dashboard_modals", "score_weighting_title", language)}</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; margin-bottom: 15px;">
-                    <div style="padding: 8px; background-color: #e8f5e9; border: 1px solid #2e7d32; border-radius: 4px; color: #1b5e20;"><strong>✅ Erfüllt:</strong> 100%</div>
-                    <div style="padding: 8px; background-color: #fff3e0; border: 1px solid #ef6c00; border-radius: 4px; color: #e65100;"><strong>⚠️ Teilweise:</strong> 50%</div>
-                    <div style="padding: 8px; background-color: #fffde7; border: 1px solid #fbc02d; border-radius: 4px; color: #f57f17;"><strong>🤔 Potenziell:</strong> 40%</div>
-                    <div style="padding: 8px; background-color: #ffebee; border: 1px solid #c62828; border-radius: 4px; color: #b71c1c;"><strong>❌ Nicht erfüllt:</strong> 0%</div>
+                    <div style="padding: 8px; background-color: #e8f5e9; border: 1px solid #2e7d32; border-radius: 4px; color: #1b5e20;"><strong>✅ {get_text("dashboard_modals", "score_fulfilled", language)}</strong></div>
+                    <div style="padding: 8px; background-color: #fff3e0; border: 1px solid #ef6c00; border-radius: 4px; color: #e65100;"><strong>⚠️ {get_text("dashboard_modals", "score_partial", language)}</strong></div>
+                    <div style="padding: 8px; background-color: #fffde7; border: 1px solid #fbc02d; border-radius: 4px; color: #f57f17;"><strong>🤔 {get_text("dashboard_modals", "score_potential", language)}</strong></div>
+                    <div style="padding: 8px; background-color: #ffebee; border: 1px solid #c62828; border-radius: 4px; color: #b71c1c;"><strong>❌ {get_text("dashboard_modals", "score_not_fulfilled_val", language)}</strong></div>
                 </div>
 
                 <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 13px; border-left: 4px solid var(--secondary-color);">
-                    <strong>💡 Beispiel-Rechnung:</strong><br>
-                    Angenommen, ein Profil hat 5 Muss- und 5 Soll-Kriterien:<br>
-                    • 5/5 Muss erfüllt (<span style="color: #27ae60;">✅</span>) & 3/5 Soll erfüllt (<span style="color: #f39c12;">⚠️</span>) → <strong>ca. 95%</strong><br>
-                    • 1/5 Muss <u>nicht</u> erfüllt (<span style="color: #c0392b;">❌</span>) → <strong>Max. 80% möglich</strong> (da -20% Abzug vom Gesamtwert).
+                    <strong>{get_text("dashboard_modals", "score_example_title", language)}</strong><br>
+                    {get_text("dashboard_modals", "score_example_scenario", language)}<br>
+                    • {get_text("dashboard_modals", "score_example_1", language)} (<span style="color: #27ae60;">✅</span>) & {get_text("dashboard_modals", "score_example_1_soll", language)} (<span style="color: #f39c12;">⚠️</span>) → <strong>ca. 95%</strong><br>
+                    • {get_text("dashboard_modals", "score_example_2", language)} (<span style="color: #c0392b;">❌</span>) → <strong>{get_text("dashboard_modals", "score_example_2_desc", language)}</strong>
                 </div>
 
                 <div style="background-color: #eee; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 13px;">
-                    <strong>*Dynamische Gewichtung:</strong>
-                    Falls Kategorien fehlen (z.B. keine Soll-Kriterien im Profil), wird deren Gewichtung automatisch auf die vorhandenen Sektionen verteilt. 100% sind somit immer erreichbar.
+                    <strong>{get_text("dashboard_modals", "score_dynamic_title", language)}</strong>
+                    {get_text("dashboard_modals", "score_dynamic_desc", language)}
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
                     <div style="flex: 1; padding: 10px; background: #e8f5e9; border-radius: 4px; text-align: center; border-bottom: 3px solid #2e7d32;">
-                        <strong>> 80%</strong><br><span style="font-size: 12px;">Hervorragend</span>
+                        <strong>> 80%</strong><br><span style="font-size: 12px;">{get_text("dashboard_modals", "score_excellent", language)}</span>
                     </div>
                     <div style="flex: 1; padding: 10px; background: #fff3e0; border-radius: 4px; text-align: center; border-bottom: 3px solid #ef6c00;">
-                        <strong>60-80%</strong><br><span style="font-size: 12px;">Gute Passung</span>
+                        <strong>60-80%</strong><br><span style="font-size: 12px;">{get_text("dashboard_modals", "score_good", language)}</span>
                     </div>
                     <div style="flex: 1; padding: 10px; background: #ffebee; border-radius: 4px; text-align: center; border-bottom: 3px solid #c62828;">
-                        <strong>< 60%</strong><br><span style="font-size: 12px;">Kritisch</span>
+                        <strong>< 60%</strong><br><span style="font-size: 12px;">{get_text("dashboard_modals", "score_critical", language)}</span>
                     </div>
                 </div>
             </div>
@@ -816,32 +863,32 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         <div id="statusModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="document.getElementById('statusModal').style.display='none'">&times;</span>
-                <h3>Legende: Status-Werte</h3>
-                <p>Übersicht der verwendeten Symbole und deren Bedeutung im Matching-Prozess:</p>
+                <h3>{get_text("dashboard_modals", "status_title", language)}</h3>
+                <p>{get_text("dashboard_modals", "status_desc", language)}</p>
                 <table class="status-info-table">
                     <tr>
                         <td style="width: 40px; font-size: 20px;">✅</td>
-                        <td><strong>Erfüllt</strong>: Das Kriterium ist im CV eindeutig belegt.</td>
+                        <td><strong>{get_text("dashboard_modals", "status_fulfilled", language)}</strong>: {get_text("dashboard_modals", "status_fulfilled_desc", language)}</td>
                     </tr>
                     <tr>
                         <td style="font-size: 20px;">⚠️</td>
-                        <td><strong>Teilweise</strong>: Das Kriterium ist bedingt vorhanden oder aufgrund der Erfahrung sehr wahrscheinlich (potenziell erfüllt).</td>
+                        <td><strong>{get_text("dashboard_modals", "status_partial", language)}</strong>: {get_text("dashboard_modals", "status_partial_desc", language)}</td>
                     </tr>
                     <tr>
                         <td style="font-size: 20px;">❌</td>
-                        <td><strong>Nicht erfüllt</strong>: Keine Anhaltspunkte im CV gefunden.</td>
+                        <td><strong>{get_text("dashboard_modals", "status_not_fulfilled", language)}</strong>: {get_text("dashboard_modals", "status_not_fulfilled_desc", language)}</td>
                     </tr>
                     <tr>
                         <td style="font-size: 20px;">⚪</td>
-                        <td><strong>Nicht erwähnt</strong>: Weder belegt noch widerlegt (Standardwert für Soft Skills).</td>
+                        <td><strong>{get_text("dashboard_modals", "status_not_mentioned", language)}</strong>: {get_text("dashboard_modals", "status_not_mentioned_desc", language)}</td>
                     </tr>
                     <tr>
                         <td style="font-size: 20px;">❓</td>
-                        <td><strong>Prüfen</strong>: Information fehlt oder ist unklar.</td>
+                        <td><strong>{get_text("dashboard_modals", "status_check", language)}</strong>: {get_text("dashboard_modals", "status_check_desc", language)}</td>
                     </tr>
                 </table>
                 <p style="margin-top: 20px; font-size: 12px; color: #666;">
-                    <em>Hinweis: Das Matching erfolgt KI-gestützt auf Basis der extrahierten JSON-Daten. Eine manuelle Prüfung der kritischen Punkte wird empfohlen.</em>
+                    <em>{get_text("dashboard_modals", "ai_note", language)}</em>
                 </p>
             </div>
         </div>

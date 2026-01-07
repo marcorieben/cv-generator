@@ -6,9 +6,9 @@ Scalable internationalization for the CV Generator & Matchmaking Suite to suppor
 ## 🚀 To-Do List
 
 ### 1. Infrastructure & State Management
-- [ ] Create `scripts/translations.json` for centralized UI & Word labels.
-- [ ] Implement language selection in Streamlit sidebar (dropdown [DE, EN, FR]).
-- [ ] Manage `st.session_state.language` and persist across session.
+- [x] Create `scripts/translations.json` for centralized UI & Word labels.
+- [x] Implement language selection in Streamlit sidebar (dropdown [DE, EN, FR]).
+- [x] Manage `st.session_state.language` and persist across session.
 
 ### 2. Extraction & AI Prompts (Parsing)
 - [ ] **Dynamic Prompts:** Refactor `pdf_to_json.py` to select system prompts based on target language.

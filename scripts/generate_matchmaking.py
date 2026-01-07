@@ -3,32 +3,93 @@ import json
 from openai import OpenAI
 from datetime import datetime
 
-def normalize_matching_values(data):
+def load_translations():
+    """Lädt die Übersetzungen aus der translations.json Datei."""
+    try:
+        paths = [
+            os.path.join(os.path.dirname(__file__), "translations.json"),
+            os.path.join("scripts", "translations.json"),
+            "translations.json"
+        ]
+        for path in paths:
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        return {}
+    except:
+        return {}
+
+def get_text(translations, section, key, lang="de"):
+    """Holt einen übersetzten Text."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
+    except:
+        return f"[{key}]"
+
+def normalize_matching_values(data, language="de"):
     """
     Normalisiert die 'bewertung' Felder auf fix definierte, einheitliche Werte
     für alle Kriterientypen (Muss, Soll, Soft, Weitere).
     """
-    # Einheitliches Mapping für alle Kriterien
+    translations = load_translations()
+    
+    # Target values in the selected language
+    t_fulfilled = get_text(translations, 'status', 'fulfilled', language)
+    t_partial = get_text(translations, 'status', 'partial', language)
+    t_not_fulfilled = get_text(translations, 'status', 'not_fulfilled', language)
+    t_potential = get_text(translations, 'status', 'potential', language)
+    t_not_mentioned = get_text(translations, 'status', 'not_mentioned', language)
+
+    # Dictionary mapping many variations to the target canonical value
     unified_map = {
-        "erfüllt": "erfüllt",
-        "voll erfüllt": "erfüllt",
-        "ja": "erfüllt",
+        # German
+        "erfüllt": t_fulfilled,
+        "voll erfüllt": t_fulfilled,
+        "ja": t_fulfilled,
+        "teilweise": t_partial,
+        "teilweise erfüllt": t_partial,
+        "nicht erfüllt": t_not_fulfilled,
+        "nein": t_not_fulfilled,
+        "fehlt": t_not_fulfilled,
+        "potenziell": t_potential,
+        "potenziell erfüllt": t_potential,
+        "implizit": t_potential,
+        "nicht explizit": t_not_mentioned,
+        "nicht explizit erwähnt": t_not_mentioned,
+        "nicht erwähnt": t_not_mentioned,
+        "neutral": t_not_mentioned,
         
-        "teilweise": "teilweise erfüllt",
-        "teilweise erfüllt": "teilweise erfüllt",
-        
-        "nicht erfüllt": "nicht erfüllt",
-        "nein": "nicht erfüllt",
-        "fehlt": "nicht erfüllt",
-        
-        "potenziell": "potenziell erfüllt",
-        "potenziell erfüllt": "potenziell erfüllt",
-        "implizit": "potenziell erfüllt",
-        
-        "nicht explizit": "nicht explizit erwähnt",
-        "nicht explizit erwähnt": "nicht explizit erwähnt",
-        "nicht erwähnt": "nicht explizit erwähnt",
-        "neutral": "nicht explizit erwähnt",
+        # English
+        "fulfilled": t_fulfilled,
+        "met": t_fulfilled,
+        "yes": t_fulfilled,
+        "partially": t_partial,
+        "partially fulfilled": t_partial,
+        "not fulfilled": t_not_fulfilled,
+        "not met": t_not_fulfilled,
+        "no": t_not_fulfilled,
+        "missing": t_not_fulfilled,
+        "potentially": t_potential,
+        "potentially fulfilled": t_potential,
+        "implicit": t_potential,
+        "not explicitly mentioned": t_not_mentioned,
+        "not mentioned": t_not_mentioned,
+
+        # French
+        "rempli": t_fulfilled,
+        "satisfait": t_fulfilled,
+        "oui": t_fulfilled,
+        "partiellement": t_partial,
+        "partiellement rempli": t_partial,
+        "non rempli": t_not_fulfilled,
+        "non satisfait": t_not_fulfilled,
+        "non": t_not_fulfilled,
+        "manquant": t_not_fulfilled,
+        "potentiellement": t_potential,
+        "potentiellement rempli": t_potential,
+        "implicite": t_potential,
+        "pas explicitement mentionné": t_not_mentioned,
+        "pas mentionné": t_not_mentioned,
         
         "unklar": "! bitte prüfen !",
         "! bitte prüfen !": "! bitte prüfen !"
@@ -55,38 +116,36 @@ def normalize_matching_values(data):
         if section in data and isinstance(data[section], list):
             for item in data[section]:
                 # 1. Konsistenzcheck: Wenn nichts gefunden wurde, kann es nicht 'erfüllt' sein
-                # Wir prüfen auf boolean False oder String "false" / "nein"
                 found = item.get("im_cv_gefunden")
                 found_bool = False
                 if isinstance(found, bool):
                     found_bool = found
                 elif isinstance(found, str):
-                    found_bool = found.lower() in ["true", "ja", "yes", "vorhanden"]
+                    found_bool = found.lower() in ["true", "ja", "yes", "vorhanden", "vrai"]
                 
                 # 2. Bestehende Bewertung normalisieren
                 current_val = item.get("bewertung", "")
                 normalized_val = get_normalized(current_val, unified_map, "! bitte prüfen !")
                 
                 # 3. Korrektur bei offensichtlicher Inkonsistenz
-                # Falls 'gefunden' = False, aber Bewertung = 'erfüllt', korrigieren wir auf 'nicht erfüllt'
-                if not found_bool and normalized_val == "erfüllt":
-                    # Ausnahme: Soft Skills werden oft nicht 'gefunden' aber als neutral/nicht erwähnt markiert
+                if not found_bool and normalized_val == t_fulfilled:
                     if section != "soft_skills_abgleich":
-                        normalized_val = "nicht erfüllt"
+                        normalized_val = t_not_fulfilled
                 
-                # Soft Skills erhalten als Default "nicht explizit erwähnt"
                 if not current_val or normalized_val == "! bitte prüfen !":
                     if section == "soft_skills_abgleich":
-                        normalized_val = "nicht explizit erwähnt"
+                        normalized_val = t_not_mentioned
 
                 item["bewertung"] = normalized_val
 
     return data
 
-def generate_matchmaking_json(cv_json_path, stellenprofil_json_path, output_path, schema_path):
+def generate_matchmaking_json(cv_json_path, stellenprofil_json_path, output_path, schema_path, language="de"):
     """
     Generate a matchmaking JSON using the provided CV and Stellenprofil JSONs and the schema prompt.
     """
+    translations = load_translations()
+    
     # Load schema
     with open(schema_path, 'r', encoding='utf-8') as f:
         schema = json.load(f)
@@ -96,30 +155,23 @@ def generate_matchmaking_json(cv_json_path, stellenprofil_json_path, output_path
     with open(stellenprofil_json_path, 'r', encoding='utf-8') as f:
         stellenprofil_data = json.load(f)
 
+    # Dictionary for language names
+    lang_names = {
+        "de": "Deutsch (Schweizer Rechtschreibung)",
+        "en": "English",
+        "fr": "Français"
+    }
+    lang_name = lang_names.get(language, "Deutsch")
+
     # Prepare prompt for OpenAI
-    system_prompt = (
-        "Du bist ein kritischer Auditor für CV-Matching. Vergleiche das folgende Stellenprofil und den CV gemäss der JSON-Schema-Vorgabe.\n"
-        "WICHTIGE REGELN ZUR VERMEIDUNG VON HALLUZINATIONEN UND FÜR STRUKTURELLE TREUE:\n"
-        "1. Nutze AUSSCHLIESSLICH die bereitgestellten JSON-Daten des CVs. Erfinde keine Informationen.\n"
-        "2. EXAKTE KONTINUITÄT & VOLLSTÄNDIGKEIT: Übernehme JEDES EINZELNE Kriterium aus dem Stellenprofil (anforderungen.muss_kriterien und anforderungen.soll_kriterien) ABSOLUT VOLLSTÄNDIG und WÖRTLICH. Es darf KEIN Wort ausgelassen, gekürzt oder zusammengefasst werden. Auch Aufzählungen innerhalb eines Kriteriums (z.B. 'SAFe, Kenntnisse als Coach' oder 'Deutsch- und Englischkenntnisse') müssen 1:1 übernommen werden. Das Kriterium im Match-JSON muss identisch mit dem Text im Stellenprofil-JSON sein. Die Anzahl der Einträge im Abgleich muss exakt der Anzahl der Kriterien im Profil entsprechen.\n"
-        "3. KEINE AUSLASSUNGEN: Jedes Kriterium aus der Profil-Liste muss ein entsprechendes Gegenstück im Abgleich haben. Auch vermeintlich einfache Kriterien wie Sprachen (Deutsch/Englisch) MÜSSEN im Abgleich erscheinen.\n"
-        "4. STRIKTES CLUSTERING: Alle Kriterien aus 'anforderungen.muss_kriterien' müssen zwingend in 'muss_kriterien_abgleich' landen. Alle Kriterien aus 'anforderungen.soll_kriterien' zwingend in 'soll_kriterien_abgleich'. Vermische diese Kategorien nicht und erstelle für jeden Punkt einen eigenen Eintrag.\n"
-        "5. ZERTIFIZIERUNGEN: Scanne explizit das Feld 'Trainings_und_Zertifizierungen' sowie 'Aus_und_Weiterbildung' nach Übereinstimmungen mit den geforderten Zertifikaten. Auch wenn ein Zertifikat nur im Freitext der Projekterfahrungen erwähnt wird, gilt es als gefunden.\n"
-        "6. IMPLIZITE MATCHES: Wenn ein Skill oder Zertifikat nicht explizit im CV steht, aber durch den Kontext (z.B. Rolle, Aufgaben, Projekterfahrung) sehr wahrscheinlich vorhanden ist, bewerte es als 'potenziell erfüllt'. Begründe dies im Kommentar.\n"
-        "7. LOGISCHE KONSISTENZ: Falls 'im_cv_gefunden' = false ist, darf die 'bewertung' NIEMALS 'erfüllt' oder 'teilweise erfüllt' sein. In diesem Fall muss die Bewertung 'nicht erfüllt' oder 'nicht explizit erwähnt' lauten.\n"
-        "8. CV-EVIDENZ & NACHWEIS: Formuliere im Feld 'cv_evidenz' eine prägnante Begründung basierend auf Fakten aus dem CV. Nutze Telegramm-Stil: keine Füllwörter, keine Personalpronomen, kein 'im CV nachgewiesen' oder 'laut Lebenslauf'. Erwähne explizite Fakten (Projekte, Rollen, Zertifikate) sowie implizite Herleitungen aus dem Kontext. Beispiel: 'Mehrjährige Erfahrung in SAFe-Projekten als Scrum Master' statt 'Die Person hat im CV Erfahrung mit SAFe'. Bei Sprachen: 'Deutsch (C2) und Englisch (C1) durch Projekterfahrung belegt'.\n"
-        "9. LOGISCHE KONSISTENZ: Falls 'im_cv_gefunden' = false ist, darf die 'bewertung' NIEMALS 'erfüllt' oder 'teilweise erfüllt' sein. In diesem Fall muss die Bewertung 'nicht erfüllt' oder 'nicht explizit erwähnt' lauten.\n"
-        "10. KOMMENTAR: Nutze das Feld 'kommentar' nur für zusätzliche, kritische Anmerkungen oder Erklärungen zur Bewertung, falls notwendig.\n"
-        "11. SOFT SKILLS: Identifiziere und extrahiere eigenständig persönliche Kompetenzen (z.B. Teamfähigkeit, Kommunikation) in die Liste 'soft_skills_abgleich'.\n"
-        "12. WEITERE KRITERIEN: Falls im Stellenprofil (z.B. in den Aufgaben oder Fliesstext) Anforderungen stehen, die nicht in den expliziten Muss/Soll-Listen aufgeführt sind, ordne diese in 'weitere_kriterien_abgleich' ein.\n"
-        "13. SCHWEIZER RECHTSCHREIBUNG: Nutze ausschliesslich die Schweizer Schreibweise. Ersetze jedes 'ß' durch 'ss' (z.B. 'gross' statt 'groß', 'gemäss' statt 'gemäß').\n"
-        "14. SCORE-BERECHNUNG (0-100%): Der Score berechnet sich ausschliesslich aus Muss- und Soll-Kriterien:\n"
-        "    - Basis-Gewichtung: Muss-Kriterien (90%), Soll-Kriterien (10%).\n"
-        "    - DYNAMISCHE ANPASSUNG: Falls eine der beiden Kategorien fehlt, wird die Gewichtung zu 100% auf die vorhandene Kategorie (Muss oder Soll) gelegt. Soft Skills und weitere Kriterien fliessen NICHT in den numerischen Score ein.\n"
-        "    - BEWERTUNGS-LOGIK: 'erfüllt' = 100% des Kriterium-Werts, 'teilweise erfüllt' = 50%, 'potenziell erfüllt' = 40%, 'nicht erfüllt' / 'nicht explizit erwähnt' = 0%.\n"
-        "    - Muss-Kriterien sind 'Showstopper': Ein 'nicht erfüllt' bei einem Muss-Kriterium führt zu einem massiven Abzug (mind. -20% vom Gesamtergebnis pro fehlendem Punkt).\n\n"
+    prompt_template = get_text(translations, 'system', 'matchmaking_prompt', language)
+    system_prompt = prompt_template.replace("{lang_name}", lang_name) + "\n\n" + (
         "Schema (nur als Vorgabe, nicht ausgeben):\n" +
         json.dumps(schema, ensure_ascii=False, indent=2)
+    )
+    user_prompt = (
+        "Stellenprofil JSON:\n" + json.dumps(stellenprofil_data, ensure_ascii=False, indent=2) +
+        "\n\nCV JSON:\n" + json.dumps(cv_data, ensure_ascii=False, indent=2)
     )
     user_prompt = (
         "Stellenprofil JSON:\n" + json.dumps(stellenprofil_data, ensure_ascii=False, indent=2) +
@@ -187,7 +239,7 @@ def generate_matchmaking_json(cv_json_path, stellenprofil_json_path, output_path
         match_json = json.loads(response.choices[0].message.content)
     
     # Normalisierung der Bewertungs-Werte
-    match_json = normalize_matching_values(match_json)
+    match_json = normalize_matching_values(match_json, language=language)
     
     # Ensure matching_datum is set to current date
     if "match_metadata" in match_json:

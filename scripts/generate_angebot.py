@@ -3,11 +3,19 @@ import json
 from openai import OpenAI
 from datetime import datetime
 
-def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path, output_path, schema_path):
+def abs_path(relative_path):
+    """Gibt den absoluten Pfad relativ zum Skript-Verzeichnis zurück"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(script_dir, relative_path)
+
+def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path, output_path, schema_path=None, language='de'):
     """
     Generate an Offer (Angebot) JSON using the provided CV, Stellenprofil, and Match JSONs.
     """
     # Load schema
+    if not schema_path:
+        schema_path = abs_path("angebot_json_schema.json")
+        
     with open(schema_path, 'r', encoding='utf-8') as f:
         schema = json.load(f)
     
@@ -135,17 +143,27 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         "match": {
             "score": match_data.get("match_score", {}).get("score_gesamt", 0) if match_data else 0,
             "fazit": match_data.get("gesamt_fazit", {}).get("kurzbegruendung", "") if match_data else ""
-        }
+        },
+        "ausgabesprache": language
     }
 
+    # Select language name for the prompt
+    lang_map = {
+        "de": "Deutsch",
+        "en": "Englisch",
+        "fr": "Französisch"
+    }
+    lang_name = lang_map.get(language, "Deutsch")
+
     system_prompt = (
-        "Du bist ein Experte für die Erstellung von professionellen IT-Dienstleistungsangeboten. "
-        "Erstelle die qualitativen Abschnitte eines Angebots basierend auf dem bereitgestellten Kontext.\n\n"
+        f"Du bist ein Experte für die Erstellung von professionellen IT-Dienstleistungsangeboten in **{lang_name}**. "
+        f"Erstelle die qualitativen Abschnitte eines Angebots basierend auf dem bereitgestellten Kontext in **{lang_name}**.\n\n"
         "WICHTIGE REGELN:\n"
-        "1. TONALITÄT: Professionell, empathisch, überzeugend. Schweizer Rechtschreibung (ss statt ß).\n"
-        "2. WIR-FORM: Verwende konsequent die 'Wir-Form' (Wir als Orange Business), niemals die 'Ich-Form'.\n"
-        "3. STRIKT POSITIV: Alle Kriterien gelten als erfüllt. Weise NIEMALS auf Lücken, fehlende Erfahrung oder Defizite hin (NICHT: 'Trotz fehlender...', 'Obwohl XY nicht...'). Formuliere ausschliesslich Stärken und Übereinstimmungen.\n"
-        "4. STRUKTUR: Gib ein JSON-Objekt mit exakt diesen Feldern zurück. Beachte dabei unbedingt die HINWEISE (Hints) für jedes Feld:\n"
+        f"1. SPRACHE: Generiere alle Texte (Werte im JSON) konsequent in **{lang_name}**.\n"
+        "2. TONALITÄT: Professionell, empathisch, überzeugend. Falls die Ausgabe in Deutsch erfolgt: Nutze Schweizer Rechtschreibung (ss statt ß).\n"
+        "3. WIR-FORM: Verwende konsequent die 'Wir-Form' (Wir als Orange Business), niemals die 'Ich-Form'.\n"
+        "4. STRIKT POSITIV: Alle Kriterien gelten als erfüllt. Weise NIEMALS auf Lücken, fehlende Erfahrung oder Defizite hin (NICHT: 'Trotz fehlender...', 'Obwohl XY nicht...'). Formuliere ausschliesslich Stärken und Übereinstimmungen.\n"
+        "5. STRUKTUR: Gib ein JSON-Objekt mit exakt diesen Feldern zurück. Beachte dabei unbedingt die HINWEISE (Hints) für jedes Feld:\n"
     )
 
     # Inject hints into system prompt

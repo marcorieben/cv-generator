@@ -14,11 +14,37 @@ except ImportError:
 # Globale Konstante für fehlende Daten
 MISSING_DATA_MARKER = "! bitte prüfen !"
 
+def load_translations():
+    """Lädt die Übersetzungen aus der translations.json Datei."""
+    try:
+        # Versuche verschiedene Pfade (für Streamlit und direkte Ausführung)
+        paths = [
+            os.path.join(os.path.dirname(__file__), "translations.json"),
+            os.path.join("scripts", "translations.json"),
+            "translations.json"
+        ]
+        for path in paths:
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        return {}
+    except Exception as e:
+        print(f"Warnung: Übersetzungen konnten nicht geladen werden: {e}")
+        return {}
+
+def get_text(translations, section, key, lang="de"):
+    """Holt einen übersetzten Text."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
+    except:
+        return f"[{key}]"
+
 # -------------------------------------
 # Hilfsfunktion: Absoluten Pfad bilden
 # -------------------------------------
-def validate_json_structure(data):
+def validate_json_structure(data, language="de"):
     """Validiert die Struktur der JSON-Daten und gibt kritische Fehler und Info zurück"""
+    translations = load_translations()
     critical = []
     info = []
     
@@ -37,25 +63,25 @@ def validate_json_structure(data):
     
     for field in required_fields:
         if field not in data:
-            critical.append(f"Fehlendes Feld: {field}")
+            critical.append(f"{get_text(translations, 'validation', 'missing_field', language)}: {field}")
         elif data[field] is None:
-            critical.append(f"Feld ist None: {field}")
+            critical.append(f"{get_text(translations, 'validation', 'field_is_none', language)}: {field}")
         else:
             # Typ-Prüfungen
             if field == "Hauptrolle":
                 if not isinstance(data[field], dict) or "Titel" not in data[field] or "Beschreibung" not in data[field]:
-                    critical.append(f"Feld 'Hauptrolle' muss ein Objekt mit 'Titel' und 'Beschreibung' sein")
+                    critical.append(get_text(translations, 'validation', 'hauptrolle_invalid', language))
                 else:
                     beschreibung = data[field]["Beschreibung"]
                     word_count = len(beschreibung.split())
                     if word_count < 5 or word_count > 10:
-                        info.append(f"Hauptrolle.Beschreibung sollte 5-10 Wörter haben (aktuell {word_count})")
+                        info.append(f"{get_text(translations, 'validation', 'hauptrolle_desc_length', language)} (aktuell {word_count})")
             elif field in ["Vorname", "Nachname", "Nationalität", "Ausbildung", "Kurzprofil"]:
                 if not isinstance(data[field], str):
-                    info.append(f"Feld '{field}' sollte ein String sein (ist {type(data[field]).__name__})")
+                    info.append(f"Feld '{field}' {get_text(translations, 'validation', 'should_be_string', language)} (ist {type(data[field]).__name__})")
             elif field in array_fields:
                 if not isinstance(data[field], list):
-                    critical.append(f"Feld '{field}' muss ein Array sein")
+                    critical.append(f"Feld '{field}' {get_text(translations, 'validation', 'must_be_array', language)}")
     
     # Entferne die doppelte Definition
     # array_fields = [...
@@ -64,58 +90,58 @@ def validate_json_structure(data):
     if "Fachwissen_und_Schwerpunkte" in data and isinstance(data["Fachwissen_und_Schwerpunkte"], list):
         for i, item in enumerate(data["Fachwissen_und_Schwerpunkte"]):
             if not isinstance(item, dict):
-                critical.append(f"Fachwissen_und_Schwerpunkte[{i}]: Muss ein Objekt sein")
+                critical.append(f"Fachwissen_und_Schwerpunkte[{i}]: {get_text(translations, 'validation', 'must_be_object', language)}")
                 continue
             if "Kategorie" not in item:
-                critical.append(f"Fachwissen_und_Schwerpunkte[{i}]: Fehlendes Feld 'Kategorie'")
+                critical.append(f"Fachwissen_und_Schwerpunkte[{i}]: {get_text(translations, 'validation', 'missing_field', language)} 'Kategorie'")
             if "Inhalt" not in item or not isinstance(item["Inhalt"], list):
-                critical.append(f"Fachwissen_und_Schwerpunkte[{i}]: 'Inhalt' muss ein Array sein")
+                critical.append(f"Fachwissen_und_Schwerpunkte[{i}]: 'Inhalt' {get_text(translations, 'validation', 'must_be_array', language)}")
     
     # Prüfe Aus_und_Weiterbildung Struktur
     if "Aus_und_Weiterbildung" in data and isinstance(data["Aus_und_Weiterbildung"], list):
         for i, item in enumerate(data["Aus_und_Weiterbildung"]):
             if not isinstance(item, dict):
-                critical.append(f"Aus_und_Weiterbildung[{i}]: Muss ein Objekt sein")
+                critical.append(f"Aus_und_Weiterbildung[{i}]: {get_text(translations, 'validation', 'must_be_object', language)}")
                 continue
             required = ["Zeitraum", "Institution", "Abschluss"]
             for req in required:
                 if req not in item:
-                    critical.append(f"Aus_und_Weiterbildung[{i}]: Fehlendes Feld '{req}'")
+                    critical.append(f"Aus_und_Weiterbildung[{i}]: {get_text(translations, 'validation', 'missing_field', language)} '{req}'")
     
     # Prüfe Trainings_und_Zertifizierungen Struktur
     if "Trainings_und_Zertifizierungen" in data and isinstance(data["Trainings_und_Zertifizierungen"], list):
         for i, item in enumerate(data["Trainings_und_Zertifizierungen"]):
             if not isinstance(item, dict):
-                critical.append(f"Trainings_und_Zertifizierungen[{i}]: Muss ein Objekt sein")
+                critical.append(f"Trainings_und_Zertifizierungen[{i}]: {get_text(translations, 'validation', 'must_be_object', language)}")
                 continue
             required = ["Zeitraum", "Institution", "Titel"]
             for req in required:
                 if req not in item:
-                    critical.append(f"Trainings_und_Zertifizierungen[{i}]: Fehlendes Feld '{req}'")
+                    critical.append(f"Trainings_und_Zertifizierungen[{i}]: {get_text(translations, 'validation', 'missing_field', language)} '{req}'")
     
     # Prüfe Sprachen Struktur
     if "Sprachen" in data and isinstance(data["Sprachen"], list):
         for i, item in enumerate(data["Sprachen"]):
             if not isinstance(item, dict):
-                critical.append(f"Sprachen[{i}]: Muss ein Objekt sein")
+                critical.append(f"Sprachen[{i}]: {get_text(translations, 'validation', 'must_be_object', language)}")
                 continue
             if "Sprache" not in item:
-                critical.append(f"Sprachen[{i}]: Fehlendes Feld 'Sprache'")
+                critical.append(f"Sprachen[{i}]: {get_text(translations, 'validation', 'missing_field', language)} 'Sprache'")
             if "Level" not in item or not is_valid_level(item["Level"]):
-                info.append(f"Sprachen[{i}]: Ungültiges oder fehlendes Feld 'Level' (muss eine Zahl 1-5, Text wie 'Muttersprache' oder Kombination sein)")
+                info.append(f"Sprachen[{i}]: {get_text(translations, 'validation', 'invalid_level', language)}")
     
     # Prüfe Referenzprojekte Struktur
     if "Ausgewählte_Referenzprojekte" in data and isinstance(data["Ausgewählte_Referenzprojekte"], list):
         for i, item in enumerate(data["Ausgewählte_Referenzprojekte"]):
             if not isinstance(item, dict):
-                critical.append(f"Ausgewählte_Referenzprojekte[{i}]: Muss ein Objekt sein")
+                critical.append(f"Ausgewählte_Referenzprojekte[{i}]: {get_text(translations, 'validation', 'must_be_object', language)}")
                 continue
             required = ["Zeitraum", "Rolle", "Kunde", "Tätigkeiten"]
             for req in required:
                 if req not in item:
-                    critical.append(f"Ausgewählte_Referenzprojekte[{i}]: Fehlendes Feld '{req}'")
+                    critical.append(f"Ausgewählte_Referenzprojekte[{i}]: {get_text(translations, 'validation', 'missing_field', language)} '{req}'")
             if "Tätigkeiten" in item and not isinstance(item["Tätigkeiten"], list):
-                critical.append(f"Ausgewählte_Referenzprojekte[{i}]: 'Tätigkeiten' muss ein Array sein")
+                critical.append(f"Ausgewählte_Referenzprojekte[{i}]: 'Tätigkeiten' {get_text(translations, 'validation', 'must_be_array', language)}")
     
     return critical, info
 
@@ -131,15 +157,26 @@ def parse_level(level):
         match = re.match(r'(\d+)', level)
         if match:
             return int(match.group(1))
-        # Mappe Text
-        text_to_num = {
-            "Muttersprache": 5,
-            "Verhandlungssicher": 4,
-            "Sehr gute Kenntnisse": 3,
-            "Gute Kenntnisse": 2,
-            "Grundkenntnisse": 1
-        }
-        return text_to_num.get(level, 0)
+            
+        # Mappe Text (suche in allen Sprachen)
+        translations = load_translations()
+        text_to_num = {}
+        for i in range(1, 6):
+            key = f"level_{i}"
+            lvl_trans = translations.get("levels", {}).get(key, {})
+            for lang_code in lvl_trans:
+                text_to_num[lvl_trans[lang_code].lower()] = i
+        
+        # Fallback Hardcoded für Sicherheit
+        text_to_num.update({
+            "muttersprache": 5, "native": 5, "maternelle": 5,
+            "verhandlungssicher": 4, "proficient": 4, "courant": 4,
+            "sehr gute kenntnisse": 3, "advanced": 3, "avancé": 3,
+            "gute kenntnisse": 2, "intermediate": 2, "intermédiaire": 2,
+            "grundkenntnisse": 1, "basic": 1, "débutant": 1
+        })
+        
+        return text_to_num.get(level.lower(), 0)
     return 0
 
 
@@ -150,11 +187,29 @@ def is_valid_level(level):
     if isinstance(level, str):
         import re
         level = level.strip()
-        if level in ["Muttersprache", "Verhandlungssicher", "Sehr gute Kenntnisse", "Gute Kenntnisse", "Grundkenntnisse"]:
-            return True
+        # Zahl am Anfang ist okay
         if re.match(r'^\d+', level):
-            num = int(re.match(r'^\d+', level).group())
-            return 1 <= num <= 5
+            val = parse_level(level)
+            return 1 <= val <= 5
+            
+        # Prüfe gegen alle Übersetzungen
+        translations = load_translations()
+        valid_texts = []
+        for i in range(1, 6):
+            key = f"level_{i}"
+            lvl_trans = translations.get("levels", {}).get(key, {})
+            for lang_code in lvl_trans:
+                valid_texts.append(lvl_trans[lang_code].lower())
+        
+        if level.lower() in valid_texts:
+            return True
+            
+        # Fallback Hardcoded
+        if level.lower() in ["muttersprache", "verhandlungssicher", "sehr gute kenntnisse", "gute kenntnisse", "grundkenntnisse",
+                            "native speaker", "full professional proficiency", "very good knowledge", "good knowledge", "basic knowledge",
+                            "langue maternelle", "capacité professionnelle complète", "très bonnes connaissances", "bonnes connaissances", "connaissances de base"]:
+            return True
+            
     return False
 
 
@@ -269,23 +324,28 @@ def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, b
         run.font.italic = True
 
 
-def highlight_missing_data_in_document(doc):
+def highlight_missing_data_in_document(doc, translations=None, language="de"):
     """
     Durchsucht das gesamte Dokument nach verschiedenen Varianten des Fehlenden-Daten-Markers,
     normalisiert sie auf die einheitliche Version und hebt alle Vorkommen gelb hervor.
     """
     from docx.enum.text import WD_COLOR_INDEX
     
+    if translations is None:
+        translations = load_translations()
+    
+    marker_base = get_text(translations, "system", "missing_data_marker", language)
+    
     # Alle möglichen Varianten des Markers (OpenAI verwendet oft andere Bindestriche/Leerzeichen)
     marker_variants = [
-        "! bitte prüfen!",           # Ohne Leerzeichen vor !
-        "! bitte prüfen !",          # Mit Leerzeichen vor ! (unser Standard)
-        "! fehlt – bitte prüfen!",   # Alt: Gedankenstrich ohne Leerzeichen vor !
-        "! fehlt – bitte prüfen !",  # Alt: Gedankenstrich mit Leerzeichen vor !
-        "! fehlt - bitte prüfen!",   # Alt: Normaler Bindestrich ohne Leerzeichen vor !
-        "! fehlt - bitte prüfen !",  # Alt: Normaler Bindestrich mit Leerzeichen vor !
-        "! fehlt — bitte prüfen!",   # Alt: Em-Dash ohne Leerzeichen vor !
-        "! fehlt — bitte prüfen !",  # Alt: Em-Dash mit Leerzeichen vor !
+        marker_base,
+        marker_base.replace(" !", "!"), # Ohne Leerzeichen vor !
+        "! bitte prüfen!",           # Fallback DE
+        "! bitte prüfen !",          # Fallback DE
+        "! please check !",          # Fallback EN
+        "! please check!",           # Fallback EN
+        "! à vérifier !",            # Fallback FR
+        "! à vérifier!",             # Fallback FR
     ]
     
     # Durchsuche alle Paragraphen im Hauptdokument
@@ -370,7 +430,7 @@ def get_available_width(doc):
     return page_width - left_margin - right_margin
 
 
-def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
+def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung, language="de", translations=None):
     """
     Render basic info as a 3-column borderless table with white background.
     Column 1 (20%): Labels (bold)
@@ -447,7 +507,8 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     
     p_label = cell_label.paragraphs[0]
     p_label.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-    run_label = p_label.add_run("Hauptrolle:")
+    label_text = get_text(translations, 'cv', 'role_label', language)
+    run_label = p_label.add_run(label_text)
     run_label.font.name = s["font"]
     run_label.font.size = Pt(s["size"])
     run_label.font.bold = True
@@ -472,7 +533,8 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     
     p_label2 = cell_label2.paragraphs[0]
     p_label2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-    run_label2 = p_label2.add_run("Nationalität:")
+    label_text2 = get_text(translations, 'cv', 'nationality_label', language)
+    run_label2 = p_label2.add_run(label_text2)
     run_label2.font.name = s["font"]
     run_label2.font.size = Pt(s["size"])
     run_label2.font.bold = True
@@ -497,7 +559,8 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
     
     p_label3 = cell_label3.paragraphs[0]
     p_label3.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-    run_label3 = p_label3.add_run("Ausbildung:")
+    label_text3 = get_text(translations, 'cv', 'education_label', language)
+    run_label3 = p_label3.add_run(label_text3)
     run_label3.font.name = s["font"]
     run_label3.font.size = Pt(s["size"])
     run_label3.font.bold = True
@@ -893,37 +956,34 @@ def add_header_with_logo(doc):
                 p_element.getparent().remove(p_element)
 
 
-def generate_cv(json_path, output_dir=None, interactive=True):
+def generate_cv(json_path, output_dir=None, interactive=True, language="de"):
 
     json_path = abs_path(json_path)
+    translations = load_translations()
 
     # JSON einlesen
     with open(json_path, 'r', encoding="utf-8") as f:
         data = json.load(f)
     
     # JSON-Struktur validieren
-    critical, info = validate_json_structure(data)
+    critical, info = validate_json_structure(data, language=language)
     if (critical or info) and interactive:
         # Build warning message with explanation
-        warning_msg = (
-            "ℹ️  Die Validierung prüft, ob alle erforderlichen Felder vorhanden und korrekt formatiert sind.\n\n"
-            "Die JSON-Datei weist Strukturprobleme auf, die die Qualität des generierten CVs beeinträchtigen können. \n"
-            "Nachstehend eine Auflistung der entdeckten Strukturprobleme nach Kritikalität klassifiziert."
-        )
+        warning_msg = get_text(translations, 'validation', 'warning_msg', language)
         
         # Build details with better formatting and icons
         details_parts = []
         
         if critical:
-            details_parts.append("🔴 KRITISCHE PROBLEME:")
+            details_parts.append(get_text(translations, 'validation', 'critical_problems', language))
             details_parts.append("─" * 40)
             for err in critical:
                 # Add specific icons based on error type
-                if "Fehlendes Feld" in err:
+                if get_text(translations, 'validation', 'missing_field', language) in err:
                     icon = "❌"
-                elif "Muss ein" in err or "muss ein" in err:
+                elif get_text(translations, 'validation', 'must_be_array', language) in err or get_text(translations, 'validation', 'must_be_object', language) in err:
                     icon = "⚠️"
-                elif "Ungültig" in err or "ungültig" in err:
+                elif "Ungültig" in err or "ungültig" in err or "Invalid" in err or "non valide" in err:
                     icon = "🚫"
                 else:
                     icon = "🔴"
@@ -932,13 +992,13 @@ def generate_cv(json_path, output_dir=None, interactive=True):
         if info:
             if critical:
                 details_parts.append("")  # Empty line separator
-            details_parts.append("🟡 WENIGER KRITISCHE HINWEISE:")
+            details_parts.append(get_text(translations, 'validation', 'info_problems', language))
             details_parts.append("─" * 40)
             for wrn in info:
                 # Add specific icons based on warning type
-                if "sollte" in wrn:
+                if "sollte" in wrn or "should" in wrn or "devrait" in wrn:
                     icon = "💡"
-                elif "Typ" in wrn or "sein" in wrn:
+                elif "Typ" in wrn or "sein" in wrn or "string" in wrn or "chaîne" in wrn:
                     icon = "ℹ️"
                 else:
                     icon = "🟡"
@@ -947,15 +1007,15 @@ def generate_cv(json_path, output_dir=None, interactive=True):
         details = "\n".join(details_parts)
         
         try:
-            proceed = show_warning(warning_msg, title="JSON-Validierung", details=details)
+            proceed = show_warning(warning_msg, title=get_text(translations, 'validation', 'warning_title', language), details=details)
             if not proceed:
-                print("❌ Benutzer hat abgebrochen.")
+                print(f"❌ {get_text(translations, 'validation', 'user_cancelled', language)}")
                 return None
         except Exception as e:
             print(f"Warnung konnte nicht angezeigt werden: {e}")
             print("Probleme gefunden:", "\n".join(critical + info))
-            user_input = input("Trotzdem fortfahren? (j/n): ")
-            if user_input.lower() not in ['j', 'ja', 'y', 'yes']:
+            user_input = input(get_text(translations, 'validation', 'proceed_anyway', language))
+            if user_input.lower() not in ['j', 'ja', 'y', 'yes', 'o', 'oui']:
                 return None
 
     # Lade Template-Datei mit Header/Footer oder erstelle leeres Dokument
@@ -964,7 +1024,7 @@ def generate_cv(json_path, output_dir=None, interactive=True):
         doc = Document(template_path)
         # Template bringt bereits Header, Footer und Seitenränder mit
     else:
-        print(f"Warnung: Template nicht gefunden ({template_path}). Erstelle leeres Dokument.")
+        print(f"Warnung: {get_text(translations, 'validation', 'no_template', language)}")
         doc = Document()
         # Set page margins: 1.5 cm all sides and A4 size
         from docx.shared import Cm
@@ -1000,51 +1060,53 @@ def generate_cv(json_path, output_dir=None, interactive=True):
     add_basic_info_table(doc, 
                          rolle_desc,
                          str(data.get("Nationalität", "")),
-                         str(data.get("Ausbildung", "")))
+                         str(data.get("Ausbildung", "")),
+                         language=language,
+                         translations=translations)
 
     # -----------------------------
     # Kurzprofil
     # -----------------------------
-    add_heading_1(doc, "Kurzprofil")
+    add_heading_1(doc, get_text(translations, 'cv', 'profile', language))
     add_normal_text(doc, str(data.get("Kurzprofil", "")))
 
     # -----------------------------
     # Expertise & Fachwissen
     # -----------------------------
-    add_heading_1(doc, "Expertise")
-    add_heading_2(doc, "Fachwissen & Schwerpunkte")
+    add_heading_1(doc, get_text(translations, 'cv', 'expertise', language))
+    add_heading_2(doc, get_text(translations, 'cv', 'skills', language))
     skills = data.get("Fachwissen_und_Schwerpunkte", [])
     add_fachwissen_table(doc, skills)
 
     # -----------------------------
     # Aus- und Weiterbildung
     # -----------------------------
-    add_heading_2(doc, "Aus- und Weiterbildung")
+    add_heading_2(doc, get_text(translations, 'cv', 'education', language))
     education = data.get("Aus_und_Weiterbildung", [])
     add_education_table(doc, education)
 
     # -----------------------------
     # Trainings & Zertifizierungen
     # -----------------------------
-    add_heading_2(doc, "Trainings & Zertifizierungen")
+    add_heading_2(doc, get_text(translations, 'cv', 'certifications', language))
     trainings = data.get("Trainings_und_Zertifizierungen", [])
     add_trainings_table(doc, trainings)
 
     # -----------------------------
     # Sprachen
     # -----------------------------
-    add_heading_2(doc, "Sprachen")
+    add_heading_2(doc, get_text(translations, 'cv', 'languages', language))
     sprachen = data.get("Sprachen", [])
-    add_sprachen_table(doc, sprachen)
+    add_sprachen_table(doc, sprachen, language=language, translations=translations)
 
     # -----------------------------
     # Referenzprojekte
     # -----------------------------
     doc.add_page_break()
-    add_heading_1(doc, "Ausgewählte Referenzprojekte")
+    add_heading_1(doc, get_text(translations, 'cv', 'projects', language))
     referenzprojekte = data.get("Ausgewählte_Referenzprojekte", [])
     for projekt in referenzprojekte:
-        add_referenzprojekt_section(doc, projekt)
+        add_referenzprojekt_section(doc, projekt, language=language, translations=translations)
 
 
     # -----------------------------
@@ -1058,7 +1120,7 @@ def generate_cv(json_path, output_dir=None, interactive=True):
         out_docx = os.path.join(output_dir, f"cv_{firstname}_{lastname}_{timestamp}.docx")
 
     # Vor dem Speichern: Highlight alle fehlenden Daten im gesamten Dokument
-    highlight_missing_data_in_document(doc)
+    highlight_missing_data_in_document(doc, translations=translations, language=language)
     
     doc.save(out_docx)
     print(f"✅ Word-Datei erstellt: {out_docx}")
@@ -1081,7 +1143,7 @@ def select_json_file():
     return picker("Wählen Sie eine JSON-Datei für den CV", initialdir=output_dir)
 
 
-def add_sprachen_table(doc, sprachen_data):
+def add_sprachen_table(doc, sprachen_data, language="de", translations=None):
     """
     Render Sprachen as a 6-column table (2 rows max).
     Columns: Sprache | Level (stars) | Sprache | Level (stars) | Sprache | Level (stars)
@@ -1096,12 +1158,29 @@ def add_sprachen_table(doc, sprachen_data):
         return
     
     # Define level to star count mapping (supports both strings and numbers)
+    # We include translations of the levels to ensure mapping works regardless of target language
     level_stars = {
+        # German (Original)
         "Muttersprache": 5,
         "Verhandlungssicher": 4,
         "Sehr gute Kenntnisse": 3,
         "Gute Kenntnisse": 2,
         "Grundkenntnisse": 1,
+        # Translations from translations.json
+        get_text(translations, 'levels', 'level_5', language): 5,
+        get_text(translations, 'levels', 'level_4', language): 4,
+        get_text(translations, 'levels', 'level_3', language): 3,
+        get_text(translations, 'levels', 'level_2', language): 2,
+        get_text(translations, 'levels', 'level_1', language): 1,
+        # English variants often found
+        "Native speaker": 5,
+        "Native": 5,
+        "Full professional proficiency": 4,
+        "Professional proficiency": 4,
+        "Very good knowledge": 3,
+        "Good knowledge": 2,
+        "Basic knowledge": 1,
+        # Numeric
         5: 5,
         4: 4,
         3: 3,
@@ -1199,7 +1278,7 @@ def add_sprachen_table(doc, sprachen_data):
             run_empty.font.color.rgb = RGBColor(128, 128, 128)  # Gray color
 
 
-def add_referenzprojekt_section(doc, projekt):
+def add_referenzprojekt_section(doc, projekt, language="de", translations=None):
     """
     Render a single reference project as a unified 5-row table block:
     Row 1: Kunde (100% width, Heading 2)
@@ -1340,7 +1419,7 @@ def add_referenzprojekt_section(doc, projekt):
     
     cell_tech_label.text = ""
     p_tech_label = cell_tech_label.paragraphs[0]
-    run_tech_label = p_tech_label.add_run("Technologien")
+    run_tech_label = p_tech_label.add_run(get_text(translations, 'cv', 'tech_label', language))
     run_tech_label.font.name = s_text["font"]
     run_tech_label.font.size = Pt(s_text["size"])
     run_tech_label.font.color.rgb = RGBColor(*s_text["color"])
@@ -1363,7 +1442,7 @@ def add_referenzprojekt_section(doc, projekt):
     
     cell_meth_label.text = ""
     p_meth_label = cell_meth_label.paragraphs[0]
-    run_meth_label = p_meth_label.add_run("Methodik")
+    run_meth_label = p_meth_label.add_run(get_text(translations, 'cv', 'methodology_label', language))
     run_meth_label.font.name = s_text["font"]
     run_meth_label.font.size = Pt(s_text["size"])
     run_meth_label.font.color.rgb = RGBColor(*s_text["color"])

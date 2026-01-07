@@ -77,6 +77,24 @@ def load_styles():
             return json.load(f)
     return {}
 
+def load_translations():
+    """Lädt die Übersetzungen aus der translations.json Datei."""
+    translations_path = abs_path("translations.json")
+    if os.path.exists(translations_path):
+        try:
+            with open(translations_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            pass
+    return {}
+
+def get_text(translations, section, key, lang="de"):
+    """Holt einen übersetzten Text."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
+    except:
+        return f"[{key}]"
+
 def add_page_number(run):
     fldChar1 = create_element('w:fldChar')
     create_attribute(fldChar1, 'w:fldCharType', 'begin')
@@ -161,7 +179,7 @@ def add_bullet_paragraph(doc, text):
 
     return p
 
-def add_criteria_table(doc, title, criteria_list):
+def add_criteria_table(doc, title, criteria_list, language="de", translations=None):
     """Refactored helper for adding a criteria table to word"""
     if not criteria_list:
         return
@@ -188,9 +206,9 @@ def add_criteria_table(doc, title, criteria_list):
     widths = [Cm(width_total * r) for r in ratios]
     
     hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Kriterium'
-    hdr_cells[1].text = 'Status'
-    hdr_cells[2].text = 'Hinweis'
+    hdr_cells[0].text = get_text(translations, 'offer', 'criterion_label', language)
+    hdr_cells[1].text = get_text(translations, 'offer', 'status_label', language)
+    hdr_cells[2].text = get_text(translations, 'offer', 'hint_label', language)
     
     # Set widths for header cells
     for i, width in enumerate(widths):
@@ -226,16 +244,17 @@ def add_criteria_table(doc, title, criteria_list):
         
         # Mapping to display text and color (with icons)
         status_map = {
-            "erfüllt": ("✅ Erfüllt", RGBColor(39, 174, 96), False),
-            "teilweise erfüllt": ("⚠️ Teilweise", RGBColor(243, 156, 18), True),
-            "potenziell erfüllt": ("⚠️ Teilweise", RGBColor(243, 156, 18), True),
-            "nicht erfüllt": ("❌ Nicht erfüllt", RGBColor(192, 57, 43), True),
-            "nicht explizit erwähnt": ("⚪ Nicht erwähnt", RGBColor(127, 140, 141), False),
-            "true": ("✅ Erfüllt", RGBColor(39, 174, 96), False),
-            "false": ("❌ Nicht erfüllt", RGBColor(192, 57, 43), True),
-            "! bitte prüfen !": ("❓ Prüfen", RGBColor(0, 0, 0), True)
+            "erfüllt": (get_text(translations, 'matchmaking', 'fulfilled', language), RGBColor(39, 174, 96), False),
+            "teilweise erfüllt": (get_text(translations, 'matchmaking', 'partially_fulfilled', language), RGBColor(243, 156, 18), True),
+            "potenziell erfüllt": (get_text(translations, 'matchmaking', 'partially_fulfilled', language), RGBColor(243, 156, 18), True),
+            "nicht erfüllt": (get_text(translations, 'matchmaking', 'not_fulfilled', language), RGBColor(192, 57, 43), True),
+            "nicht explizit erwähnt": (get_text(translations, 'matchmaking', 'not_mentioned', language), RGBColor(127, 140, 141), False),
+            "true": (get_text(translations, 'matchmaking', 'fulfilled', language), RGBColor(39, 174, 96), False),
+            "false": (get_text(translations, 'matchmaking', 'not_fulfilled', language), RGBColor(192, 57, 43), True),
+            "! bitte prüfen !": (get_text(translations, 'matchmaking', 'check_manual', language), RGBColor(0, 0, 0), True)
         }
         
+        # Fallback handling: use capitalized status if not in map
         display_text, color, is_bold = status_map.get(status, (status.capitalize(), RGBColor(0, 0, 0), False))
         
         # 2. Status
@@ -254,7 +273,7 @@ def add_criteria_table(doc, title, criteria_list):
         run_hint.font.name = f_name
         run_hint.font.size = Pt(f_size)
 
-def generate_angebot_word(json_path, output_path):
+def generate_angebot_word(json_path, output_path, language="de"):
     """
     Generates a Word document for the Offer based on the JSON data.
     """
@@ -262,8 +281,9 @@ def generate_angebot_word(json_path, output_path):
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # Load External Styles
+    # Load External Styles and Translations
     styles_cfg = load_styles()
+    translations = load_translations()
     
     def get_color(cfg_section, key="color"):
         rgb_list = cfg_section.get(key, [0, 0, 0])
@@ -392,27 +412,33 @@ def generate_angebot_word(json_path, output_path):
         cell.width = Cm(8.5)
         set_cell_padding(cell)
     
+    def is_placeholder(text):
+        if not text: return False
+        text_l = text.lower()
+        return "<" in text or "bitte prüfen" in text_l or "please check" in text_l or "à vérifier" in text_l or "a verifier" in text_l
+
     # Left Cell: Sender & Date
     cell_sender = letter_table.cell(0, 0)
     p_sender = cell_sender.paragraphs[0]
-    p_sender.add_run("Orange Business Digital").bold = True
-    p_sender.add_run("\nIttigen, ").bold = False
-    run_date = p_sender.add_run("DD.MM.YYYY")
+    p_sender.add_run(get_text(translations, 'offer', 'sender_name', language)).bold = True
+    p_sender.add_run(f"\n{get_text(translations, 'offer', 'sender_city', language)}, ").bold = False
+    run_date = p_sender.add_run(datetime.now().strftime("%d.%m.%Y")) # Real date would be better or keep DD.MM.YYYY
     run_date.font.highlight_color = WD_COLOR_INDEX.YELLOW
     
-    p_sender.add_run("\n\n\n\nIhr direkter Ansprechpartner:\n").bold = True
+    label_contact = get_text(translations, 'offer', 'direct_contact', language)
+    p_sender.add_run(f"\n\n\n\n{label_contact}\n").bold = True
     run_name = p_sender.add_run(contact_name)
-    if "<" in contact_name or "bitte prüfen" in contact_name.lower():
+    if is_placeholder(contact_name):
         run_name.font.highlight_color = WD_COLOR_INDEX.YELLOW
     
     p_sender.add_run("\n")
     run_mail = p_sender.add_run(contact_email)
-    if "<" in contact_email or "bitte prüfen" in contact_email.lower():
+    if is_placeholder(contact_email):
         run_mail.font.highlight_color = WD_COLOR_INDEX.YELLOW
         
     p_sender.add_run("\n")
-    run_mobile = p_sender.add_run("<Direkte Tel Nr.>")
-    if "bitte prüfen" in run_mobile.text.lower() or "<" in run_mobile.text:
+    run_mobile = p_sender.add_run(get_text(translations, 'offer', 'direct_contact_tel', language))
+    if is_placeholder(run_mobile.text):
         run_mobile.font.highlight_color = WD_COLOR_INDEX.YELLOW
     
     # Right Cell: Recipient
@@ -420,7 +446,8 @@ def generate_angebot_word(json_path, output_path):
     cell_recipient.paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
     p_rec = cell_recipient.paragraphs[0]
     p_rec.add_run(meta.get("kunde", "")).bold = True
-    run_rec_hint = p_rec.add_run("\n<bitte falls bekannt Ansprechpartner Kunde ergänzen>")
+    label_rec_hint = get_text(translations, 'offer', 'customer_placeholder', language)
+    run_rec_hint = p_rec.add_run(f"\n{label_rec_hint}")
     run_rec_hint.font.highlight_color = WD_COLOR_INDEX.YELLOW
 
     doc.add_paragraph() # Spacer
@@ -439,18 +466,18 @@ def generate_angebot_word(json_path, output_path):
     else:
         full_role = role_text
         
-    run_subj = subject_p.add_run(f"Angebot {offer_id} | {full_role}")
+    run_subj = subject_p.add_run(f"{get_text(translations, 'offer', 'title', language)} {offer_id} | {full_role}")
     run_subj.bold = True
     run_subj.font.size = Pt(12)
-    if "<" in offer_id or "bitte prüfen" in offer_id.lower():
+    if is_placeholder(offer_id):
         run_subj.font.highlight_color = WD_COLOR_INDEX.YELLOW
 
     doc.add_paragraph() # Spacer
 
     # Salutation
     salutation_p = doc.add_paragraph()
-    salutation_p.add_run("Sehr geehrter ").bold = False
-    run_salt = salutation_p.add_run("<Nachname Ansprechperson - bitte prüfen>")
+    salutation_p.add_run(f"{get_text(translations, 'offer', 'salutation', language)} ").bold = False
+    run_salt = salutation_p.add_run(get_text(translations, 'offer', 'salutation_placeholder', language))
     run_salt.font.highlight_color = WD_COLOR_INDEX.YELLOW
     salutation_p.paragraph_format.space_after = Pt(0)
 
@@ -463,8 +490,8 @@ def generate_angebot_word(json_path, output_path):
 
     # 4. Einsatzkonditionen (Moved to Page 1)
     konditionen = data.get("einsatzkonditionen", {})
-    doc.add_heading("Einsatzkonditionen", level=1)
-    doc.add_paragraph("Dieses Angebot basiert auf folgenden Konditionen:")
+    doc.add_heading(get_text(translations, 'offer', 'engagement_terms', language), level=1)
+    doc.add_paragraph(get_text(translations, 'offer', 'conditions_intro', language))
     
     # Load table styles
     table_cfg = styles_cfg.get("table", {})
@@ -491,11 +518,11 @@ def generate_angebot_word(json_path, output_path):
     validity_date = get_default_validity_date().strftime("%d.%m.%Y")
     
     rows_cond = [
-        ("Pensum:", konditionen.get("pensum", "")),
-        ("Verfügbarkeit:", konditionen.get("verfuegbarkeit", "")),
-        ("Stundensatz (CHF):", konditionen.get("stundensatz", "")),
-        ("Subunternehmen:", konditionen.get("subunternehmen", "")),
-        ("Angebot Gültigkeit:", f"{validity_date} ! bitte prüfen !")
+        (get_text(translations, 'offer', 'pensum_label', language), konditionen.get("pensum", "")),
+        (get_text(translations, 'offer', 'availability_label', language), konditionen.get("verfuegbarkeit", "")),
+        (get_text(translations, 'offer', 'hourly_rate_label', language), konditionen.get("stundensatz", "")),
+        (get_text(translations, 'offer', 'subcontractor_label', language), konditionen.get("subunternehmen", "")),
+        (get_text(translations, 'offer', 'validity_label', language), f"{validity_date} {get_text(translations, 'system', 'missing_data_marker', language)}")
     ]
     
     for i, (label, value) in enumerate(rows_cond):
@@ -508,35 +535,35 @@ def generate_angebot_word(json_path, output_path):
         run_v = row.cells[1].paragraphs[0].runs[0]
         run_v.font.size = Pt(f_size)
         # Highlight all condition values or if they contain placeholder
-        if "<" in value or "bitte prüfen" in value.lower():
+        if is_placeholder(value):
             run_v.font.highlight_color = WD_COLOR_INDEX.YELLOW
         set_cell_background(row.cells[1], "FFFF00") # Yellow
 
     # 2. Kriterien Abgleich
     doc.add_page_break()
     abgleich = data.get("kriterien_abgleich", {})
-    doc.add_heading("Abgleich mit Anforderungskriterien", level=1)
-    doc.add_paragraph("Die Muss- und Soll-Kriterien werden erfüllt, mit folgenden ergänzenden Hinweisen:")
+    doc.add_heading(get_text(translations, 'offer', 'criteria_match', language), level=1)
+    doc.add_paragraph(get_text(translations, 'offer', 'criteria_intro', language))
     
     # Muss-Kriterien
-    add_criteria_table(doc, "Muss-Kriterien", abgleich.get("muss_kriterien", []))
+    add_criteria_table(doc, get_text(translations, 'offer', 'muss_criteria', language), abgleich.get("muss_kriterien", []), language=language, translations=translations)
 
     # Soll-Kriterien
-    add_criteria_table(doc, "Soll-Kriterien", abgleich.get("soll_kriterien", []))
+    add_criteria_table(doc, get_text(translations, 'offer', 'soll_criteria', language), abgleich.get("soll_kriterien", []), language=language, translations=translations)
 
     # Weitere Kriterien
-    add_criteria_table(doc, "Weitere Anforderungen", abgleich.get("weitere_kriterien", []))
+    add_criteria_table(doc, get_text(translations, 'offer', 'other_criteria', language), abgleich.get("weitere_kriterien", []), language=language, translations=translations)
 
     # Soft Skills
-    add_criteria_table(doc, "Persönliche Kompetenzen / Soft Skills", abgleich.get("soft_skills", []))
+    add_criteria_table(doc, get_text(translations, 'offer', 'soft_skills', language), abgleich.get("soft_skills", []), language=language, translations=translations)
 
     # 3. Gesamtbeurteilung
     doc.add_page_break()
     beurteilung = data.get("gesamtbeurteilung", {})
-    doc.add_heading("Gesamtbeurteilung & Mehrwert", level=1)
+    doc.add_heading(get_text(translations, 'offer', 'assessment_title', language), level=1)
     add_paragraph_with_bold(doc, beurteilung.get("zusammenfassung", ""))
     
-    doc.add_heading("Mehrwert für den Kunden", level=2)
+    doc.add_heading(get_text(translations, 'offer', 'added_value', language), level=2)
     for item in beurteilung.get("mehrwert_fuer_kunden", []):
         add_bullet_paragraph(doc, item)
         
@@ -545,12 +572,13 @@ def generate_angebot_word(json_path, output_path):
         run.bold = True
 
     # Abschluss (No header)
-    doc.add_paragraph("\nFür Fragen zu diesem Angebot stehen wir jederzeit gerne zur Verfügung.")
+    doc.add_paragraph(f"\n{get_text(translations, 'offer', 'questions_footer', language)}")
 
-    doc.add_paragraph("\nBeste Grüsse\n")
-    add_paragraph_with_bold(doc, "Vorname Nachname ! bitte prüfen !", style=None)
+    doc.add_paragraph(f"\n{get_text(translations, 'offer', 'best_regards', language)}\n")
+    check_marker = get_text(translations, 'system', 'missing_data_marker', language)
+    add_paragraph_with_bold(doc, f"Vorname Nachname {check_marker}", style=None)
     p_closing = doc.add_paragraph()
-    p_closing.add_run("Orange Business Digital").bold = True
+    p_closing.add_run(get_text(translations, 'offer', 'sender_name', language)).bold = True
 
     # Save
     doc.save(output_path)
