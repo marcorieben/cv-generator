@@ -2,7 +2,9 @@ import os
 import json
 from datetime import datetime
 
-def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, validation_warnings=None, model_name=None, pipeline_mode=None, cv_filename=None, job_filename=None):
+def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, 
+                       validation_warnings=None, model_name=None, pipeline_mode=None, 
+                       cv_filename=None, job_filename=None, angebot_json_path=None):
     """
     Generates a professional HTML dashboard visualizing the results of the CV processing,
     matchmaking, and quality feedback.
@@ -21,6 +23,14 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     if feedback_json_path and os.path.exists(feedback_json_path):
         with open(feedback_json_path, 'r', encoding='utf-8') as f:
             feedback_data = json.load(f)
+
+    angebot_data = None
+    if angebot_json_path and os.path.exists(angebot_json_path):
+        try:
+            with open(angebot_json_path, 'r', encoding='utf-8') as f:
+                angebot_data = json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not load offer data: {e}")
 
     # Load Styles for CI/CD Color
     primary_color_rgb = "44, 62, 80" # Default dark blue
@@ -223,6 +233,50 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             }}
             .feedback-item.critical {{ border-left-color: var(--danger-color); background-color: #fff5f5; }}
             .feedback-item.warning {{ border-left-color: var(--warning-color); background-color: #fdfbf0; }}
+
+            /* Modal Styles */
+            .modal {{
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+            }}
+            .modal-content {{
+                background-color: #fefefe;
+                margin: 10% auto;
+                padding: 25px;
+                border-radius: 8px;
+                width: 50%;
+                max-width: 600px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            }}
+            .close {{
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }}
+            .close:hover {{ color: black; }}
+            .status-info-table td {{ padding: 8px; border-bottom: 1px solid #eee; }}
+            .info-btn {{
+                background: none;
+                border: 1px solid var(--primary-color);
+                color: var(--primary-color);
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                margin-left: 10px;
+            }}
         </style>
     </head>
     <body>
@@ -260,7 +314,10 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         html_content += f"""
             <div class="grid">
                 <div class="card">
-                    <div class="card-header">Match Score</div>
+                    <div class="card-header">
+                        <span>Match Score</span>
+                        <button class="info-btn" onclick="document.getElementById('scoreModal').style.display='block'" title="Erklärung der Score-Berechnung">i</button>
+                    </div>
                     <div style="position: relative; height: 160px; width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
                         <canvas id="scoreGauge"></canvas>
                         <div style="position: absolute; bottom: 20px; width: 100%; text-align: center;">
@@ -304,80 +361,155 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                     </div>
                 </div>
             </div>
+        """
+
+        # --- QUALITATIVE ANGEBOTS-DETAILS (New) ---
+        if angebot_data:
+            beurteilung = angebot_data.get("gesamtbeurteilung", {})
+            kompetenzen = angebot_data.get("profil_und_kompetenzen", {})
             
-            <div class="card" style="margin-bottom: 20px;">
-                <div class="card-header">Detaillierter Kriterien-Abgleich</div>
-                <table>
+            mehrwert_raw = beurteilung.get("mehrwert_fuer_kunden", [])
+            
+            # Helper to safely get list
+            def get_as_list(val):
+                if isinstance(val, list): return val
+                if isinstance(val, str): return [p.strip() for p in val.split("\n") if p.strip()]
+                return []
+
+            mehrwert_list = get_as_list(mehrwert_raw)
+            methoden_list = get_as_list(kompetenzen.get("methoden_und_technologien", []))
+            erfahrung_list = get_as_list(kompetenzen.get("operative_und_fuehrungserfahrung", []))
+
+            html_content += f"""
+            <h2 style="color: var(--primary-color); margin-top: 30px;">Angebots-Argumentation & Mehrwert</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">Zusammenfassung der Eignung</div>
+                    <p style="font-size: 14px; line-height: 1.6;">
+                        {beurteilung.get("zusammenfassung", "Keine Zusammenfassung verfügbar.")}
+                    </p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">Methoden & Technologien</div>
+                    <ul style="font-size: 13px; line-height: 1.5; padding-left: 20px;">
+                        {"".join([f"<li style='margin-bottom: 4px;'>{item.replace('**', '<b>').replace('**', '</b>')}</li>" for item in methoden_list])}
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Eignungs-Fokus</div>
+                    <ul style="font-size: 13px; line-height: 1.5; padding-left: 20px;">
+                        {"".join([f"<li style='margin-bottom: 4px;'>{item.replace('**', '<b>').replace('**', '</b>')}</li>" for item in erfahrung_list])}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">Mehrwert für den Kunden</div>
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            """
+            
+            for item in mehrwert_list:
+                display_item = item.replace("**", "<b>").replace("**", "</b>")
+                html_content += f"""
+                    <div style="padding: 10px; background: #fffcf5; border: 1px solid #fef5d4; border-radius: 6px; font-size: 13px;">
+                        ✨ {display_item}
+                    </div>
+                """
+            
+            html_content += """
+                </div>
+            </div>
+            """
+
+        # --- CRITERIA TABLES (Split into Muss/Soll) ---
+        html_content += """
+            <h2 style="color: var(--primary-color); margin-top: 30px;">Kriterien-Abgleich</h2>
+        """
+
+        # Helper to render a specific section as separate table
+        def render_criteria_card(title, items, bg_color="#f8f9fa"):
+            if not items: 
+                return f"""
+                <div class="card" style="margin-bottom: 20px; opacity: 0.6;">
+                    <div class="card-header" style="background-color: {bg_color}; border-radius: 4px 4px 0 0; margin-bottom: 0; padding: 10px;">
+                        <span>{title} (0)</span>
+                    </div>
+                    <p style="text-align: center; padding: 20px; color: #999;">Keine Kriterien in dieser Kategorie definiert.</p>
+                </div>
+                """
+            
+            card_html = f"""
+            <div class="card" style="margin-bottom: 20px; padding: 0; overflow: hidden;">
+                <div class="card-header" style="background-color: {bg_color}; border-radius: 4px 4px 0 0; margin-bottom: 0; padding: 15px; border-bottom: 2px solid #ddd;">
+                    <span>{title} ({len(items)})</span>
+                </div>
+                <table style="margin: 0;">
                     <thead>
-                        <tr>
-                            <th>Kriterium</th>
-                            <th>Status</th>
-                            <th>Evidenz im CV</th>
+                        <tr style="background-color: #fafafa;">
+                            <th style="width: 35%; padding-left: 20px;">Kriterium</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 50%;">Evidenz im CV</th>
                         </tr>
                     </thead>
                     <tbody>
-        """
-        
-        # Helper to render a section
-        def render_criteria_section(title, items, bg_color="#f8f9fa"):
-            if not items: return ""
-            
-            section_html = f"""
-                <tr style="background-color: {bg_color}; border-bottom: 2px solid #ddd;">
-                    <td colspan="3" style="font-weight: bold; padding-top: 15px; padding-bottom: 10px; color: #2c3e50;">{title}</td>
-                </tr>
             """
             
             for k in items:
-                status = k.get("bewertung", "").lower()
-                
-                # Determine Icon
-                if "nicht explizit" in status:
-                    icon = "⚪" # Neutral
-                elif "nicht" in status:
-                    icon = "❌"
-                elif "potenziell" in status or "implizit" in status:
-                    icon = "🤔" # Potential / Review needed
-                elif "teilweise" in status or "unklar" in status:
-                    icon = "⚠️"
-                elif "erfüllt" in status:
-                    icon = "✅"
-                else:
-                    icon = "❓"
+                status = k.get("bewertung", "").lower().strip()
+                icon = "❓"
+                if status == "erfüllt": icon = "✅"
+                elif "teilweise" in status: icon = "⚠️"
+                elif "potenziell" in status: icon = "🤔"
+                elif "nicht erfüllt" in status: icon = "❌"
+                elif "nicht explizit" in status: icon = "⚪"
+                elif "! bitte prüfen !" in status: icon = "❓"
 
-                # Format Evidence
                 evidenz_raw = k.get("cv_evidenz", "")
-                if evidenz_raw:
-                    parts = [p.strip() for p in evidenz_raw.replace(";", "\n").split("\n") if p.strip()]
+                kommentar_raw = k.get("kommentar", "")
+                
+                # Combine evidence and comment for the dashboard if they differ
+                display_evidenz = evidenz_raw
+                if kommentar_raw and kommentar_raw != evidenz_raw:
+                    if display_evidenz:
+                        display_evidenz += f" ({kommentar_raw})"
+                    else:
+                        display_evidenz = kommentar_raw
+
+                if display_evidenz:
+                    parts = [p.strip() for p in display_evidenz.replace(";", "\n").split("\n") if p.strip()]
                     if len(parts) > 1:
-                        evidenz_html = "<ol style='margin: 0; padding-left: 20px;'>" + "".join([f"<li>{p}</li>" for p in parts]) + "</ol>"
+                        evidenz_html = "<ul style='margin: 0; padding-left: 20px;'>" + "".join([f"<li>{p}</li>" for p in parts]) + "</ul>"
                     else:
                         evidenz_html = parts[0]
                 else:
-                    if "nicht explizit" in status:
-                        evidenz_html = "<span style='color: #999; font-style: italic;'>Keine explizite Evidenz</span>"
-                    else:
-                        evidenz_html = "<span style='color: #999; font-style: italic;'>Keine Evidenz gefunden</span>"
+                    evidenz_html = "<span style='color: #999; font-style: italic;'>Keine explizite Evidenz</span>"
 
-                section_html += f"""
+                card_html += f"""
                     <tr>
-                        <td style="padding-left: 20px;">{k.get("kriterium", "")}</td>
+                        <td style="padding-left: 20px; font-weight: 500;">{k.get("kriterium", "")}</td>
                         <td>{icon} {k.get("bewertung", "")}</td>
-                        <td>{evidenz_html}</td>
+                        <td style="font-size: 13px;">{evidenz_html}</td>
                     </tr>
                 """
-            return section_html
-
-        html_content += render_criteria_section("Muss-Kriterien (Pflicht)", match_data.get("muss_kriterien_abgleich", []), "#e8f6f3")
-        html_content += render_criteria_section("Soll-Kriterien (Wunsch)", match_data.get("soll_kriterien_abgleich", []), "#fef9e7")
-        html_content += render_criteria_section("Soft Skills & Persönlichkeit", match_data.get("soft_skills_abgleich", []), "#f4f6f7")
-        html_content += render_criteria_section("Weitere Kriterien", match_data.get("weitere_kriterien_abgleich", []), "#f4f6f7")
             
-        html_content += """
+            card_html += """
                     </tbody>
                 </table>
             </div>
-        """
+            """
+            return card_html
+
+        # Now render them as separate blocks
+        html_content += render_criteria_card("Muss-Kriterien", match_data.get("muss_kriterien_abgleich", []), "#e8f6f3")
+        html_content += render_criteria_card("Soll-Kriterien", match_data.get("soll_kriterien_abgleich", []), "#fef9e7")
+        
+        # Soft Skills and others in a 2-column grid to save space
+        html_content += """<div class="grid">"""
+        html_content += render_criteria_card("Persönliche Kompetenzen / Soft Skills", match_data.get("soft_skills_abgleich", []), "#f4f6f7")
+        html_content += render_criteria_card("Weitere Anforderungen", match_data.get("weitere_kriterien_abgleich", []), "#f4f6f7")
+        html_content += """</div>"""
 
     # --- VALIDATION SECTION ---
     # Always show validation section, even if empty
@@ -459,7 +591,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             if item.get("status") != "erfüllt":
                 item['source'] = "Struktur-Check"
                 item['beschreibung'] = item.get('beobachtung', '')
-                item['feedback_typ'] = "Regelverstoß"
+                item['feedback_typ'] = "Regelverstoss"
                 all_feedback.append(item)
 
         if not all_feedback:
@@ -608,6 +740,116 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         """
 
     html_content += """
+        <!-- Score Legend Modal -->
+        <div id="scoreModal" class="modal">
+            <div class="modal-content" style="max-width: 700px;">
+                <span class="close" onclick="document.getElementById('scoreModal').style.display='none'">&times;</span>
+                <h3>Berechnung des Match-Scores</h3>
+                <p>Der Score wird durch eine dynamische, gewichtete Analyse ermittelt:</p>
+                
+                <table class="status-info-table" style="margin-bottom: 20px;">
+                    <tr style="background-color: #e8f6f3;">
+                        <td style="width: 150px;"><strong>Muss-Kriterien</strong></td>
+                        <td><strong>90% Basis</strong></td>
+                        <td>Höchste Priorität. Fehlende Muss-Punkte führen zu hohen Abzügen (-20% pro Punkt).</td>
+                    </tr>
+                    <tr style="background-color: #fef9e7;">
+                        <td><strong>Soll-Kriterien</strong></td>
+                        <td><strong>10% Basis</strong></td>
+                        <td>Wichtige Zusatzerwartungen, die den Score massgeblich stützen.</td>
+                    </tr>
+                    <tr style="background-color: #f4f6f7;">
+                        <td><strong>Soft Skills</strong></td>
+                        <td><strong>0% (qualitativ)</strong></td>
+                        <td>Persönliche Kompetenzen fliessen nicht in den numerischen Score ein.</td>
+                    </tr>
+                </table>
+
+                <h4 style="margin-top: 20px; font-size: 14px;">Gewichtung der Status-Werte:</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; margin-bottom: 15px;">
+                    <div style="padding: 8px; background-color: #e8f5e9; border: 1px solid #2e7d32; border-radius: 4px; color: #1b5e20;"><strong>✅ Erfüllt:</strong> 100%</div>
+                    <div style="padding: 8px; background-color: #fff3e0; border: 1px solid #ef6c00; border-radius: 4px; color: #e65100;"><strong>⚠️ Teilweise:</strong> 50%</div>
+                    <div style="padding: 8px; background-color: #fffde7; border: 1px solid #fbc02d; border-radius: 4px; color: #f57f17;"><strong>🤔 Potenziell:</strong> 40%</div>
+                    <div style="padding: 8px; background-color: #ffebee; border: 1px solid #c62828; border-radius: 4px; color: #b71c1c;"><strong>❌ Nicht erfüllt:</strong> 0%</div>
+                </div>
+
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 13px; border-left: 4px solid var(--secondary-color);">
+                    <strong>💡 Beispiel-Rechnung:</strong><br>
+                    Angenommen, ein Profil hat 5 Muss- und 5 Soll-Kriterien:<br>
+                    • 5/5 Muss erfüllt (<span style="color: #27ae60;">✅</span>) & 3/5 Soll erfüllt (<span style="color: #f39c12;">⚠️</span>) → <strong>ca. 95%</strong><br>
+                    • 1/5 Muss <u>nicht</u> erfüllt (<span style="color: #c0392b;">❌</span>) → <strong>Max. 80% möglich</strong> (da -20% Abzug vom Gesamtwert).
+                </div>
+
+                <div style="background-color: #eee; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 13px;">
+                    <strong>*Dynamische Gewichtung:</strong>
+                    Falls Kategorien fehlen (z.B. keine Soll-Kriterien im Profil), wird deren Gewichtung automatisch auf die vorhandenen Sektionen verteilt. 100% sind somit immer erreichbar.
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <div style="flex: 1; padding: 10px; background: #e8f5e9; border-radius: 4px; text-align: center; border-bottom: 3px solid #2e7d32;">
+                        <strong>> 80%</strong><br><span style="font-size: 12px;">Hervorragend</span>
+                    </div>
+                    <div style="flex: 1; padding: 10px; background: #fff3e0; border-radius: 4px; text-align: center; border-bottom: 3px solid #ef6c00;">
+                        <strong>60-80%</strong><br><span style="font-size: 12px;">Gute Passung</span>
+                    </div>
+                    <div style="flex: 1; padding: 10px; background: #ffebee; border-radius: 4px; text-align: center; border-bottom: 3px solid #c62828;">
+                        <strong>< 60%</strong><br><span style="font-size: 12px;">Kritisch</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Legend Modal -->
+        <div id="statusModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="document.getElementById('statusModal').style.display='none'">&times;</span>
+                <h3>Legende: Status-Werte</h3>
+                <p>Übersicht der verwendeten Symbole und deren Bedeutung im Matching-Prozess:</p>
+                <table class="status-info-table">
+                    <tr>
+                        <td style="width: 40px; font-size: 20px;">✅</td>
+                        <td><strong>erfüllt</strong>: Das Kriterium ist im CV eindeutig belegt.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 20px;">⚠️</td>
+                        <td><strong>teilweise erfüllt</strong>: Das Kriterium ist nur bedingt oder in Ansätzen vorhanden.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 20px;">🤔</td>
+                        <td><strong>potenziell erfüllt</strong>: Nicht explizit genannt, aber aufgrund der Rolle/Erfahrung sehr wahrscheinlich vorhanden.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 20px;">❌</td>
+                        <td><strong>nicht erfüllt</strong>: Keine Anhaltspunkte im CV gefunden.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 20px;">⚪</td>
+                        <td><strong>nicht explizit erwähnt</strong>: Weder belegt noch widerlegt (Standardwert für Soft Skills).</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 20px;">❓</td>
+                        <td><strong>! bitte prüfen !</strong>: Information fehlt, ist widersprüchlich oder unklar.</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 20px; font-size: 12px; color: #666;">
+                    <em>Hinweis: Das Matching erfolgt KI-gestützt auf Basis der extrahierten JSON-Daten. Eine manuelle Prüfung der kritischen Punkte wird empfohlen.</em>
+                </p>
+            </div>
+        </div>
+
+        <script>
+            // Close modals when clicking outside
+            window.onclick = function(event) {
+                var scoreModal = document.getElementById('scoreModal');
+                var statusModal = document.getElementById('statusModal');
+                if (event.target == scoreModal) {
+                    scoreModal.style.display = "none";
+                }
+                if (event.target == statusModal) {
+                    statusModal.style.display = "none";
+                }
+            }
+        </script>
         </div>
     </body>
     </html>

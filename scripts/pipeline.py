@@ -121,7 +121,7 @@ class CVPipeline:
         print("\n" + "="*60)
         print("SCHRITT 1: PDF -> JSON Konvertierung (CV)")
         if job_profile_context:
-            print("ℹ️  Mit Stellenprofil-Kontext für maßgeschneiderte Extraktion")
+            print("ℹ️  Mit Stellenprofil-Kontext für massgeschneiderte Extraktion")
         print("="*60)
         return pdf_to_json(pdf_path, output_path=None, job_profile_context=job_profile_context)
 
@@ -351,7 +351,8 @@ class CVPipeline:
                 model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
                 pipeline_mode="CLI Pipeline",
                 cv_filename=cv_filename,
-                job_filename=stellenprofil_filename
+                job_filename=stellenprofil_filename,
+                angebot_json_path=angebot_json_path
             )
             self.update_progress(7, "completed")
 

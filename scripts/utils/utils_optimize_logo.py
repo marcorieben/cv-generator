@@ -12,7 +12,7 @@ def optimize_logo(input_path, output_path=None, max_width=800, max_height=300, d
     Empfohlene Werte für Header:
     - Maximale Breite: 800 Pixel (für 4cm bei 150 DPI ~ 472 Pixel)
     - Maximale Höhe: 300 Pixel
-    - DPI: 150 (guter Kompromiss zwischen Qualität und Dateigröße)
+    - DPI: 150 (guter Kompromiss zwischen Qualität und Dateigrösse)
     - Format: PNG mit Transparenz
     """
     if output_path is None:
@@ -28,9 +28,9 @@ def optimize_logo(input_path, output_path=None, max_width=800, max_height=300, d
     print(f"  Format: {img.format}")
     print(f"  Modus: {img.mode}")
     print(f"  Dimensionen: {img.size[0]}x{img.size[1]} Pixel")
-    print(f"  Dateigröße: {os.path.getsize(input_path):,} Bytes ({os.path.getsize(input_path)/1024:.2f} KB)")
+    print(f"  Dateigrösse: {os.path.getsize(input_path):,} Bytes ({os.path.getsize(input_path)/1024:.2f} KB)")
     
-    # Berechne neue Größe (Seitenverhältnis beibehalten)
+    # Berechne neue Grösse (Seitenverhältnis beibehalten)
     width, height = img.size
     aspect_ratio = width / height
     
@@ -60,7 +60,7 @@ def optimize_logo(input_path, output_path=None, max_width=800, max_height=300, d
     
     print(f"\n✅ Optimiertes Logo gespeichert: {output_path}")
     print(f"  Neue Dimensionen: {img.size[0]}x{img.size[1]} Pixel")
-    print(f"  Neue Dateigröße: {os.path.getsize(output_path):,} Bytes ({os.path.getsize(output_path)/1024:.2f} KB)")
+    print(f"  Neue Dateigrösse: {os.path.getsize(output_path):,} Bytes ({os.path.getsize(output_path)/1024:.2f} KB)")
     print(f"  DPI: {dpi}")
     
     print(f"\n📋 Empfohlene Einstellungen in styles.json:")

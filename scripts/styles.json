@@ -61,5 +61,20 @@
       121,
       0
     ]
+  },
+  "table": {
+    "width_cm": 17.0,
+    "header_bg_color": "EEEEEE",
+    "font_size": 10,
+    "border_style": "Table Grid",
+    "column_ratios_criteria": [
+      0.45,
+      0.1,
+      0.45
+    ],
+    "column_ratios_conditions": [
+      0.3,
+      0.7
+    ]
   }
 }

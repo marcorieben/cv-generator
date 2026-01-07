@@ -264,7 +264,7 @@ class SuccessDialog(ModernDialog):
                 messagebox.showerror("Fehler", f"Fehler bei der Erstellung: {e}")
 
         # Buttons
-        self.create_button(btn_container, "Schließen", close, is_primary=False, width=15).pack(side='left', padx=5)
+        self.create_button(btn_container, "Schliessen", close, is_primary=False, width=15).pack(side='left', padx=5)
         
         if self.dashboard_path:
              self.create_button(btn_container, "📊 Dashboard", lambda: open_file_action(self.dashboard_path), is_primary=True, width=15, bg_color="#3498db").pack(side='left', padx=5)
@@ -367,7 +367,7 @@ class ErrorDialog(ModernDialog):
             self.result = False
             self.root.destroy()
         
-        self.create_button(btn_container, "Schließen", close, is_primary=False)
+        self.create_button(btn_container, "Schliessen", close, is_primary=False)
 
 
 class WarningDialog(ModernDialog):
@@ -841,7 +841,7 @@ class WelcomeDialog(ModernDialog):
                     self.cv_status_label.config(text="Bitte laden Sie hier den Lebenslauf hoch.", fg=self.DARK_GRAY)
                 if self.stellenprofil_path == "MOCK_STELLENPROFIL.pdf":
                     self.stellenprofil_path = None
-                    self.stellenprofil_status_label.config(text="Optional: Stellenprofil für maßgeschneiderten CV hochladen.", fg="#777777")
+                    self.stellenprofil_status_label.config(text="Optional: Stellenprofil für massgeschneiderten CV hochladen.", fg="#777777")
                 
                 # Re-evaluate button state
                 update_weiter_button()
@@ -1065,7 +1065,7 @@ class WelcomeDialog(ModernDialog):
             stellenprofil_label_container.config(bg=self.LIGHT_GRAY)
             self.stellenprofil_header_label.config(bg=self.LIGHT_GRAY, fg=self.DARK_GRAY)
             self.stellenprofil_optional_label.config(text=" (Optional)", bg=self.LIGHT_GRAY, fg="#777777")
-            self.stellenprofil_status_label.config(text="Optional: Stellenprofil für maßgeschneiderten CV hochladen.", bg=self.LIGHT_GRAY, fg="#777777")
+            self.stellenprofil_status_label.config(text="Optional: Stellenprofil für massgeschneiderten CV hochladen.", bg=self.LIGHT_GRAY, fg="#777777")
             self.stellenprofil_upload_btn.config(text="📤 Stellenprofil wählen", bg=self.DARK_GRAY)
             self.stellenprofil_remove_btn.config(bg=self.LIGHT_GRAY)
             self.stellenprofil_remove_btn.pack_forget()
@@ -1115,7 +1115,7 @@ class WelcomeDialog(ModernDialog):
         self.stellenprofil_remove_btn.bind("<Leave>", on_sp_remove_leave)
         # Initially hidden
         
-        self.stellenprofil_status_label = tk.Label(self.stellenprofil_frame, text="Optional: Stellenprofil für maßgeschneiderten CV hochladen.", bg=self.LIGHT_GRAY, fg="#777777", font=('Segoe UI', 9))
+        self.stellenprofil_status_label = tk.Label(self.stellenprofil_frame, text="Optional: Stellenprofil für massgeschneiderten CV hochladen.", bg=self.LIGHT_GRAY, fg="#777777", font=('Segoe UI', 9))
         self.stellenprofil_status_label.pack(anchor='w', padx=25, pady=(0, 12))
         
         # Initially disable upload buttons

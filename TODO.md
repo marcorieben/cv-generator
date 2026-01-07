@@ -218,4 +218,4 @@ def pdf_to_json_with_retry(pdf_path):
 - MVP Status: ✅ Erreicht
 - Production-Ready: 🔄 In Arbeit
 
-**Nächster Meilenstein:** P0-Items abschließen → **Score 8/10**
+**Nächster Meilenstein:** P0-Items abschliessen → **Score 8/10**

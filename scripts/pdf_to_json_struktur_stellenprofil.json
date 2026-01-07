@@ -105,10 +105,10 @@
 
   "anforderungen": {
     "muss_kriterien": [],
-    "_hint_muss_kriterien": "Zwingend erforderliche Fähigkeiten, Erfahrungen oder Eigenschaften",
+    "_hint_muss_kriterien": "Zwingend erforderliche Fähigkeiten, Erfahrungen oder Eigenschaften. WICHTIG: Jedes Kriterium / jeder Bullet-Point aus dem Dokument muss als SEPARATER Eintrag in der Liste erscheinen. Keine Kriterien zusammenfassen!",
 
     "soll_kriterien": [],
-    "_hint_soll_kriterien": "Wünschenswerte oder optionale Zusatzqualifikationen",
+    "_hint_soll_kriterien": "Wünschenswerte oder optionale Zusatzqualifikationen. WICHTIG: Jedes Kriterium / jeder Bullet-Point aus dem Dokument muss als SEPARATER Eintrag in der Liste erscheinen. Keine Kriterien zusammenfassen!",
 
     "sprachen": [
       {

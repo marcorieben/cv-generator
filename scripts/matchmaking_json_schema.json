@@ -41,7 +41,7 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Konkrete Textstelle, Skill oder Erfahrung aus dem CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
+      "_hint_bewertung": "MUSS einer dieser Werte sein: erfüllt / teilweise erfüllt / potenziell erfüllt / nicht erfüllt / nicht explizit erwähnt / ! bitte prüfen !",
       "kommentar": "",
       "_hint_kommentar": "Kurze Begründung der Bewertung"
     }
@@ -55,7 +55,7 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Konkrete Evidenz aus dem CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
+      "_hint_bewertung": "MUSS einer dieser Werte sein: erfüllt / teilweise erfüllt / potenziell erfüllt / nicht erfüllt / nicht explizit erwähnt / ! bitte prüfen !",
       "kommentar": "",
       "_hint_kommentar": "Einordnung der Relevanz"
     }
@@ -69,7 +69,7 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Konkrete Evidenz aus dem CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / teilweise erfüllt / nicht erfüllt / potenziell erfüllt / ! bitte prüfen !",
+      "_hint_bewertung": "MUSS einer dieser Werte sein: erfüllt / teilweise erfüllt / potenziell erfüllt / nicht erfüllt / nicht explizit erwähnt / ! bitte prüfen !",
       "kommentar": "",
       "_hint_kommentar": "Einordnung der Relevanz"
     }
@@ -83,7 +83,7 @@
       "cv_evidenz": "",
       "_hint_cv_evidenz": "Indirekte oder direkte Hinweise im CV",
       "bewertung": "",
-      "_hint_bewertung": "erfüllt / nicht explizit erwähnt",
+      "_hint_bewertung": "MUSS einer dieser Werte sein: erfüllt / teilweise erfüllt / potenziell erfüllt / nicht erfüllt / nicht explizit erwähnt / ! bitte prüfen !",
       "kommentar": ""
     }
   ],
@@ -117,14 +117,12 @@
   ],
   "match_score": {
     "score_gesamt": "",
-    "_hint_score_gesamt": "Numerischer Score 0–100",
+    "_hint_score_gesamt": "Numerischer Score 0–100. Berechne dynamisch: Basisgewichtung Muss (90%), Soll (10%). Soft Skills/Weitere fliessen nicht ein. Falls eine Kategorie fehlt -> 100% auf die vorhandene. Nicht erfüllte Muss-Kriterien führen zu hohem Punktabzug.",
     "gewichtung": {
       "muss_kriterien": "",
-      "_hint_muss_kriterien": "z. B. 60",
+      "_hint_muss_kriterien": "z. B. 90",
       "soll_kriterien": "",
-      "_hint_soll_kriterien": "z. B. 30",
-      "skill_abdeckung": "",
-      "_hint_skill_abdeckung": "z. B. 10"
+      "_hint_soll_kriterien": "z. B. 10"
     }
   },
   "gesamt_fazit": {

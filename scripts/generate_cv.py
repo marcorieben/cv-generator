@@ -165,10 +165,12 @@ def abs_path(relative_path):
 
 
 def remove_cell_borders(cell):
-    """Entfernt alle Rahmen einer Tabellenzelle mittels XML-Manipulation"""
-    from docx.oxml import parse_xml
-    from docx.oxml.ns import nsdecls
+    """Entfernt alle Rahmen einer Tabellenzelle mittels XML-Manipulation und setzt Padding auf 0"""
+    from docx.oxml import parse_xml, OxmlElement
+    from docx.oxml.ns import nsdecls, qn
     tcPr = cell._element.get_or_add_tcPr()
+    
+    # Rahmen entfernen
     tcBorders = parse_xml(r'<w:tcBorders %s>'
                           r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
                           r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
@@ -180,6 +182,29 @@ def remove_cell_borders(cell):
     if existing is not None:
         tcPr.remove(existing)
     tcPr.append(tcBorders)
+
+    # Padding auf 0 setzen
+    tcMar = OxmlElement('w:tcMar')
+    for margin in ['top', 'left', 'bottom', 'right']:
+        node = OxmlElement(f'w:{margin}')
+        node.set(qn('w:w'), '0')
+        node.set(qn('w:type'), 'dxa')
+        tcMar.append(node)
+    tcPr.append(tcMar)
+
+def set_cell_padding_zero(cell):
+    """Setzt alle internen Zellenabstände (Padding) auf 0"""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    tc = cell._element
+    tcPr = tc.get_or_add_tcPr()
+    tcMar = OxmlElement('w:tcMar')
+    for margin in ['top', 'left', 'bottom', 'right']:
+        node = OxmlElement(f'w:{margin}')
+        node.set(qn('w:w'), '0')
+        node.set(qn('w:type'), 'dxa')
+        tcMar.append(node)
+    tcPr.append(tcMar)
 
 
 # -------------------------------------
@@ -230,7 +255,7 @@ def add_normal_text(doc, text):
     return p
 
 
-def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, bold=False):
+def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, bold=False, italic=False):
     """Helper function to add text (highlighting wird am Ende global durchgeführt)"""
     run = paragraph.add_run(text)
     run.font.name = font_name
@@ -238,6 +263,8 @@ def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, b
     run.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
     if bold:
         run.font.bold = True
+    if italic:
+        run.font.italic = True
 
 
 def highlight_missing_data_in_document(doc):
@@ -381,7 +408,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
 
     # Helper function to set cell background to white and remove individual cell borders
     def set_cell_background_and_borders(cell, fill_color='FFFFFF'):
-        """Set cell background color and remove borders"""
+        """Set cell background color, remove borders and set padding to 0"""
         tcPr = cell._element.get_or_add_tcPr()
         shd = OxmlElement('w:shd')
         shd.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}fill', fill_color)
@@ -390,6 +417,16 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
         # Remove cell borders
         tcBorders = parse_xml(r'<w:tcBorders %s><w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/></w:tcBorders>' % nsdecls('w'))
         tcPr.append(tcBorders)
+
+        # Set padding to 0
+        from docx.oxml.ns import qn
+        tcMar = OxmlElement('w:tcMar')
+        for margin in ['top', 'left', 'bottom', 'right']:
+            node = OxmlElement(f'w:{margin}')
+            node.set(qn('w:w'), '0')
+            node.set(qn('w:type'), 'dxa')
+            tcMar.append(node)
+        tcPr.append(tcMar)
 
     s = styles["text"]
     
@@ -927,10 +964,12 @@ def generate_cv(json_path, output_dir=None, interactive=True):
     else:
         print(f"Warnung: Template nicht gefunden ({template_path}). Erstelle leeres Dokument.")
         doc = Document()
-        # Set page margins: 1.5 cm all sides
+        # Set page margins: 1.5 cm all sides and A4 size
         from docx.shared import Cm
         sections = doc.sections
         for section in sections:
+            section.page_height = Cm(29.7)
+            section.page_width = Cm(21.0)
             section.top_margin = Cm(1.5)
             section.bottom_margin = Cm(1.5)
             section.left_margin = Cm(1.5)
@@ -1028,7 +1067,7 @@ def generate_cv(json_path, output_dir=None, interactive=True):
 
 
 def select_json_file():
-    """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei (standardmäßig im output/-Ordner)"""
+    """Oeffnet einen Datei-Dialog zur Auswahl einer JSON-Datei (standardmässig im output/-Ordner)"""
     try:
         from dialogs import select_json_file as picker
     except ImportError:
@@ -1104,7 +1143,9 @@ def add_sprachen_table(doc, sprachen_data):
     col_width = available_width / 6
     for row in table.rows:
         for idx in range(6):
-            row.cells[idx].width = col_width
+            cell = row.cells[idx]
+            cell.width = col_width
+            set_cell_padding_zero(cell)
         # Set smaller row height for compact display
         from docx.shared import Pt
         row.height = Pt(18)  # Smaller row height
@@ -1217,8 +1258,13 @@ def add_referenzprojekt_section(doc, projekt):
     p_kunde.paragraph_format.space_after = Pt(3)
     
     # Row 2: Zeitraum (20%) | Rolle (80%)
-    cell_zeitraum = table.rows[1].cells[0]
-    cell_rolle = table.rows[1].cells[1]
+    from docx.enum.table import WD_ROW_HEIGHT_RULE
+    row2 = table.rows[1]
+    row2.height = Cm(0.7)
+    row2.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+    
+    cell_zeitraum = row2.cells[0]
+    cell_rolle = row2.cells[1]
     remove_cell_borders(cell_zeitraum)
     remove_cell_borders(cell_rolle)
     
@@ -1296,13 +1342,14 @@ def add_referenzprojekt_section(doc, projekt):
     run_tech_label.font.name = s_text["font"]
     run_tech_label.font.size = Pt(s_text["size"])
     run_tech_label.font.color.rgb = RGBColor(*s_text["color"])
-    run_tech_label.bold = True
+    run_tech_label.italic = True
+    run_tech_label.bold = False
     p_tech_label.paragraph_format.space_before = Pt(0)
     p_tech_label.paragraph_format.space_after = Pt(0)
     
     cell_tech_content.text = ""
     p_tech_content = cell_tech_content.paragraphs[0]
-    add_text_with_highlight(p_tech_content, technologien, s_text["font"], s_text["size"], s_text["color"])
+    add_text_with_highlight(p_tech_content, technologien, s_text["font"], s_text["size"], s_text["color"], italic=True)
     p_tech_content.paragraph_format.space_before = Pt(0)
     p_tech_content.paragraph_format.space_after = Pt(0)
     
@@ -1318,13 +1365,14 @@ def add_referenzprojekt_section(doc, projekt):
     run_meth_label.font.name = s_text["font"]
     run_meth_label.font.size = Pt(s_text["size"])
     run_meth_label.font.color.rgb = RGBColor(*s_text["color"])
-    run_meth_label.bold = True
+    run_meth_label.italic = True
+    run_meth_label.bold = False
     p_meth_label.paragraph_format.space_before = Pt(0)
     p_meth_label.paragraph_format.space_after = Pt(0)
     
     cell_meth_content.text = ""
     p_meth_content = cell_meth_content.paragraphs[0]
-    add_text_with_highlight(p_meth_content, methodik, s_text["font"], s_text["size"], s_text["color"])
+    add_text_with_highlight(p_meth_content, methodik, s_text["font"], s_text["size"], s_text["color"], italic=True)
     p_meth_content.paragraph_format.space_before = Pt(0)
     p_meth_content.paragraph_format.space_after = Pt(0)
     

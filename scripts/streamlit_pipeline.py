@@ -11,6 +11,7 @@ from scripts.generate_cv import generate_cv, validate_json_structure
 from scripts.generate_matchmaking import generate_matchmaking_json
 from scripts.generate_cv_feedback import generate_cv_feedback_json
 from scripts.generate_angebot import generate_angebot_json
+from scripts.generate_angebot_word import generate_angebot_word
 from scripts.visualize_results import generate_dashboard
 
 class StreamlitCVGenerator:
@@ -103,21 +104,15 @@ class StreamlitCVGenerator:
         }
 
         try:
-            # --- STEP 1: Extract Job Profile (if present) ---
-            if progress_callback: progress_callback(10, "Analysiere Stellenprofil...", "running")
-            
+            # --- PHASE 1: PDF Extraction ---
             stellenprofil_data = None
-            stellenprofil_json_path = None
-            
             if job_file:
-                schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
-                stellenprofil_data = pdf_to_json(job_file, None, schema_path)
-            
-            # --- STEP 2: Extract CV ---
-            if progress_callback: progress_callback(30, "Analysiere Lebenslauf...", "running")
-            
-            # WICHTIG: job_profile_context=None, um Halluzinationen zu vermeiden!
-            cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=None)
+                if progress_callback: progress_callback(10, "Analysiere Stellenprofil...", "running")
+                job_schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
+                stellenprofil_data = pdf_to_json(job_file, None, job_schema_path)
+
+            if progress_callback: progress_callback(30, "Analysiere CV...", "running")
+            cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data)
             
             # Save JSONs
             vorname = cv_data.get("Vorname", "Unbekannt")
@@ -129,7 +124,10 @@ class StreamlitCVGenerator:
             with open(cv_json_path, 'w', encoding='utf-8') as f:
                 json.dump(cv_data, f, ensure_ascii=False, indent=2)
             results["cv_json"] = cv_json_path
+            results["vorname"] = vorname
+            results["nachname"] = nachname
                 
+            stellenprofil_json_path = None
             if stellenprofil_data:
                 stellenprofil_json_path = os.path.join(output_dir, f"stellenprofil_{self.timestamp}.json")
                 with open(stellenprofil_json_path, 'w', encoding='utf-8') as f:
@@ -181,6 +179,23 @@ class StreamlitCVGenerator:
                 if future_match: future_match.result()
                 future_feedback.result()
 
+            # --- STEP 4.5: Offer (Background) ---
+            angebot_json_path = None
+            if pipeline_mode == "Full" and stellenprofil_json_path and matchmaking_json_path:
+                if progress_callback: progress_callback(85, "Erstelle Angebot...", "running")
+                try:
+                    angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
+                    # Generate JSON
+                    generate_angebot_json(cv_json_path, stellenprofil_json_path, matchmaking_json_path, angebot_json_path)
+                    
+                    # Generate Word
+                    angebot_word_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.docx")
+                    generate_angebot_word(angebot_json_path, angebot_word_path)
+                    
+                    results["offer_word_path"] = angebot_word_path
+                except Exception as e:
+                    print(f"⚠️ Fehler bei Angebotserstellung: {str(e)}")
+
             results["word_path"] = word_path
             results["match_json"] = matchmaking_json_path
 
@@ -196,7 +211,8 @@ class StreamlitCVGenerator:
                 model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
                 pipeline_mode=pipeline_mode,
                 cv_filename=cv_file.name if hasattr(cv_file, 'name') else os.path.basename(str(cv_file)),
-                job_filename=job_file.name if job_file and hasattr(job_file, 'name') else (os.path.basename(str(job_file)) if job_file else None)
+                job_filename=job_file.name if job_file and hasattr(job_file, 'name') else (os.path.basename(str(job_file)) if job_file else None),
+                angebot_json_path=angebot_json_path
             )
             results["dashboard_path"] = dashboard_path
             
