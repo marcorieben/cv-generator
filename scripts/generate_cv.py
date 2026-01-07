@@ -251,6 +251,8 @@ def add_heading_2(doc, text, bold=None):
 def add_normal_text(doc, text):
     p = doc.add_paragraph()
     s = styles["text"]
+    p.paragraph_format.space_before = Pt(s.get("space_before", 0))
+    p.paragraph_format.space_after = Pt(s.get("space_after", 6))
     add_text_with_highlight(p, text, s["font"], s["size"], s["color"])
     return p
 
@@ -1320,8 +1322,8 @@ def add_referenzprojekt_section(doc, projekt):
                 # Add text with normal size
                 add_text_with_highlight(p, taetigkeit, s_text["font"], s_text["size"], s_text["color"])
                 
-                p.paragraph_format.space_before = Pt(0)
-                p.paragraph_format.space_after = Pt(3)
+                p.paragraph_format.space_before = Pt(s_bullet.get("space_before", 0))
+                p.paragraph_format.space_after = Pt(s_bullet.get("space_after", 3))
                 p.paragraph_format.line_spacing = s_bullet.get("line_spacing", 1.0)
                 
                 # Set tab stop at the text start position

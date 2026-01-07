@@ -8,8 +8,8 @@
       121,
       0
     ],
-    "space_before": 0,
-    "space_after": 6
+    "space_before": 15,
+    "space_after": 5
   },
   "heading2": {
     "font": "Aptos",
@@ -20,8 +20,8 @@
       68,
       68
     ],
-    "space_before": 6,
-    "space_after": 6
+    "space_before": 5,
+    "space_after": 5
   },
   "text": {
     "font": "Aptos",
@@ -31,7 +31,9 @@
       0,
       0,
       0
-    ]
+    ],
+    "space_before": 0,
+    "space_after": 6
   },
   "bullet": {
     "font": "Aptos",
@@ -47,7 +49,7 @@
     "hanging_indent": 12,
     "line_spacing": 1.0,
     "space_before": 0,
-    "space_after": 0
+    "space_after": 3
   },
   "header": {
     "logo_path": "../templates/logo.png",
@@ -68,9 +70,9 @@
     "font_size": 10,
     "border_style": "Table Grid",
     "column_ratios_criteria": [
-      0.45,
-      0.1,
-      0.45
+      0.4,
+      0.2,
+      0.4
     ],
     "column_ratios_conditions": [
       0.3,

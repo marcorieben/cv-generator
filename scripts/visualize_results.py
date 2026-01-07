@@ -458,13 +458,26 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             
             for k in items:
                 status = k.get("bewertung", "").lower().strip()
+                
+                # Consistent mapping with Word output
+                status_display = status
                 icon = "❓"
-                if status == "erfüllt": icon = "✅"
-                elif "teilweise" in status: icon = "⚠️"
-                elif "potenziell" in status: icon = "🤔"
-                elif "nicht erfüllt" in status: icon = "❌"
-                elif "nicht explizit" in status: icon = "⚪"
-                elif "! bitte prüfen !" in status: icon = "❓"
+                
+                if status in ["erfüllt", "true"]:
+                    icon = "✅"
+                    status_display = "Erfüllt"
+                elif "teilweise" in status or "potenziell" in status:
+                    icon = "⚠️"
+                    status_display = "Teilweise"
+                elif status in ["nicht erfüllt", "false"]:
+                    icon = "❌"
+                    status_display = "Nicht erfüllt"
+                elif "nicht explizit" in status:
+                    icon = "⚪"
+                    status_display = "Nicht erwähnt"
+                elif "! bitte prüfen !" in status:
+                    icon = "❓"
+                    status_display = "! bitte prüfen !"
 
                 evidenz_raw = k.get("cv_evidenz", "")
                 kommentar_raw = k.get("kommentar", "")
@@ -489,7 +502,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                 card_html += f"""
                     <tr>
                         <td style="padding-left: 20px; font-weight: 500;">{k.get("kriterium", "")}</td>
-                        <td>{icon} {k.get("bewertung", "")}</td>
+                        <td style="white-space: nowrap;">{icon} {status_display}</td>
                         <td style="font-size: 13px;">{evidenz_html}</td>
                     </tr>
                 """
@@ -808,27 +821,23 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                 <table class="status-info-table">
                     <tr>
                         <td style="width: 40px; font-size: 20px;">✅</td>
-                        <td><strong>erfüllt</strong>: Das Kriterium ist im CV eindeutig belegt.</td>
+                        <td><strong>Erfüllt</strong>: Das Kriterium ist im CV eindeutig belegt.</td>
                     </tr>
                     <tr>
                         <td style="font-size: 20px;">⚠️</td>
-                        <td><strong>teilweise erfüllt</strong>: Das Kriterium ist nur bedingt oder in Ansätzen vorhanden.</td>
-                    </tr>
-                    <tr>
-                        <td style="font-size: 20px;">🤔</td>
-                        <td><strong>potenziell erfüllt</strong>: Nicht explizit genannt, aber aufgrund der Rolle/Erfahrung sehr wahrscheinlich vorhanden.</td>
+                        <td><strong>Teilweise</strong>: Das Kriterium ist bedingt vorhanden oder aufgrund der Erfahrung sehr wahrscheinlich (potenziell erfüllt).</td>
                     </tr>
                     <tr>
                         <td style="font-size: 20px;">❌</td>
-                        <td><strong>nicht erfüllt</strong>: Keine Anhaltspunkte im CV gefunden.</td>
+                        <td><strong>Nicht erfüllt</strong>: Keine Anhaltspunkte im CV gefunden.</td>
                     </tr>
                     <tr>
                         <td style="font-size: 20px;">⚪</td>
-                        <td><strong>nicht explizit erwähnt</strong>: Weder belegt noch widerlegt (Standardwert für Soft Skills).</td>
+                        <td><strong>Nicht erwähnt</strong>: Weder belegt noch widerlegt (Standardwert für Soft Skills).</td>
                     </tr>
                     <tr>
                         <td style="font-size: 20px;">❓</td>
-                        <td><strong>! bitte prüfen !</strong>: Information fehlt, ist widersprüchlich oder unklar.</td>
+                        <td><strong>Prüfen</strong>: Information fehlt oder ist unklar.</td>
                     </tr>
                 </table>
                 <p style="margin-top: 20px; font-size: 12px; color: #666;">

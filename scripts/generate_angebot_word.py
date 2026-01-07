@@ -117,6 +117,50 @@ def add_paragraph_with_bold(parent_obj, text, style=None):
             
     return p
 
+def add_bullet_paragraph(doc, text):
+    """Adds a custom bullet paragraph using styles.json config"""
+    styles = load_styles()
+    s_bullet = styles.get("bullet", {})
+    text_cfg = styles.get("text", {})
+    
+    p = doc.add_paragraph()
+    indent = s_bullet.get("indent", 0)
+    hanging = s_bullet.get("hanging_indent", 12)
+    p.paragraph_format.left_indent = Pt(indent + hanging)
+    p.paragraph_format.first_line_indent = Pt(-hanging)
+    p.paragraph_format.space_before = Pt(s_bullet.get("space_before", 0))
+    p.paragraph_format.space_after = Pt(s_bullet.get("space_after", 3))
+    p.paragraph_format.line_spacing = s_bullet.get("line_spacing", 1.0)
+    
+    # Add tab stop for bullet alignment
+    p.paragraph_format.tab_stops.add_tab_stop(Pt(indent + hanging))
+
+    # 1. Add Bullet Symbol
+    symbol = s_bullet.get("symbol", "■")
+    run_sym = p.add_run(f"{symbol}\t")
+    run_sym.font.name = s_bullet.get("font", "Aptos")
+    run_sym.font.size = Pt(s_bullet.get("symbol_size", 9))
+    if "color" in s_bullet:
+        run_sym.font.color.rgb = RGBColor(*s_bullet["color"])
+
+    # 2. Add content with bold support
+    parts = text.split('**')
+    for i, part in enumerate(parts):
+        chunk = part
+        is_bold = (i % 2 == 1)
+        
+        run = p.add_run(chunk)
+        run.font.name = text_cfg.get("font", "Aptos")
+        run.font.size = Pt(text_cfg.get("size", 11))
+        if is_bold:
+            run.bold = True
+        
+        # Highlighting for check markers
+        if "bitte prüfen" in chunk.lower():
+            run.font.highlight_color = WD_COLOR_INDEX.YELLOW
+
+    return p
+
 def add_criteria_table(doc, title, criteria_list):
     """Refactored helper for adding a criteria table to word"""
     if not criteria_list:
@@ -124,11 +168,13 @@ def add_criteria_table(doc, title, criteria_list):
     
     # Load styles
     styles_cfg = load_styles()
+    text_cfg = styles_cfg.get("text", {})
     table_cfg = styles_cfg.get("table", {})
     width_total = table_cfg.get("width_cm", 17.0)
-    ratios = table_cfg.get("column_ratios_criteria", [0.45, 0.10, 0.45])
+    ratios = table_cfg.get("column_ratios_criteria", [0.4, 0.2, 0.4])
     bg_color = table_cfg.get("header_bg_color", "EEEEEE")
     f_size = table_cfg.get("font_size", 10)
+    f_name = text_cfg.get("font", "Aptos")
         
     doc.add_heading(title, level=3)
     table = doc.add_table(rows=1, cols=3)
@@ -144,17 +190,21 @@ def add_criteria_table(doc, title, criteria_list):
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = 'Kriterium'
     hdr_cells[1].text = 'Status'
-    hdr_cells[2].text = 'Begründung / Evidenz'
+    hdr_cells[2].text = 'Hinweis'
     
     # Set widths for header cells
     for i, width in enumerate(widths):
         hdr_cells[i].width = width
 
     # Header styling & Font size
-    for cell in hdr_cells:
+    for i, cell in enumerate(hdr_cells):
         set_cell_background(cell, bg_color)
         set_cell_padding(cell)
-        run = cell.paragraphs[0].runs[0]
+        p = cell.paragraphs[0]
+        if i == 1: # Status column
+            p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        run = p.runs[0]
+        run.font.name = f_name
         run.font.bold = True
         run.font.size = Pt(f_size)
 
@@ -168,34 +218,41 @@ def add_criteria_table(doc, title, criteria_list):
             
         # 1. Kriterium
         row_cells[0].text = item.get("kriterium", "")
-        row_cells[0].paragraphs[0].runs[0].font.size = Pt(f_size)
+        run_crit = row_cells[0].paragraphs[0].runs[0]
+        run_crit.font.name = f_name
+        run_crit.font.size = Pt(f_size)
         
         status = str(item.get("erfuellt", "")).lower().strip()
         
         # Mapping to display text and color (with icons)
         status_map = {
-            "erfüllt": ("✓ ja", RGBColor(39, 174, 96), False),
-            "teilweise erfüllt": ("⚠️ teil", RGBColor(243, 156, 18), True),
-            "potenziell erfüllt": ("🤔 evtl", RGBColor(52, 152, 219), True),
-            "nicht erfüllt": ("❌ nein", RGBColor(192, 57, 43), True),
-            "nicht explizit erwähnt": ("⚪ -", RGBColor(127, 140, 141), False),
-            "true": ("✓ ja", RGBColor(39, 174, 96), False),
-            "false": ("❌ nein", RGBColor(192, 57, 43), True),
-            "! bitte prüfen !": ("❓ ?", RGBColor(0, 0, 0), True)
+            "erfüllt": ("✅ Erfüllt", RGBColor(39, 174, 96), False),
+            "teilweise erfüllt": ("⚠️ Teilweise", RGBColor(243, 156, 18), True),
+            "potenziell erfüllt": ("⚠️ Teilweise", RGBColor(243, 156, 18), True),
+            "nicht erfüllt": ("❌ Nicht erfüllt", RGBColor(192, 57, 43), True),
+            "nicht explizit erwähnt": ("⚪ Nicht erwähnt", RGBColor(127, 140, 141), False),
+            "true": ("✅ Erfüllt", RGBColor(39, 174, 96), False),
+            "false": ("❌ Nicht erfüllt", RGBColor(192, 57, 43), True),
+            "! bitte prüfen !": ("❓ Prüfen", RGBColor(0, 0, 0), True)
         }
         
         display_text, color, is_bold = status_map.get(status, (status.capitalize(), RGBColor(0, 0, 0), False))
         
         # 2. Status
         row_cells[1].text = display_text
-        run_status = row_cells[1].paragraphs[0].runs[0]
+        p_status = row_cells[1].paragraphs[0]
+        p_status.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        run_status = p_status.runs[0]
+        run_status.font.name = f_name
         run_status.font.color.rgb = color
         run_status.font.bold = is_bold
         run_status.font.size = Pt(f_size)
             
-        # 3. Begründung
+        # 3. Hinweis
         row_cells[2].text = item.get("begruendung", "")
-        row_cells[2].paragraphs[0].runs[0].font.size = Pt(f_size)
+        run_hint = row_cells[2].paragraphs[0].runs[0]
+        run_hint.font.name = f_name
+        run_hint.font.size = Pt(f_size)
 
 def generate_angebot_word(json_path, output_path):
     """
@@ -232,6 +289,8 @@ def generate_angebot_word(json_path, output_path):
     font.name = style_cfg.get("font", "Aptos")
     font.size = Pt(style_cfg.get("size", 11))
     font.color.rgb = get_color(style_cfg)
+    style.paragraph_format.space_before = Pt(style_cfg.get("space_before", 0))
+    style.paragraph_format.space_after = Pt(style_cfg.get("space_after", 6))
 
     # Heading 1 (Titel)
     h1_cfg = styles_cfg.get("heading1", {})
@@ -240,6 +299,8 @@ def generate_angebot_word(json_path, output_path):
     h1.font.size = Pt(h1_cfg.get("size", 16))
     h1.font.bold = h1_cfg.get("bold", True)
     h1.font.color.rgb = get_color(h1_cfg)
+    h1.paragraph_format.space_before = Pt(h1_cfg.get("space_before", 5))
+    h1.paragraph_format.space_after = Pt(h1_cfg.get("space_after", 5))
     
     # Heading 2 (Abschnitte)
     h2_cfg = styles_cfg.get("heading2", {})
@@ -248,6 +309,8 @@ def generate_angebot_word(json_path, output_path):
     h2.font.size = Pt(h2_cfg.get("size", 11))
     h2.font.bold = h2_cfg.get("bold", True)
     h2.font.color.rgb = get_color(h2_cfg)
+    h2.paragraph_format.space_before = Pt(h2_cfg.get("space_before", 5))
+    h2.paragraph_format.space_after = Pt(h2_cfg.get("space_after", 5))
 
     # Heading 3 (Unterabschnitte)
     try:
@@ -337,7 +400,7 @@ def generate_angebot_word(json_path, output_path):
     run_date = p_sender.add_run("DD.MM.YYYY")
     run_date.font.highlight_color = WD_COLOR_INDEX.YELLOW
     
-    p_sender.add_run("\n\nIhr direkter Ansprechpartner:\n").bold = True
+    p_sender.add_run("\n\n\n\nIhr direkter Ansprechpartner:\n").bold = True
     run_name = p_sender.add_run(contact_name)
     if "<" in contact_name or "bitte prüfen" in contact_name.lower():
         run_name.font.highlight_color = WD_COLOR_INDEX.YELLOW
@@ -389,7 +452,6 @@ def generate_angebot_word(json_path, output_path):
     salutation_p.add_run("Sehr geehrter ").bold = False
     run_salt = salutation_p.add_run("<Nachname Ansprechperson - bitte prüfen>")
     run_salt.font.highlight_color = WD_COLOR_INDEX.YELLOW
-    salutation_p.add_run(",")
     salutation_p.paragraph_format.space_after = Pt(0)
 
     # 3. Ausgangslage & Kandidatenvorschlag (Direkt nach Briefanrede ohne Header)
@@ -402,6 +464,7 @@ def generate_angebot_word(json_path, output_path):
     # 4. Einsatzkonditionen (Moved to Page 1)
     konditionen = data.get("einsatzkonditionen", {})
     doc.add_heading("Einsatzkonditionen", level=1)
+    doc.add_paragraph("Dieses Angebot basiert auf folgenden Konditionen:")
     
     # Load table styles
     table_cfg = styles_cfg.get("table", {})
@@ -409,7 +472,7 @@ def generate_angebot_word(json_path, output_path):
     ratios = table_cfg.get("column_ratios_conditions", [0.20, 0.80])
     f_size = table_cfg.get("font_size", 10)
 
-    table = doc.add_table(rows=4, cols=2)
+    table = doc.add_table(rows=5, cols=2)
     table.style = None
     table.autofit = False
     table.width = Cm(width_total)
@@ -424,11 +487,15 @@ def generate_angebot_word(json_path, output_path):
             set_cell_padding(row.cells[i])
             remove_cell_borders(row.cells[i])
     
+    # Validity date calculation
+    validity_date = get_default_validity_date().strftime("%d.%m.%Y")
+    
     rows_cond = [
         ("Pensum:", konditionen.get("pensum", "")),
         ("Verfügbarkeit:", konditionen.get("verfuegbarkeit", "")),
         ("Stundensatz (CHF):", konditionen.get("stundensatz", "")),
-        ("Subunternehmen:", konditionen.get("subunternehmen", ""))
+        ("Subunternehmen:", konditionen.get("subunternehmen", "")),
+        ("Angebot Gültigkeit:", f"{validity_date} ! bitte prüfen !")
     ]
     
     for i, (label, value) in enumerate(rows_cond):
@@ -449,6 +516,7 @@ def generate_angebot_word(json_path, output_path):
     doc.add_page_break()
     abgleich = data.get("kriterien_abgleich", {})
     doc.add_heading("Abgleich mit Anforderungskriterien", level=1)
+    doc.add_paragraph("Die Muss- und Soll-Kriterien werden erfüllt, mit folgenden ergänzenden Hinweisen:")
     
     # Muss-Kriterien
     add_criteria_table(doc, "Muss-Kriterien", abgleich.get("muss_kriterien", []))
@@ -470,7 +538,7 @@ def generate_angebot_word(json_path, output_path):
     
     doc.add_heading("Mehrwert für den Kunden", level=2)
     for item in beurteilung.get("mehrwert_fuer_kunden", []):
-        add_paragraph_with_bold(doc, item, style='List Bullet')
+        add_bullet_paragraph(doc, item)
         
     p_empfehlung = add_paragraph_with_bold(doc, beurteilung.get("empfehlung", ""))
     for run in p_empfehlung.runs:
@@ -478,19 +546,9 @@ def generate_angebot_word(json_path, output_path):
 
     # Abschluss (No header)
     doc.add_paragraph("\nFür Fragen zu diesem Angebot stehen wir jederzeit gerne zur Verfügung.")
-    
-    # Validity Logic
-    v_date = get_default_validity_date().strftime("%d.%m.%Y")
-    p_valid = doc.add_paragraph()
-    p_valid.add_run("Gültigkeit: Dieses Angebot ist gültig bis ")
-    run_vd = p_valid.add_run(v_date)
-    run_vd.bold = True
-    run_vd.font.highlight_color = WD_COLOR_INDEX.YELLOW
-    p_valid.add_run(" ")
-    run_check = p_valid.add_run("! bitte prüfen !")
-    run_check.font.highlight_color = WD_COLOR_INDEX.YELLOW
 
     doc.add_paragraph("\nBeste Grüsse\n")
+    add_paragraph_with_bold(doc, "Vorname Nachname ! bitte prüfen !", style=None)
     p_closing = doc.add_paragraph()
     p_closing.add_run("Orange Business Digital").bold = True
 
