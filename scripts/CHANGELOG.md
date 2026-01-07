@@ -5,3 +5,4 @@
 2026-01-07 16:10:57 | REFACTOR | Harmonize status values across Dashboard and Word, update criteria table layout, and refine document styling and correspondence formatting
 2026-01-07 16:20:23 | REFACTOR | Harmonize status values across Dashboard and Word, update criteria table layout, and refine document styling and correspondence formatting
 2026-01-07 16:37:10 | DOCS | add roadmap for multi-language support (DE/EN/FR)
+2026-01-07 17:56:54 | FEATURE | finalize localization, fix app initialization crash and update language selectors to DE/EN/FR codes
