@@ -82,15 +82,15 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         meta_cols.append((get_text(translations, 'dashboard', 'ai_model', language), f"<b>{model_name}</b>"))
     
     # Add target language with flag
-    lang_flags = {"de": "🇩🇪", "en": "�🇸", "fr": "🇫🇷"}
+    lang_flags = {"de": "🇩🇪", "en": "🇺🇸", "fr": "🇫🇷"}
     meta_cols.append((get_text(translations, 'ui', 'language_label', language), lang_flags.get(language, language.upper())))
 
     if pipeline_mode:
         meta_cols.append((get_text(translations, 'dashboard', 'mode', language), pipeline_mode))
     
     input_files = []
-    if cv_filename: input_files.append(f"CV: {cv_filename}")
-    if job_filename: input_files.append(f"SP: {job_filename}")
+    if cv_filename: input_files.append(f"{get_text(translations, 'dashboard', 'cv_prefix', language)} {cv_filename}")
+    if job_filename: input_files.append(f"{get_text(translations, 'dashboard', 'job_prefix', language)} {job_filename}")
     if input_files:
         meta_cols.append((get_text(translations, 'dashboard', 'input_files', language), "<br>".join(input_files)))
 
@@ -539,7 +539,7 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                     else:
                         evidenz_html = parts[0]
                 else:
-                    evidenz_html = "<span style='color: #999; font-style: italic;'>Keine explizite Evidenz</span>"
+                    evidenz_html = f"<span style='color: #999; font-style: italic;'>{get_text(translations, 'dashboard', 'no_evidence', language)}</span>"
 
                 card_html += f"""
                     <tr>
@@ -557,26 +557,26 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             return card_html
 
         # Now render them as separate blocks
-        html_content += render_criteria_card("Muss-Kriterien", match_data.get("muss_kriterien_abgleich", []), "#e8f6f3")
-        html_content += render_criteria_card("Soll-Kriterien", match_data.get("soll_kriterien_abgleich", []), "#fef9e7")
+        html_content += render_criteria_card(get_text(translations, 'offer', 'muss_criteria', language), match_data.get("muss_kriterien_abgleich", []), "#e8f6f3")
+        html_content += render_criteria_card(get_text(translations, 'offer', 'soll_criteria', language), match_data.get("soll_kriterien_abgleich", []), "#fef9e7")
         
         # Soft Skills and others in a 2-column grid to save space
         html_content += """<div class="grid">"""
-        html_content += render_criteria_card("Persönliche Kompetenzen / Soft Skills", match_data.get("soft_skills_abgleich", []), "#f4f6f7")
-        html_content += render_criteria_card("Weitere Anforderungen", match_data.get("weitere_kriterien_abgleich", []), "#f4f6f7")
+        html_content += render_criteria_card(get_text(translations, 'offer', 'soft_skills', language), match_data.get("soft_skills_abgleich", []), "#f4f6f7")
+        html_content += render_criteria_card(get_text(translations, 'offer', 'other_criteria', language), match_data.get("weitere_kriterien_abgleich", []), "#f4f6f7")
         html_content += """</div>"""
 
     # --- VALIDATION SECTION ---
     # Always show validation section, even if empty
     html_content += f"""
-        <h2 style="color: var(--primary-color); margin-top: 30px;">Technische Validierung</h2>
+        <h2 style="color: var(--primary-color); margin-top: 30px;">{get_text(translations, 'dashboard', 'validation_title', language)}</h2>
         <div class="grid">
             <div class="card" style="grid-column: 1 / -1;">
                 <div class="card-header">
-                    <span>{'⚠️ Validierungshinweise' if validation_warnings else '✅ Validierung erfolgreich'}</span>
+                    <span>{get_text(translations, 'dashboard', 'validation_warnings', language) if validation_warnings else get_text(translations, 'dashboard', 'validation_success', language)}</span>
                 </div>
                 <div style="margin-bottom: 10px; color: #666; font-size: 14px;">
-                    Ergebnis der technischen Prüfung der CV-Struktur (Pflichtfelder, Datentypen, Längen).
+                    {get_text(translations, 'dashboard', 'validation_desc', language)}
                 </div>
                 <div style="max-height: 300px; overflow-y: auto;">
     """
@@ -586,17 +586,17 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
              html_content += f"""
                 <div class="feedback-item warning">
                     <div style="display:flex; justify-content:space-between;">
-                        <strong>Struktur-Check</strong>
+                        <strong>{get_text(translations, 'dashboard', 'structure_check', language)}</strong>
                         <span style="font-size: 11px; text-transform: uppercase; opacity: 0.7;">Info</span>
                     </div>
                     <div>{warning}</div>
                 </div>
             """
     else:
-        html_content += """
+        html_content += f"""
             <div style="text-align: center; padding: 20px; color: #27ae60;">
                 <div style="font-size: 24px; margin-bottom: 10px;">✨</div>
-                <div>Keine strukturellen Fehler oder Warnungen gefunden.</div>
+                <div>{get_text(translations, 'dashboard', 'no_errors_found', language)}</div>
             </div>
         """
         
@@ -612,45 +612,45 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         quality_rating = summary.get("gesamt_einschaetzung", "Unbekannt")
         
         html_content += f"""
-            <h2 style="color: var(--primary-color); margin-top: 30px;">CV Qualitäts-Check</h2>
+            <h2 style="color: var(--primary-color); margin-top: 30px;">{get_text(translations, 'dashboard', 'cv_quality_check', language)}</h2>
             <div class="grid">
                 <div class="card">
-                    <div class="card-header">Qualitätseinschätzung</div>
+                    <div class="card-header">{get_text(translations, 'dashboard', 'quality_assessment', language)}</div>
                     <div class="score-display">
                         <div class="score-value" style="font-size: 32px; color: var(--primary-color)">{quality_rating}</div>
-                        <div class="score-label">Datenqualität & Struktur</div>
+                        <div class="score-label">{get_text(translations, 'dashboard', 'quality_data_structure', language)}</div>
                     </div>
                     <div style="padding: 10px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                            <span>Kritische Punkte:</span>
+                            <span>{get_text(translations, 'dashboard', 'critical_points', language)}</span>
                             <span style="font-weight: bold; color: var(--danger-color)">{summary.get("kritische_punkte", 0)}</span>
                         </div>
                         <div style="font-size: 13px; margin-top: 10px;">
-                            <strong>Empfehlung:</strong> {summary.get("empfehlung", "")}
+                            <strong>{get_text(translations, 'dashboard', 'recommendation', language)}</strong> {summary.get("empfehlung", "")}
                         </div>
                     </div>
                 </div>
                 
                 <div class="card" style="grid-column: 2 / -1;">
-                    <div class="card-header">Handlungsbedarf & Feedback</div>
+                    <div class="card-header">{get_text(translations, 'dashboard', 'action_needed_feedback', language)}</div>
                     <div style="max-height: 250px; overflow-y: auto;">
         """
         
         # Combine different feedback sections
         all_feedback = []
         for item in feedback_data.get("feldbezogenes_feedback", []):
-            item['source'] = f"Feld: {item.get('cv_feld', '')}"
+            item['source'] = f"{get_text(translations, 'dashboard', 'field_prefix', language)} {item.get('cv_feld', '')}"
             all_feedback.append(item)
         
         for item in feedback_data.get("struktur_und_regelchecks", []):
             if item.get("status") != "erfüllt":
-                item['source'] = "Struktur-Check"
+                item['source'] = get_text(translations, 'dashboard', 'structure_check', language)
                 item['beschreibung'] = item.get('beobachtung', '')
                 item['feedback_typ'] = "Regelverstoss"
                 all_feedback.append(item)
 
         if not all_feedback:
-             html_content += "<p style='color: #999; text-align: center;'>Keine nennenswerten Qualitätsprobleme gefunden.</p>"
+             html_content += f"<p style='color: #999; text-align: center;'>{get_text(translations, 'dashboard', 'no_quality_issues', language)}</p>"
         else:
             for item in all_feedback:
                 typ = item.get("feedback_typ", "").lower()

@@ -67,4 +67,5 @@ class TestOfflineGeneration:
         assert os.path.getsize(dashboard_path) > 0
         with open(dashboard_path, 'r', encoding='utf-8') as f:
             content = f.read()
-            assert "CV Analyse Dashboard" in content
+            assert "Dashboard" in content
+            assert "CV Analyse" in content

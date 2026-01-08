@@ -204,18 +204,25 @@ def normalize_json_structure(data, language="de"):
     
     # Korrektur 5: Normalisiere Sprachen Level und Namen
     if "Sprachen" in data and isinstance(data["Sprachen"], list):
-        # Mapping für gängige Sprachen (Englisch -> Deutsch)
-        language_mapping = {
-            "english": "Englisch",
-            "german": "Deutsch",
-            "french": "Französisch",
-            "italian": "Italienisch",
-            "spanish": "Spanisch",
-            "portuguese": "Portugiesisch",
-            "russian": "Russisch",
-            "chinese": "Chinesisch",
-            "japanese": "Japanisch"
-        }
+        # Mapping für gängige Sprachen (Mapping basierend auf Zielsprache)
+        if target_language == "en":
+            language_mapping = {
+                "english": "English", "german": "German", "french": "French",
+                "italian": "Italian", "spanish": "Spanish", "portuguese": "Portuguese",
+                "russian": "Russian", "chinese": "Chinese", "japanese": "Japanese"
+            }
+        elif target_language == "fr":
+            language_mapping = {
+                "english": "Anglais", "german": "Allemand", "french": "Français",
+                "italian": "Italien", "spanish": "Espagnol", "portuguese": "Portugais",
+                "russian": "Russe", "chinese": "Chinois", "japanese": "Japonais"
+            }
+        else: # Standard: Deutsch
+            language_mapping = {
+                "english": "Englisch", "german": "Deutsch", "french": "Französisch",
+                "italian": "Italienisch", "spanish": "Spanisch", "portuguese": "Portugiesisch",
+                "russian": "Russisch", "chinese": "Chinesisch", "japanese": "Japanisch"
+            }
 
         for item in data["Sprachen"]:
             # 5a: Sprache Name normalisieren
@@ -394,9 +401,13 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
     missing_marker = get_text(translations, "system", "missing_data_marker", target_language)
     
     # System Prompt mit Schema
-    system_prompt = f"""Du bist ein Experte für CV-Extraktion und arbeitest für eine IT-Beratungsfirma.
+    is_cv = "cv" in schema_path.lower()
+    role_name = "Experte für CV-Extraktion" if is_cv else "Experte für die Analyse von IT-Projektangeboten und Stellenprofilen"
+    task_desc = "Extrahiere alle Informationen aus dem bereitgestellten CV-Text" if is_cv else "Extrahiere alle Anforderungen und Rahmendaten aus dem bereitgestellten Stellenprofil"
+    
+    system_prompt = f"""Du bist ein {role_name} und arbeitest für eine IT-Beratungsfirma.
 
-Deine Aufgabe: Extrahiere alle Informationen aus dem bereitgestellten CV-Text und erstelle ein strukturiertes JSON gemäss dem folgenden Schema.
+Deine Aufgabe: {task_desc} und erstelle ein strukturiertes JSON gemäss dem folgenden Schema.
 Zielsprache für die Extraktion ist: {target_language.upper()} (de=Deutsch, en=Englisch, fr=Französisch).
 
 WICHTIGE REGELN:
@@ -404,7 +415,7 @@ WICHTIGE REGELN:
 2. Bei fehlenden Informationen: Markiere mit "{missing_marker}"
 3. Keine Informationen erfinden oder raten
 4. Halte dich strikt an die Feldnamen und Struktur des Schemas
-5. Sprachen: Level 1-5 numerisch. Normalisiere unterschiedliche Skalen auf 1-5:
+5. [NUR FÜR CV] Sprachen: Level 1-5 numerisch. Normalisiere unterschiedliche Skalen auf 1-5:
    - WICHTIG: Wenn grafische Elemente (Sterne, Punkte, Balken) vorhanden sind, haben diese VORRANG vor Textbeschreibungen.
    - Zähle die vollen Sterne/Punkte: ★★★★★ = 5, ★★★★☆ = 4.
    - 5er-Skala (Standard): 1=1, ..., 5=5
@@ -412,24 +423,26 @@ WICHTIGE REGELN:
    - 4er-Skala: 1=1, 2=2, 3=4, 4=5
    - Text (A1-C2): A1/A2=1, B1=2, B2=3, C1=4, C2=5
    Sortiere absteigend nach Level.
-6. REFERENZPROJEKTE UND BERUFSERFAHRUNG: Erfasse VOLLSTÄNDIG ALLE beruflichen Stationen, Projekte und Arbeitsverhältnisse aus dem gesamten Lebenslauf. Es gibt keine zeitliche Beschränkung nach hinten.
+6. [NUR FÜR CV] REFERENZPROJEKTE UND BERUFSERFAHRUNG: Erfasse VOLLSTÄNDIG ALLE beruflichen Stationen, Projekte und Arbeitsverhältnisse aus dem gesamten Lebenslauf. Es gibt keine zeitliche Beschränkung nach hinten.
    - WICHTIG: Das Feld 'Ausgewählte_Referenzprojekte' muss entgegen seinem Namen VOLLSTÄNDIG ALLE beruflichen Stationen enthalten (nicht nur eine Auswahl). Es dient als vollständiger chronologischer Lebenslauf.
    - Es ist ein kritischer Fehler, Stationen auszulassen, nur weil sie älter sind oder nicht als "Projekt" bezeichnet werden.
    - Jede Station muss als eigenes Objekt in 'Ausgewählte_Referenzprojekte' erscheinen.
    - TÄTIGKEITEN/BULLET POINTS: Erfasse JEDE Tätigkeit ABSOLUT VOLLSTÄNDIG und WÖRTLICH so, wie sie im CV steht. 
    - WICHTIG: Es darf KEIN Wort ausgelassen, gekürzt oder zusammengefasst werden. Übernimm die gesamte Beschreibung des Aufpunkts unverändert. Die Beschränkung auf 5 Bullets entfällt komplett.
-7. WICHTIG: Verwende "Inhalt" (NICHT "BulletList") für Fachwissen_und_Schwerpunkte
-8. WICHTIG: Fachwissen_und_Schwerpunkte ist direkt auf oberster Ebene (NICHT in "Expertise" verschachtelt)
-9. WICHTIG: Fachwissen_und_Schwerpunkte hat IMMER genau 3 Kategorien in dieser Reihenfolge:
+7. [NUR FÜR CV] WICHTIG: Verwende "Inhalt" (NICHT "BulletList") für Fachwissen_und_Schwerpunkte
+8. [NUR FÜR CV] WICHTIG: Fachwissen_und_Schwerpunkte ist direkt auf oberster Ebene (NICHT in "Expertise" verschachtelt)
+9. [NUR FÜR CV] WICHTIG: Fachwissen_und_Schwerpunkte hat IMMER genau 3 Kategorien in dieser Reihenfolge:
    - 1. "Projektmethodik"
    - 2. "Tech Stack"
    - 3. "Weitere Skills"
 10. ZEITFORMATE: Konvertiere Zeitangaben zu MM/YYYY (z.B. "01/2020"). Ausnahme: "Aus_und_Weiterbildung" sowie "Trainings_und_Zertifizierungen" verwenden NUR das Jahr YYYY (z.B. "2020" oder "2020 - 2022").
-11. ALLE ZERTIFIKATE ERFASSEN: Erfasse ausnahmslos JEDES im PDF erwähnte Zertifikat und Training. Unabhängig vom Alter, Typ oder Bekanntheitsgrad. Gehe das Dokument chronologisch durch und stelle sicher, dass die Liste VOLLSTÄNDIG ist. Ein Auslassen von Zertifikaten ist nicht zulässig.
-12. KURZPROFIL: Verwende den Vornamen der Person und schreibe in der 3. Person. Sei sachlich, hebe nur echte Stärken hervor, die aus dem CV ersichtlich sind. KEINE Übertreibungen oder Erfindungen!
+11. [NUR FÜR CV] ALLE ZERTIFIKATE ERFASSEN: Erfasse ausnahmslos JEDES im PDF erwähnte Zertifikat und Training. Unabhängig vom Alter, Typ oder Bekanntheitsgrad. Gehe das Dokument chronologisch durch und stelle sicher, dass die Liste VOLLSTÄNDIG ist. Ein Auslassen von Zertifikaten ist nicht zulässig.
+12. [NUR FÜR CV] KURZPROFIL: Verwende den Vornamen der Person und schreibe in der 3. Person. Sei sachlich, hebe nur echte Stärken hervor, die aus dem CV ersichtlich sind. KEINE Übertreibungen oder Erfindungen!
 13. ROLLE in Referenzprojekten: Maximal 8 Wörter! Kurz und prägnant formulieren.
 14. SCHWEIZER RECHTSCHREIBUNG: Nutze ausschliesslich die Schweizer Schreibweise. Ersetze jedes 'ß' durch 'ss' (z.B. 'gross' statt 'groß', 'gemäss' statt 'gemäß').
-15. ZIELSPRACHE: Extrahiere und übersetze den gesamten Inhalt (alle Felder) in die Zielsprache: {target_language.upper()}. Dies gilt insbesondere für Profile, Tätigkeiten und Projekterfolge. Fachbegriffe (z.B. 'Scrum', 'Cloud Architecture') sollten in ihrer üblichen Fachsprache bleiben, wenn dies in der Zielsprache üblich ist.
+15. ZIELSPRACHE: Extrahiere und übersetze den gesamten Inhalt (ALLE Felder, ALLE Werte, ALLE Beschreibungen) konsequent in die Zielsprache: {target_language.upper()}.
+    WICHTIG: Alle Beschreibungen von Projekten, Tätigkeiten, Erfolgen und Rollen MÜSSEN in der Sprache {target_language.upper()} verfasst sein. Es ist ein Fehler, Teile in der Originalsprache zu belassen. 
+    Fachbegriffe (z.B. 'Scrum', 'Cloud Architecture', 'Python') sollten in ihrer üblichen Fachsprache bleiben.
 
 SCHEMA:
 {json.dumps(schema, ensure_ascii=False, indent=2)}

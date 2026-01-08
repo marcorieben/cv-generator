@@ -413,6 +413,17 @@ with st.sidebar:
                 background-color: #f8f9fa;
                 border-right: 1px solid #ddd;
             }}
+
+            /* Translate the "Drag and drop file here" text for st.file_uploader */
+            [data-testid="stFileUploader"] section > button + div {{
+                display: none;
+            }}
+            [data-testid="stFileUploader"] section::after {{
+                content: "{get_text("ui", "uploader_drag_drop", st.session_state.language)}";
+                display: block;
+                color: #444;
+                margin-top: 10px;
+            }}
             </style>
         """, unsafe_allow_html=True)
         

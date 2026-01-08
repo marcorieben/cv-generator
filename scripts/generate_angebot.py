@@ -8,10 +8,29 @@ def abs_path(relative_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(script_dir, relative_path)
 
+def load_translations():
+    """Lädt die Übersetzungen aus der translations.json Datei."""
+    translations_path = abs_path("translations.json")
+    if os.path.exists(translations_path):
+        try:
+            with open(translations_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            pass
+    return {}
+
+def get_text(translations, section, key, lang="de"):
+    """Holt einen übersetzten Text."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
+    except:
+        return f"[{key}]"
+
 def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path, output_path, schema_path=None, language='de'):
     """
     Generate an Offer (Angebot) JSON using the provided CV, Stellenprofil, and Match JSONs.
     """
+    translations = load_translations()
     # Load schema
     if not schema_path:
         schema_path = abs_path("angebot_json_schema.json")
@@ -228,16 +247,19 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         return []
 
     # 4. Final Assembly
+    check_marker = translations.get("system", {}).get("missing_data_marker", {}).get(language, "! bitte prüfen !")
+    acc_manager_label = translations.get("offer", {}).get("account_manager", {}).get(language, "Account Manager")
+    
     angebot_json = {
         "angebots_metadata": {
-            "angebots_id": stellenprofil_data.get("metadata", {}).get("document_id", "! bitte prüfen !"),
+            "angebots_id": stellenprofil_data.get("metadata", {}).get("document_id", check_marker),
             "anbieter": "Orange Business",
             "kunde": llm_context["stelle"]["kunde"],
             "datum": datetime.now().strftime("%d.%m.%Y"),
             "ansprechpartner": {
-                "name": "! bitte prüfen !",
-                "rolle": "Account Manager",
-                "kontakt": "! bitte prüfen !"
+                "name": check_marker,
+                "rolle": acc_manager_label,
+                "kontakt": check_marker
             }
         },
         "stellenbezug": {
@@ -252,13 +274,19 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         },
         "profil_und_kompetenzen": {
             "methoden_und_technologien": ensure_list(llm_response.get("methoden_technologien", [])),
-            "operative_und_fuehrungserfahrung": ensure_list(llm_response.get("erfahrung_ops_führung", []))
+            "operative_und_fuehrungserfahrung": ensure_list(llm_response.get("erfahrung_ops_führung", [])),
+            "sprachen": [
+                {
+                    "sprache": s.get("Sprache", ""),
+                    "level": get_text(translations, 'levels', f"level_{s.get('Level', 0)}", language) if s.get("Level") else ""
+                } for s in cv_data.get("Sprachen", [])
+            ]
         },
         "einsatzkonditionen": {
             "pensum": stellenprofil_data.get("einsatzrahmen", {}).get("pensum", "100%"),
-            "verfuegbarkeit": stellenprofil_data.get("einsatzrahmen", {}).get("zeitraum", {}).get("start", "ab sofort"),
+            "verfuegbarkeit": stellenprofil_data.get("einsatzrahmen", {}).get("zeitraum", {}).get("start", translations.get("offer", {}).get("asap", {}).get(language, "ab sofort")),
             "stundensatz": "165.00 CHF (exkl. MWST)",
-            "subunternehmen": "Nein"
+            "subunternehmen": translations.get("offer", {}).get("no", {}).get(language, "Nein")
         },
         "kriterien_abgleich": abgleich,
         "gesamtbeurteilung": {
@@ -267,8 +295,8 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
             "empfehlung": llm_response.get("empfehlung", "")
         },
         "abschluss": {
-            "verfuegbarkeit_gespraech": llm_response.get("verfuegbarkeit_gespraech", "Nach Absprache kurzfristig möglich."),
-            "kontakt_hinweis": llm_response.get("kontakt_hinweis", "Wir freuen uns auf Ihre Rückmeldung.")
+            "verfuegbarkeit_gespraech": llm_response.get("verfuegbarkeit_gespraech", translations.get("offer", {}).get("appointment_ready", {}).get(language, "Nach Absprache kurzfristig möglich.")),
+            "kontakt_hinweis": llm_response.get("kontakt_hinweis", translations.get("offer", {}).get("feedback_welcome", {}).get(language, "Wir freuen uns auf Ihre Rückmeldung."))
         }
     }
 

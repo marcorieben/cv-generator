@@ -81,7 +81,15 @@
     "operative_und_fuehrungserfahrung": [
       ""
     ],
-    "_hint_operative_und_fuehrungserfahrung": "Erfahrungen mit Ops, Führung, Coaching, Betrieb"
+    "_hint_operative_und_fuehrungserfahrung": "Erfahrungen mit Ops, Führung, Coaching, Betrieb",
+
+    "sprachen": [
+      {
+        "sprache": "",
+        "level": ""
+      }
+    ],
+    "_hint_sprachen": "Sprachkenntnisse aus dem CV"
   },
 
   "einsatzkonditionen": {

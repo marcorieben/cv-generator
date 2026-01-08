@@ -577,7 +577,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung, langua
         merged_cell.text = ""
         p_merged = merged_cell.paragraphs[0]
         p_merged.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        run_merged = p_merged.add_run("BILD EINFÜGEN")
+        run_merged = p_merged.add_run(get_text(translations, "cv", "insert_image", language))
         run_merged.font.name = s["font"]
         run_merged.font.size = Pt(s["size"])
         run_merged.font.color.rgb = RGBColor(*s["color"])

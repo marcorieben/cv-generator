@@ -130,6 +130,11 @@
       "en": "✅ File active:",
       "fr": "✅ Fichier actif :"
     },
+    "uploader_drag_drop": {
+      "de": "Datei hierher ziehen oder klicken",
+      "en": "Drag and drop file here or click",
+      "fr": "Glisser et déposer le fichier ici ou cliquer"
+    },
     "cv_title": {
       "de": "📄 1. Lebenslauf (CV)",
       "en": "📄 1. Curriculum Vitae (CV)",
@@ -793,6 +798,11 @@
       "en": "Short Profile",
       "fr": "Bref profil"
     },
+    "insert_image": {
+      "de": "BILD EINFÜGEN",
+      "en": "INSERT IMAGE",
+      "fr": "INSÉRER IMAGE"
+    },
     "expertise": {
       "de": "Expertise",
       "en": "Expertise",
@@ -994,6 +1004,51 @@
       "de": "Beste Grüsse",
       "en": "Best regards",
       "fr": "Meilleures salutations"
+    },
+    "profile_label": {
+      "de": "Profil & Kompetenzen",
+      "en": "Profile & Competencies",
+      "fr": "Profil et compétences"
+    },
+    "methods_tech_label": {
+      "de": "Methoden & Technologien",
+      "en": "Methods & Technologies",
+      "fr": "Méthodes et technologies"
+    },
+    "ops_leadership_label": {
+      "de": "Operative & Führungserfahrung",
+      "en": "Operative & Leadership Experience",
+      "fr": "Expérience opérationnelle et de leadership"
+    },
+    "languages_label": {
+      "de": "Sprachkenntnisse",
+      "en": "Language Skills",
+      "fr": "Compétences linguistiques"
+    },
+    "account_manager": {
+      "de": "Account Manager",
+      "en": "Account Manager",
+      "fr": "Gestionnaire de compte"
+    },
+    "asap": {
+      "de": "ab sofort",
+      "en": "as of now",
+      "fr": "à partir de maintenant"
+    },
+    "no": {
+      "de": "Nein",
+      "en": "No",
+      "fr": "Non"
+    },
+    "appointment_ready": {
+      "de": "Nach Absprache kurzfristig möglich.",
+      "en": "Possible at short notice by arrangement.",
+      "fr": "Possible à court terme sur rendez-vous."
+    },
+    "feedback_welcome": {
+      "de": "Wir freuen uns auf Ihre Rückmeldung.",
+      "en": "We look forward to your feedback.",
+      "fr": "Nous nous réjouissons de votre retour."
     }
   },
   "dashboard": {
@@ -1021,6 +1076,16 @@
       "de": "Input Dateien",
       "en": "Input Files",
       "fr": "Fichiers d'entrée"
+    },
+    "cv_prefix": {
+      "de": "Lebenslauf:",
+      "en": "Resume:",
+      "fr": "CV :"
+    },
+    "job_prefix": {
+      "de": "Stellenprofil:",
+      "en": "Job Profile:",
+      "fr": "Profil de poste :"
     },
     "print_pdf": {
       "de": "🖨️ Drucken / PDF",
@@ -1151,6 +1216,81 @@
       "de": "Nicht Erfüllt",
       "en": "Not Fulfilled",
       "fr": "Non rempli"
+    },
+    "validation_title": {
+      "de": "Technische Validierung",
+      "en": "Technical Validation",
+      "fr": "Validation technique"
+    },
+    "validation_success": {
+      "de": "Validierung erfolgreich",
+      "en": "Validation successful",
+      "fr": "Validation réussie"
+    },
+    "validation_warnings": {
+      "de": "Validierungshinweise",
+      "en": "Validation notes",
+      "fr": "Notes de validation"
+    },
+    "validation_desc": {
+      "de": "Ergebnis der technischen Prüfung der CV-Struktur (Pflichtfelder, Datentypen, Längen).",
+      "en": "Result of the technical check of the CV structure (required fields, data types, lengths).",
+      "fr": "Résultat du contrôle technique de la structure du CV (champs obligatoires, types de données, longueurs)."
+    },
+    "no_errors_found": {
+      "de": "Keine strukturellen Fehler oder Warnungen gefunden.",
+      "en": "No structural errors or warnings found.",
+      "fr": "Aucune erreur ou avertissement structurel trouvé."
+    },
+    "cv_quality_check": {
+      "de": "CV Qualitäts-Check",
+      "en": "CV Quality Check",
+      "fr": "Contrôle de qualité du CV"
+    },
+    "quality_assessment": {
+      "de": "Qualitätseinschätzung",
+      "en": "Quality Assessment",
+      "fr": "Évaluation de la qualité"
+    },
+    "action_needed_feedback": {
+      "de": "Handlungsbedarf & Feedback",
+      "en": "Action Needed & Feedback",
+      "fr": "Mesures à prendre et commentaires"
+    },
+    "critical_points": {
+      "de": "Kritische Punkte:",
+      "en": "Critical points:",
+      "fr": "Points critiques :"
+    },
+    "recommendation": {
+      "de": "Empfehlung:",
+      "en": "Recommendation:",
+      "fr": "Recommandation :"
+    },
+    "no_evidence": {
+      "de": "Keine explizite Evidenz",
+      "en": "No explicit evidence",
+      "fr": "Aucune preuve explicite"
+    },
+    "no_quality_issues": {
+      "de": "Keine nennenswerten Qualitätsprobleme gefunden.",
+      "en": "No significant quality issues found.",
+      "fr": "Aucun problème de qualité significatif trouvé."
+    },
+    "structure_check": {
+      "de": "Struktur-Check",
+      "en": "Structure Check",
+      "fr": "Contrôles structurels"
+    },
+    "quality_data_structure": {
+      "de": "Datenqualität & Struktur",
+      "en": "Data Quality & Structure",
+      "fr": "Qualité des données et structure"
+    },
+    "field_prefix": {
+      "de": "Feld:",
+      "en": "Field:",
+      "fr": "Champ :"
     }
   },
   "levels": {
@@ -1318,9 +1458,9 @@
       "fr": "Vous êtes un réviseur de qualité de CV. Analysez le CV JSON suivant (et éventuellement le profil de poste) conformément à la spécification du schéma de rétroaction. Répondez exclusivement dans la langue : {target_language}. Remplissez exactement la structure, n'ajoutez ni ne omettez aucun champ. Utilisez uniquement les données JSON fournies."
     },
     "matchmaking_prompt": {
-      "de": "Du bist ein kritischer Auditor für CV-Matching. Vergleiche das folgende Stellenprofil und den CV gemäss der JSON-Schema-Vorgabe in der ZIELSPRACHE: {lang_name}.\nALLE TEXTE (BEGRÜNDUNGEN, EVIDENZ, KOMMENTARE) MÜSSEN AUF {lang_name} VERFASST SEIN.\nWICHTIGE REGELN ZUR VERMEIDUNG VON HALLUZINATIONEN UND FÜR STRUKTURELLE TREUE:\n1. Nutze AUSSCHLIESSLICH die bereitgestellten JSON-Daten des CVs. Erfinde keine Informationen.\n2. EXAKTE KONTINUITÄT & VOLLSTÄNDIGKEIT: Übernehme JEDES EINZELNE Kriterium aus dem Stellenprofil (anforderungen.muss_kriterien und anforderungen.soll_kriterien) ABSOLUT VOLLSTÄNDIG und WÖRTLICH. Es darf KEIN Wort ausgelassen, gekürzt oder zusammengefasst werden. Auch Aufzählungen innerhalb eines Kriteriums (z.B. 'SAFe, Kenntnisse als Coach' oder 'Deutsch- und Englischkenntnisse') müssen 1:1 übernommen werden. Das Kriterium im Match-JSON muss identisch mit dem Text im Stellenprofil-JSON sein.\n3. KEINE AUSLASSUNGEN: Jedes Kriterium aus der Profil-Liste muss ein entsprechendes Gegenstück im Abgleich haben.\n4. STRIKTES CLUSTERING: Alle Kriterien aus 'anforderungen.muss_kriterien' müssen zwingend in 'muss_kriterien_abgleich' landen. Alle Kriterien aus 'anforderungen.soll_kriterien' zwingend in 'soll_kriterien_abgleich'.\n5. ZERTIFIZIERUNGEN: Scanne explizit das Feld 'Trainings_und_Zertifizierungen' sowie 'Aus_und_Weiterbildung' nach Übereinstimmungen.\n6. IMPLIZITE MATCHES: Wenn ein Skill nicht explizit steht, aber durch den Kontext wahrscheinlich vorhanden ist, bewerte es als 'potenziell erfüllt'.\n7. LOGISCHE KONSISTENZ: Falls 'im_cv_gefunden' = false ist, darf die 'bewertung' NIEMALS 'erfüllt' oder 'teilweise erfüllt' sein.\n8. CV-EVIDENZ & NACHWEIS: Formuliere im Feld 'cv_evidenz' eine prägnante Begründung basierend auf Fakten aus dem CV. Nutze Telegramm-Stil: keine Füllwörter, keine Personalpronomen.\n9. RECHTSCHREIBUNG: Nutze die Standard-Rechtschreibung der ZIELSPRACHE: {lang_name} (für Deutsch: Schweizer Rechtschreibung, kein 'ß').",
-      "en": "You are a critical auditor for CV matching. Compare the following job profile and CV according to the JSON schema specification in the TARGET LANGUAGE: {lang_name}.\nALL TEXTS (JUSTIFICATIONS, EVIDENCE, COMMENTS) MUST BE WRITTEN IN {lang_name}.\nIMPORTANT RULES TO AVOID HALLUCINATIONS AND FOR STRUCTURAL FIDELITY:\n1. Use ONLY the provided JSON data of the CV. Do not invent information.\n2. EXACT CONTINUITY & COMPLETENESS: Transfer EVERY SINGLE criterion from the job profile (anforderungen.muss_kriterien and anforderungen.soll_kriterien) ABSOLUTELY COMPLETELY and LITERALLY. No word may be omitted, shortened, or summarized. Criteria in the match JSON must be identical to the text in the job profile JSON.\n3. NO OMISSIONS: Every bacterium from the profile list must have a corresponding counterpart in the comparison.\n4. STRICT CLUSTERING: All criteria from 'anforderungen.muss_kriterien' must necessarily end up in 'muss_kriterien_abgleich'. All criteria from 'anforderungen.soll_kriterien' necessarily in 'soll_kriterien_abgleich'.\n5. CERTIFICATIONS: Explicitly scan the fields 'Trainings_und_Zertifizierungen' and 'Aus_und_Weiterbildung' for matches.\n6. IMPLICIT MATCHES: If a skill is not explicitly stated but is likely present due to context, evaluate it as 'potentially fulfilled'.\n7. LOGICAL CONSISTENCY: If 'im_cv_gefunden' = false, the 'bewertung' must NEVER be 'fulfilled' or 'partially fulfilled'.\n8. CV EVIDENCE & PROOF: Formulate a concise justification based on facts from the CV in the 'cv_evidenz' field. Use telegram style: no filler words, no personal pronouns.\n9. SPELLING: Use the standard spelling of the TARGET LANGUAGE: {lang_name}.",
-      "fr": "Vous êtes un auditeur critique pour l'appariement de CV. Comparez le profil de poste et le CV suivants selon la spécification du schéma JSON dans la LANGUE CIBLE : {lang_name}.\nTOUS LES TEXTES (JUSTIFICATIONS, PREUVES, COMMENTAIRES) DOIVENT ÊTRE RÉDIGÉS EN {lang_name}.\nRÈGLES IMPORTANTES POUR ÉVITER LES HALLUCINATIONS ET POUR LA FIDÉLITÉ STRUCTURELLE :\n1. Utilisez UNIQUEMENT les données JSON fournies du CV. N'inventez pas d'informations.\n2. CONTINUITÉ ET EXHAUSTIVITÉ EXACTES : Transférez CHAQUE CRITÈRE du profil de poste (anforderungen.muss_kriterien et anforderungen.soll_kriterien) de manière ABSOLUMENT COMPLÈTE et LITTÉRALE. Aucun mot ne peut être omis, raccourci ou résumé. Le critère dans le JSON de correspondance doit être identique au texte dans le JSON du profil de poste.\n3. AUCUNE OMISSION : Chaque critère de la liste de profil doit avoir un pendant correspondant dans la comparaison.\n4. REGROUPEMENT STRICT : Tous les critères de 'anforderungen.muss_kriterien' doivent impérativement se retrouver dans 'muss_kriterien_abgleich'. Tous les critères de 'anforderungen.soll_kriterien' impérativement dans 'soll_kriterien_abgleich'.\n5. CERTIFICATIONS : Scannez explicitement les champs 'Trainings_und_Zertifizierungen' et 'Aus_und_Weiterbildung' pour les correspondances.\n6. CORRESPONDANCES IMPLICITES : Si une compétence n'est pas explicitement mentionnée mais est probablement présente selon le contexte, évaluez-la comme 'potentiellement remplie'.\n7. COHÉRENCE LOGIQUE : Si 'im_cv_gefunden' = false, la 'bewertung' ne doit JAMAIS être 'remplie' ou 'partiellement remplie'.\n8. PREUVE ET JUSTIFICATION DU CV : Formulez une justification concise basée sur les faits du CV dans le champ 'cv_evidenz'. Utilisez le style télégraphique : pas de mots de remplissage, pas de pronoms personnels.\n9. ORTHOGRAPHE : Utilisez l'orthographe standard de la LANGUE CIBLE : {lang_name}."
+      "de": "Du bist ein kritischer Auditor für CV-Matching. Vergleiche das folgende Stellenprofil und den CV gemäss der JSON-Schema-Vorgabe in der ZIELSPRACHE: {lang_name}.\nALLE TEXTE (BEGRÜNDUNGEN, EVIDENZ, KOMMENTARE, RISIKOTYPEN) MÜSSEN AUF {lang_name} VERFASST SEIN.\nWICHTIGE REGELN ZUR VERMEIDUNG VON HALLUZINATIONEN UND FÜR STRUKTURELLE TREUE:\n1. Nutze AUSSCHLIESSLICH die bereitgestellten JSON-Daten des CVs. Erfinde keine Informationen.\n2. EXAKTE KONTINUITÄT & VOLLSTÄNDIGKEIT: Übernehme JEDES EINZELNE Kriterium aus dem Stellenprofil (anforderungen.muss_kriterien und anforderungen.soll_kriterien) ABSOLUT VOLLSTÄNDIG und WÖRTLICH. Es darf KEIN Wort ausgelassen, gekürzt oder zusammengefasst werden. Auch Aufzählungen innerhalb eines Kriteriums (z.B. 'SAFe, Kenntnisse als Coach' oder 'Deutsch- und Englischkenntnisse') müssen 1:1 übernommen werden. Das Kriterium im Match-JSON muss identisch mit dem Text im Stellenprofil-JSON sein.\n3. KEINE AUSLASSUNGEN: Jedes Kriterium aus der Profil-Liste muss ein entsprechendes Gegenstück im Abgleich haben.\n4. STRIKTES CLUSTERING: Alle Kriterien aus 'anforderungen.muss_kriterien' müssen zwingend in 'muss_kriterien_abgleich' landen. Alle Kriterien aus 'anforderungen.soll_kriterien' zwingend in 'soll_kriterien_abgleich'.\n5. ZERTIFIZIERUNGEN: Scanne explizit das Feld 'Trainings_und_Zertifizierungen' sowie 'Aus_und_Weiterbildung' nach Übereinstimmungen.\n6. IMPLIZITE MATCHES: Wenn ein Skill nicht explizit steht, aber durch den Kontext wahrscheinlich vorhanden ist, bewerte es als 'potenziell erfüllt'.\n7. LOGISCHE KONSISTENZ: Falls 'im_cv_gefunden' = false ist, darf die 'bewertung' NIEMALS 'erfüllt' oder 'teilweise erfüllt' sein.\n8. CV-EVIDENZ & NACHWEIS: Formuliere im Feld 'cv_evidenz' eine prägnante Begründung basierend auf Fakten aus dem CV. Nutze Telegramm-Stil: keine Füllwörter, keine Personalpronomen.\n9. RECHTSCHREIBUNG: Nutze die Standard-Rechtschreibung der ZIELSPRACHE: {lang_name} (für Deutsch: Schweizer Rechtschreibung, kein 'ß').\n10. RISIKEN: Übersetze die Typen der Risiken (z.B. 'Skill-Lücke', 'Erfahrungs-Lücke') konsequent in die Zielsprache.",
+      "en": "You are a critical auditor for CV matching. Compare the following job profile and CV according to the JSON schema specification in the TARGET LANGUAGE: {lang_name}.\nALL TEXTS (JUSTIFICATIONS, EVIDENCE, COMMENTS, RISK TYPES) MUST BE WRITTEN IN {lang_name}.\nIMPORTANT RULES TO AVOID HALLUCINATIONS AND FOR STRUCTURAL FIDELITY:\n1. Use ONLY the provided JSON data of the CV. Do not invent information.\n2. EXACT CONTINUITY & COMPLETENESS: Transfer EVERY SINGLE criterion from the job profile (anforderungen.muss_kriterien and anforderungen.soll_kriterien) ABSOLUTELY COMPLETELY and LITERALLY. No word may be omitted, shortened, or summarized. Criteria in the match JSON must be identical to the text in the job profile JSON.\n3. NO OMISSIONS: Every bacterium from the profile list must have a corresponding counterpart in the comparison.\n4. STRICT CLUSTERING: All criteria from 'anforderungen.muss_kriterien' must necessarily end up in 'muss_kriterien_abgleich'. All criteria from 'anforderungen.soll_kriterien' necessarily in 'soll_kriterien_abgleich'.\n5. CERTIFICATIONS: Explicitly scan the fields 'Trainings_und_Zertifizierungen' and 'Aus_und_Weiterbildung' for matches.\n6. IMPLICIT MATCHES: If a skill is not explicitly stated but is likely present due to context, evaluate it as 'potentially fulfilled'.\n7. LOGICAL CONSISTENCY: If 'im_cv_gefunden' = false, the 'bewertung' must NEVER be 'fulfilled' or 'partially fulfilled'.\n8. CV EVIDENCE & PROOF: Formulate a concise justification based on facts from the CV in the 'cv_evidenz' field. Use telegram style: no filler words, no personal pronouns.\n9. SPELLING: Use the standard spelling of the TARGET LANGUAGE: {lang_name}.\n10. RISKS: Consistently translate the types of risks (e.g., 'Skill Gap', 'Experience Gap') into the target language.",
+      "fr": "Vous êtes un auditeur critique pour l'appariement de CV. Comparez le profil de poste et le CV suivants selon la spécification du schéma JSON dans la LANGUE CIBLE : {lang_name}.\nTOUS LES TEXTES (JUSTIFICATIONS, PREUVES, COMMENTAIRES, TYPES DE RISQUES) DOIVENT ÊTRE RÉDIGÉS EN {lang_name}.\nRÈGLES IMPORTANTES POUR ÉVITER LES HALLUCINATIONS ET POUR LA FIDÉLITÉ STRUCTURELLE :\n1. Utilisez UNIQUEMENT les données JSON fournies du CV. N'inventez pas d'informations.\n2. CONTINUITÉ ET EXHAUSTIVITÉ EXACTES : Transférez CHAQUE CRITÈRE du profil de poste (anforderungen.muss_kriterien et anforderungen.soll_kriterien) de manière ABSOLUMENT COMPLÈTE et LITTÉRALE. Aucun mot ne peut être omis, raccourci ou résumé. Le critère dans le JSON de correspondance doit être identique au texte dans le JSON du profil de poste.\n3. AUCUNE OMISSION : Chaque critère de la liste de profil doit avoir un pendant correspondant dans la comparaison.\n4. REGROUPEMENT STRICT : Tous les critères de 'anforderungen.muss_kriterien' doivent impérativement se retrouver dans 'muss_kriterien_abgleich'. Tous les critères de 'anforderungen.soll_kriterien' impérativement dans 'soll_kriterien_abgleich'.\n5. CERTIFICATIONS : Scannez explicitement les champs 'Trainings_und_Zertifizierungen' et 'Aus_und_Weiterbildung' pour les correspondances.\n6. CORRESPONDANCES IMPLICITES : Si une compétence n'est pas explicitement mentionnée mais est probablement présente selon le contexte, évaluez-la comme 'potentiellement remplie'.\n7. COHÉRENCE LOGIQUE : Si 'im_cv_gefunden' = false, la 'bewertung' ne doit JAMAIS être 'remplie' ou 'partiellement remplie'.\n8. PREUVE ET JUSTIFICATION DU CV : Formulez une justification concise basée sur les faits du CV dans le champ 'cv_evidenz'. Utilisez le style télégraphique : pas de mots de remplissage, pas de pronoms personnels.\n9. ORTHOGRAPHE : Utilisez l'orthographe standard de la LANGUE CIBLE : {lang_name}.\n10. RISQUES : Traduisez systématiquement les types de risques (ex: 'Lacune de compétences', 'Lacune d'expérience') dans la langue cible."
     }
   }
 }
