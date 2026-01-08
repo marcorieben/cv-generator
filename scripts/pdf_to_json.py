@@ -66,14 +66,28 @@ def normalize_date_format(date_str):
         'dezember': '12', 'dez': '12', 'dez.': '12', 'dec': '12', 'dec.': '12', 'december': '12', 'décembre': '12', 'déc': '12'
     }
     
-    # Pattern: "YYYY - YYYY" oder ähnliche Ranges - ZUERST behandeln!
-    if ' - ' in date_str or ' – ' in date_str or ' — ' in date_str:
-        separator = ' - ' if ' - ' in date_str else (' – ' if ' – ' in date_str else ' — ')
-        parts = date_str.split(separator)
-        if len(parts) == 2:
-            start = normalize_date_format(parts[0].strip())
-            end = normalize_date_format(parts[1].strip())
-            return f"{start} - {end}"
+    # Pattern: "YYYY - YYYY" oder ähnliche Ranges
+    # Wir machen das ohne Rekursion um Hänger zu vermeiden
+    for sep in [' - ', ' – ', ' — ', '-']:
+        if sep in date_str:
+            parts = date_str.split(sep)
+            if len(parts) == 2:
+                # Behandle beide Teile einzeln (ohne Rekursion)
+                def norm_part(p):
+                    p = p.strip()
+                    if p.lower() in ['heute', 'today', 'present', 'aktuell', 'aujourd\'hui', 'maintenant']:
+                        return p
+                    if re.match(r'^\d{4}$', p):
+                        return f"01/{p}"
+                    # Check month mapping
+                    for m_name, m_num in months_map.items():
+                        if m_name in p.lower():
+                            year_match = re.search(r'\d{4}', p)
+                            if year_match:
+                                return f"{m_num}/{year_match.group(0)}"
+                    return p
+                
+                return f"{norm_part(parts[0])} - {norm_part(parts[1])}"
     
     # Pattern: "MM/YYYY" oder "MM.YYYY" -> bereits korrekt oder leicht anpassbar
     if re.match(r'^\d{2}[/\.]\d{4}$', date_str.strip()):
@@ -206,13 +220,13 @@ def normalize_json_structure(data, language="de"):
     # Korrektur 5: Normalisiere Sprachen Level und Namen
     if "Sprachen" in data and isinstance(data["Sprachen"], list):
         # Mapping für gängige Sprachen (Mapping basierend auf Zielsprache)
-        if target_language == "en":
+        if language == "en":
             language_mapping = {
                 "english": "English", "german": "German", "french": "French",
                 "italian": "Italian", "spanish": "Spanish", "portuguese": "Portuguese",
                 "russian": "Russian", "chinese": "Chinese", "japanese": "Japanese"
             }
-        elif target_language == "fr":
+        elif language == "fr":
             language_mapping = {
                 "english": "Anglais", "german": "Allemand", "french": "Français",
                 "italian": "Italien", "spanish": "Espagnol", "portuguese": "Portugais",
@@ -474,10 +488,11 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
         )
         
         json_data = json.loads(response.choices[0].message.content)
-        print(f"✅ JSON erfolgreich erstellt")
+        print(f"✅ JSON erfolgreich erstellt. Starte Normalisierung...")
         
         # Post-Processing: Struktur korrigieren falls nötig
         json_data = normalize_json_structure(json_data, target_language)
+        print(f"✅ Normalisierung abgeschlossen")
         
         # Optional: In Datei speichern
         if output_path:
@@ -490,4 +505,4 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
     
     except Exception as e:
         print(f"❌ Fehler: {str(e)}")
-        sys.exit(1)
+        raise e  # Weitergeben statt sys.exit, damit Pipeline Fehler abfangen kann
