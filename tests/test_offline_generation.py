@@ -41,7 +41,7 @@ class TestOfflineGeneration:
 
         # Run generation
         # generate_cv expects an output DIRECTORY, not a file path
-        generate_cv(str(cv_json_path), str(output_dir))
+        generate_cv(str(cv_json_path), str(output_dir), interactive=False)
 
         # Check if any .docx file was created in the output directory
         docx_files = list(output_dir.glob("*.docx"))

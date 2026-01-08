@@ -197,7 +197,7 @@ class CVPipeline:
         print("\n" + "="*60)
         print("SCHRITT 3: Word-Dokument Generierung")
         print("="*60)
-        word_path = generate_cv(json_path, output_dir=output_dir, language=language)
+        word_path = generate_cv(json_path, output_dir=output_dir, language=language, interactive=False)
         if not word_path:
             # Don't stop dialog here, let the caller handle it or just log error
             print("❌ Word-Dokument-Generierung fehlgeschlagen.")
