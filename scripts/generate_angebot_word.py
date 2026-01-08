@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from docx import Document
 from docx.shared import Pt, RGBColor, Cm, Inches
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_COLOR_INDEX
