@@ -4,8 +4,9 @@
 # Core dependencies
 python-docx>=1.2.0
 
-# OpenAI API for PDF to JSON conversion
+# AI Model APIs
 openai>=2.14.0
+anthropic>=0.40.0
 
 # PDF processing
 pypdf>=6.5.0
@@ -18,6 +19,7 @@ Pillow>=12.0.0
 
 # Web Interface
 streamlit>=1.52.2
+gradio>=4.0.0
 
 # Authentication & Security
 streamlit-authenticator>=0.4.2
