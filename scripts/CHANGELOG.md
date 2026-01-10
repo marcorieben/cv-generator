@@ -12,3 +12,7 @@
 2026-01-08 09:38:45 | BUGFIX | Add missing sys imports in scripts/generate_angebot_word.py and scripts/pdf_to_json.py
 2026-01-08 10:04:41 | BUGFIX | Prevent pipeline and tests from hanging on interactive input
 2026-01-08 10:12:41 | UPDATE | Fix NameError in normalize_json_structure and add progress logging to CV analysis
+2026-01-10 10:27:29 | DOCS | Add comprehensive serverless migration documentation
+2026-01-10 10:28:58 | DOCS | Add comprehensive README with project overview and documentation links
+2026-01-10 10:36:16 | FEATURE | Add multi-model support with cost tracking and lean deployment guide
+2026-01-10 10:40:53 | DOCS | Add comprehensive VPS cost comparison and deployment analysis
