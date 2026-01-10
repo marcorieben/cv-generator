@@ -2,6 +2,12 @@ import json
 import sys
 import os
 
+# Force UTF-8 encoding for Windows console
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 def check_duplicates(file_path):
     def dict_raise_duplicates(ordered_pairs):
         """Reject duplicate keys."""
@@ -38,11 +44,11 @@ if __name__ == "__main__":
 
     success, message = check_duplicates(trans_path)
     if success:
-        print(f"✅ No duplicate keys found in translations.json")
+        print(f"[OK] No duplicate keys found in translations.json")
         sys.exit(0)
     else:
         print(f"\n============================================================")
-        print(f"❌ DUPLICATE KEY ERROR in translations.json")
+        print(f"[ERROR] DUPLICATE KEY ERROR in translations.json")
         print(f"Details: {message}")
         print(f"============================================================\n")
         sys.exit(1)

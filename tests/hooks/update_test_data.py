@@ -1,6 +1,13 @@
 import os
 import json
 import sys
+
+# Force UTF-8 encoding for Windows console
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 from pathlib import Path
 
 # Add project root to path
@@ -18,7 +25,7 @@ def update_test_data():
     This ensures that the 'Mock Mode' and offline tests always use the latest
     generation logic.
     """
-    print("🔄 Updating Test Data Artifacts...")
+    print("[REFRESH] Updating Test Data Artifacts...")
     
     fixtures_dir = project_root / "tests" / "fixtures"
     output_dir = fixtures_dir / "output"
@@ -27,7 +34,7 @@ def update_test_data():
     # 1. Load Source Fixtures
     cv_json_path = fixtures_dir / "valid_cv.json"
     if not cv_json_path.exists():
-        print(f"❌ Error: {cv_json_path} not found!")
+        print(f"[ERROR] Error: {cv_json_path} not found!")
         return False
         
     # Create a dummy job profile if needed
@@ -46,9 +53,9 @@ def update_test_data():
     print("   📝 Generating Word CV...")
     try:
         word_path = generate_cv(str(cv_json_path), str(output_dir), interactive=False)
-        print(f"      ✅ Created: {Path(word_path).name}")
+        print(f"      [OK] Created: {Path(word_path).name}")
     except Exception as e:
-        print(f"      ❌ Failed: {e}")
+        print(f"      [ERROR] Failed: {e}")
         return False
 
     # 3. Generate Matchmaking JSON (Mock)
@@ -64,7 +71,7 @@ def update_test_data():
     }
     with open(match_json_path, 'w', encoding='utf-8') as f:
         json.dump(match_data, f, indent=2)
-    print(f"      ✅ Created: {match_json_path.name}")
+    print(f"      [OK] Created: {match_json_path.name}")
 
     # 4. Generate Feedback JSON (Mock)
     print("   💡 Generating Feedback JSON...")
@@ -78,7 +85,7 @@ def update_test_data():
     }
     with open(feedback_json_path, 'w', encoding='utf-8') as f:
         json.dump(feedback_data, f, indent=2)
-    print(f"      ✅ Created: {feedback_json_path.name}")
+    print(f"      [OK] Created: {feedback_json_path.name}")
 
     # 5. Generate Dashboard
     print("   📊 Generating Dashboard...")
@@ -89,12 +96,12 @@ def update_test_data():
             feedback_json_path=str(feedback_json_path),
             output_dir=str(output_dir)
         )
-        print(f"      ✅ Created: {Path(dashboard_path).name}")
+        print(f"      [OK] Created: {Path(dashboard_path).name}")
     except Exception as e:
-        print(f"      ❌ Failed: {e}")
+        print(f"      [ERROR] Failed: {e}")
         return False
         
-    print("✨ Test data update complete!")
+    print("[DONE] Test data update complete!")
     return True
 
 if __name__ == "__main__":

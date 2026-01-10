@@ -3,6 +3,13 @@ import re
 import os
 import sys
 
+# Force UTF-8 encoding for Windows console
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+
 def get_installed_packages():
     """Get dictionary of installed packages {name: version}"""
     try:
@@ -67,7 +74,7 @@ def update_requirements_file(path, installed_packages, known_packages):
     return new_lines
 
 def main():
-    print("🔄 Checking requirements.txt...")
+    print("[REFRESH] Checking requirements.txt...")
     
     # Paths
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -76,7 +83,7 @@ def main():
     
     installed = get_installed_packages()
     if not installed:
-        print("⚠️ Could not determine installed packages. Skipping update.")
+        print("[WARNING] Could not determine installed packages. Skipping update.")
         return
 
     known = set()
@@ -117,7 +124,7 @@ def main():
     with open(req_path, "w", encoding="utf-8") as f:
         f.write("\n".join(new_req_lines) + "\n")
         
-    print("✅ requirements.txt updated.")
+    print("[OK] requirements.txt updated.")
 
 if __name__ == "__main__":
     main()

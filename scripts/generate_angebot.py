@@ -182,7 +182,8 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         "2. TONALITÄT: Professionell, empathisch, überzeugend. Falls die Ausgabe in Deutsch erfolgt: Nutze Schweizer Rechtschreibung (ss statt ß).\n"
         "3. WIR-FORM: Verwende konsequent die 'Wir-Form' (Wir als Orange Business), niemals die 'Ich-Form'.\n"
         "4. STRIKT POSITIV: Alle Kriterien gelten als erfüllt. Weise NIEMALS auf Lücken, fehlende Erfahrung oder Defizite hin (NICHT: 'Trotz fehlender...', 'Obwohl XY nicht...'). Formuliere ausschliesslich Stärken und Übereinstimmungen.\n"
-        "5. STRUKTUR: Gib ein JSON-Objekt mit exakt diesen Feldern zurück. Beachte dabei unbedingt die HINWEISE (Hints) für jedes Feld:\n"
+        "5. MEHRWERT: Fasse den Mehrwert in **genau 3-5 aussagekräftigen Aufzählungspunkten** zusammen. Jeder Punkt muss ein vollständiger, überzeugender Satz sein, der die Kompetenz des Kandidaten direkt mit dem Nutzen für den Kunden verknüpft. Vermeide abgehackte Sätze oder rein technische Aufzählungen.\n"
+        "6. STRUKTUR: Gib ein JSON-Objekt mit exakt diesen Feldern zurück. Beachte dabei unbedingt die HINWEISE (Hints) für jedes Feld:\n"
     )
 
     # Inject hints into system prompt
@@ -234,17 +235,35 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
     # Post-process LLM response to ensure list fields are actually lists
     # This prevents the "each letter on a new line" bug in the dashboard
     def ensure_list(val):
+        original_list = []
         if isinstance(val, list):
-            return val
-        if isinstance(val, str):
+            original_list = val
+        elif isinstance(val, str):
             # Split by bullet points or newlines if it's a long string
             if "\n" in val:
-                return [p.strip() for p in val.split("\n") if p.strip()]
-            # Check for markdown bold starts which often indicate bullet points in a single string
-            if val.startswith("**") and "** " in val:
-                return [p.strip() for p in val.split("**") if p.strip()]
-            return [val]
-        return []
+                original_list = [p.strip() for p in val.split("\n") if p.strip()]
+            else:
+                original_list = [val]
+        else:
+            return []
+
+        # Fix fragmented lists (e.g. if LLM splits sentence at comma or bolding)
+        fixed_list = []
+        for item in original_list:
+            item = item.strip()
+            if not item: continue
+            
+            # If item starts with a comma or is a continuation (lowercase and not a bullet)
+            # and we already have items, append it to the last one.
+            if fixed_list and (item.startswith(",") or item.startswith(".") or (item[0].islower() and not item.startswith("http"))):
+                if item.startswith(",") or item.startswith("."):
+                    fixed_list[-1] = f"{fixed_list[-1]}{item}"
+                else:
+                    fixed_list[-1] = f"{fixed_list[-1]} {item}"
+            else:
+                fixed_list.append(item)
+        
+        return fixed_list
 
     # 4. Final Assembly
     check_marker = translations.get("system", {}).get("missing_data_marker", {}).get(language, "! bitte prüfen !")

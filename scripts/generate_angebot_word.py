@@ -245,11 +245,12 @@ def add_criteria_table(doc, title, criteria_list, language="de", translations=No
         
         # Mapping to display text and color (with icons)
         # We check for substrings to be more robust across languages
-        if any(x in status for x in ["erfüllt", "fulfilled", "rempli"]) and "nicht" not in status and "pas" not in status and "teilweise" not in status:
+        # Added support for [full], [partial], [none] etc.
+        if any(x in status for x in ["erfüllt", "fulfilled", "rempli", "full"]) and "nicht" not in status and "pas" not in status and "teilweise" not in status:
             display_text = get_text(translations, 'matchmaking', 'fulfilled', language)
             color = RGBColor(39, 174, 96)
             is_bold = False
-        elif any(x in status for x in ["teilweise", "partial", "partiellement"]):
+        elif any(x in status for x in ["teilweise", "partial", "partiellement", "part"]):
             display_text = get_text(translations, 'matchmaking', 'partially_fulfilled', language)
             color = RGBColor(243, 156, 18)
             is_bold = True
@@ -257,7 +258,7 @@ def add_criteria_table(doc, title, criteria_list, language="de", translations=No
             display_text = get_text(translations, 'matchmaking', 'potentially_fulfilled', language)
             color = RGBColor(243, 156, 18)
             is_bold = True
-        elif any(x in status for x in ["nicht erfüllt", "not fulfilled", "non rempli", "pas rempli"]) or status == "false":
+        elif any(x in status for x in ["nicht erfüllt", "not fulfilled", "non rempli", "pas rempli", "none", "not"]) or status == "false":
             display_text = get_text(translations, 'matchmaking', 'not_fulfilled', language)
             color = RGBColor(192, 57, 43)
             is_bold = True
@@ -508,34 +509,6 @@ def generate_angebot_word(json_path, output_path, language="de"):
     
     kandidat = data.get("kandidatenvorschlag", {})
     add_paragraph_with_bold(doc, kandidat.get("eignungs_summary", ""))
-
-    # 4. Profil & Kompetenzen
-    prof_comp = data.get("profil_und_kompetenzen", {})
-    if prof_comp:
-        doc.add_heading(get_text(translations, 'offer', 'profile_label', language), level=1)
-        
-        # Methoden & Technologien
-        methods = prof_comp.get("methoden_und_technologien", [])
-        if methods:
-            doc.add_heading(get_text(translations, 'offer', 'methods_tech_label', language), level=2)
-            for m in methods:
-                add_bullet_paragraph(doc, m)
-        
-        # Operative & Führung
-        ops = prof_comp.get("operative_und_fuehrungserfahrung", [])
-        if ops:
-            doc.add_heading(get_text(translations, 'offer', 'ops_leadership_label', language), level=2)
-            for o in ops:
-                add_bullet_paragraph(doc, o)
-        
-        # Sprachen
-        sprachen = prof_comp.get("sprachen", [])
-        if sprachen:
-            doc.add_heading(get_text(translations, 'offer', 'languages_label', language), level=2)
-            for s in sprachen:
-                label = s.get("sprache", "")
-                level = s.get("level", "")
-                add_bullet_paragraph(doc, f"{label}: {level}")
 
     # 5. Einsatzkonditionen (Moved to Page 1)
     konditionen = data.get("einsatzkonditionen", {})
