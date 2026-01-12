@@ -374,12 +374,12 @@ class GradioFullUI:
 
             # Mock mode indicator
             if model == "mock":
-                progress(0.05, desc="🧪 Mock Mode - Using test data (no API costs)")
+                progress(0.05, desc="[MOCK] Using test data (no API costs)")
 
             # Progress callback
             def progress_callback(pct: int, status: str, state: str):
                 if model == "mock":
-                    progress(pct / 100.0, desc=f"🧪 MOCK: {status}")
+                    progress(pct / 100.0, desc=f"[MOCK] {status}")
                 else:
                     progress(pct / 100.0, desc=status)
 
@@ -426,10 +426,10 @@ class GradioFullUI:
 
             # Add mock mode indicator
             if model == "mock":
-                success_msg = "🎉 Pipeline completed! 🧪 **Mock Mode - Test Data**\n\n" + "\n".join(files_generated)
-                success_msg += "\n\n💡 **Note:** Mock data used. No API costs incurred."
+                success_msg = "Pipeline completed! [MOCK MODE - Test Data]\n\n" + "\n".join(files_generated)
+                success_msg += "\n\nNote: Mock data used. No API costs incurred."
             else:
-                success_msg = "🎉 Pipeline completed successfully!\n\n" + "\n".join(files_generated)
+                success_msg = "Pipeline completed successfully!\n\n" + "\n".join(files_generated)
 
             # Get output directory
             output_dir = ""
