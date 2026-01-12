@@ -16,3 +16,4 @@
 2026-01-10 10:28:58 | DOCS | Add comprehensive README with project overview and documentation links
 2026-01-10 10:36:16 | FEATURE | Add multi-model support with cost tracking and lean deployment guide
 2026-01-10 10:40:53 | DOCS | Add comprehensive VPS cost comparison and deployment analysis
+2026-01-12 12:49:11 | FEATURE | enhance Gradio UI with interactive history, app info dialog, and improved UX

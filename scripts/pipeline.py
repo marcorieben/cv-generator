@@ -217,149 +217,155 @@ class CVPipeline:
         except Exception as e:
             print(f"⚠️  Konnte Dokument nicht öffnen: {e}")
 
+    def extract_job_profile(self, stellenprofil_path, language):
+        self.update_progress(0, "running")
+        print("\n" + "="*60)
+        print("SCHRITT 0: Stellenprofil extrahieren (für Kontext)")
+        print("="*60)
+        schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
+        data = pdf_to_json(stellenprofil_path, None, schema_path, target_language=language)
+        self.update_progress(0, "completed")
+        return data
+
+    def extract_cv(self, cv_path, job_profile_context, language):
+        self.update_progress(1, "running")
+        data = self.process_cv_pdf(cv_path, job_profile_context=job_profile_context, language=language)
+        self.update_progress(1, "completed")
+        return data
+
+    def save_outputs(self, cv_data, stellenprofil_data, output_dir, stellenprofil_filename):
+        vorname = cv_data.get("Vorname", "Unbekannt")
+        nachname = cv_data.get("Nachname", "Unbekannt")
+        cv_json_filename = f"cv_{vorname}_{nachname}_{self.timestamp}.json"
+        cv_json_path = os.path.join(output_dir, cv_json_filename)
+        self.save_json(cv_data, cv_json_path)
+        stellenprofil_json_path = None
+        if stellenprofil_data:
+            sp_basename = os.path.splitext(stellenprofil_filename)[0]
+            stellenprofil_json_filename = f"stellenprofil_{sp_basename}_{self.timestamp}.json"
+            stellenprofil_json_path = os.path.join(output_dir, stellenprofil_json_filename)
+            self.save_json(stellenprofil_data, stellenprofil_json_path)
+        return cv_json_path, stellenprofil_json_path
+
+    def validate_cv_json(self, cv_data, cv_json_path, language):
+        self.update_progress(2, "running")
+        valid = self.validate_data(cv_data, cv_json_path, language=language)
+        if not valid:
+            self.update_progress(2, "error")
+        else:
+            self.update_progress(2, "completed")
+        return valid
+
+    def generate_outputs(self, cv_json_path, stellenprofil_json_path, output_dir, vorname, nachname, language, stellenprofil_path):
+        word_path = None
+        matchmaking_json_path = None
+        feedback_json_path = None
+        angebot_json_path = None
+        self.update_progress(3, "running")
+        if stellenprofil_path:
+            self.update_progress(4, "running")
+        else:
+            self.update_progress(4, "skipped")
+        self.update_progress(5, "running")
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_word = executor.submit(self.generate_word, cv_json_path, output_dir, language=language)
+            future_match = None
+            if stellenprofil_json_path and os.path.exists(stellenprofil_json_path):
+                matchmaking_json_path = os.path.join(output_dir, f"Match_{vorname}_{nachname}_{self.timestamp}.json")
+                schema_path = os.path.join(self.base_dir, "scripts", "matchmaking_json_schema.json")
+                future_match = executor.submit(
+                    generate_matchmaking_json,
+                    cv_json_path,
+                    stellenprofil_json_path,
+                    matchmaking_json_path,
+                    schema_path,
+                    language=language
+                )
+            feedback_json_path = os.path.join(output_dir, f"CV_Feedback_{vorname}_{nachname}_{self.timestamp}.json")
+            feedback_schema_path = os.path.join(self.base_dir, "scripts", "cv_feedback_json_schema.json")
+            future_feedback = executor.submit(
+                generate_cv_feedback_json,
+                cv_json_path,
+                feedback_json_path,
+                feedback_schema_path,
+                stellenprofil_json_path,
+                language=language
+            )
+            word_path = future_word.result()
+            self.update_progress(3, "completed" if word_path else "error")
+            if future_match:
+                try:
+                    future_match.result()
+                    self.update_progress(4, "completed")
+                except Exception:
+                    self.update_progress(4, "error")
+            try:
+                future_feedback.result()
+                self.update_progress(5, "completed")
+            except Exception:
+                self.update_progress(5, "error")
+        # Angebot
+        mode = os.environ.get("CV_GENERATOR_MODE", "full")
+        if mode == "full" and stellenprofil_json_path and matchmaking_json_path and os.path.exists(matchmaking_json_path):
+            self.update_progress(6, "running")
+            try:
+                angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
+                schema_path = os.path.join(self.base_dir, "scripts", "angebot_json_schema.json")
+                generate_angebot_json(
+                    cv_json_path,
+                    stellenprofil_json_path,
+                    matchmaking_json_path,
+                    angebot_json_path,
+                    schema_path,
+                    language=language
+                )
+                self.update_progress(6, "completed")
+            except Exception as e:
+                print(f"❌ Fehler bei Angebots-Generierung: {e}")
+                self.update_progress(6, "error")
+        else:
+            self.update_progress(6, "skipped")
+        return word_path, matchmaking_json_path, feedback_json_path, angebot_json_path
+
+    def generate_dashboard_and_summary(self, cv_json_path, matchmaking_json_path, feedback_json_path, output_dir, language, cv_filename, stellenprofil_filename, angebot_json_path, word_path):
+        self.update_progress(7, "running")
+        dashboard_path = generate_dashboard(
+            cv_json_path=cv_json_path,
+            match_json_path=matchmaking_json_path if stellenprofil_filename and matchmaking_json_path and os.path.exists(matchmaking_json_path) else None,
+            feedback_json_path=feedback_json_path,
+            output_dir=output_dir,
+            model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
+            pipeline_mode="CLI Pipeline",
+            cv_filename=cv_filename,
+            job_filename=stellenprofil_filename,
+            angebot_json_path=angebot_json_path,
+            language=language
+        )
+        self.update_progress(7, "completed")
+        return dashboard_path
+
     def run(self, cv_path: str, stellenprofil_path: Optional[str] = None, language: str = "de") -> Optional[str]:
         cv_filename = os.path.basename(cv_path)
         stellenprofil_filename = os.path.basename(stellenprofil_path) if stellenprofil_path else None
-        
         mode = os.environ.get("CV_GENERATOR_MODE", "full")
         self.start_processing_dialog(cv_filename, stellenprofil_filename, mode=mode)
-
         try:
-            # --- STEP 1: PDF Extraction ---
-            cv_data = None
             stellenprofil_data = None
-            stellenprofil_json_path = None
-            
-            # If offer exists, process it FIRST to get context
             if stellenprofil_path:
-                self.update_progress(0, "running") # Stellenprofil analysieren
-                print("\n" + "="*60)
-                print("SCHRITT 0: Stellenprofil extrahieren (für Kontext)")
-                print("="*60)
-                schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
-                # Run synchronously to ensure we have data for CV extraction
-                stellenprofil_data = pdf_to_json(stellenprofil_path, None, schema_path, target_language=language)
-                self.update_progress(0, "completed")
+                stellenprofil_data = self.extract_job_profile(stellenprofil_path, language)
             else:
                 self.update_progress(0, "skipped")
-            
-            # Process CV (with offer context if available)
-            self.update_progress(1, "running") # CV analysieren
-            cv_data = self.process_cv_pdf(cv_path, job_profile_context=stellenprofil_data, language=language)
-            self.update_progress(1, "completed")
-            
-            # Determine paths and save
+            cv_data = self.extract_cv(cv_path, job_profile_context=stellenprofil_data, language=language)
             vorname = cv_data.get("Vorname", "Unbekannt")
             nachname = cv_data.get("Nachname", "Unbekannt")
-            
             output_dir = os.path.join(self.base_dir, "output", f"{vorname}_{nachname}_{self.timestamp}")
             os.makedirs(output_dir, exist_ok=True)
-            
-            cv_json_filename = f"cv_{vorname}_{nachname}_{self.timestamp}.json"
-            cv_json_path = os.path.join(output_dir, cv_json_filename)
-            self.save_json(cv_data, cv_json_path)
-
-            # Save Offer Data if it exists
-            if stellenprofil_data:
-                # Use original filename of the job profile for the JSON file
-                sp_basename = os.path.splitext(stellenprofil_filename)[0]
-                stellenprofil_json_filename = f"stellenprofil_{sp_basename}_{self.timestamp}.json"
-                stellenprofil_json_path = os.path.join(output_dir, stellenprofil_json_filename)
-                self.save_json(stellenprofil_data, stellenprofil_json_path)
-
-            # --- STEP 2: Validation ---
-            self.update_progress(2, "running") # Qualitätsprüfung
-            if not self.validate_data(cv_data, cv_json_path, language=language):
-                self.update_progress(2, "error")
+            cv_json_path, stellenprofil_json_path = self.save_outputs(cv_data, stellenprofil_data, output_dir, stellenprofil_filename)
+            if not self.validate_cv_json(cv_data, cv_json_path, language):
                 return None
-            self.update_progress(2, "completed")
-
-            # --- PARALLEL STEP 3: Generation (Word, Matchmaking, Feedback) ---
-            word_path = None
-            matchmaking_json_path = None
-            feedback_json_path = None
-            
-            # Mark steps as running/skipped
-            self.update_progress(3, "running") # Word
-            
-            if stellenprofil_path:
-                self.update_progress(4, "running") # Match
-            else:
-                self.update_progress(4, "skipped")
-                
-            self.update_progress(5, "running") # Feedback
-            
-            with ThreadPoolExecutor(max_workers=3) as executor:
-                # 1. Word Generation
-                future_word = executor.submit(self.generate_word, cv_json_path, output_dir, language=language)
-                
-                # 2. Matchmaking (if offer exists)
-                future_match = None
-                if stellenprofil_json_path and os.path.exists(stellenprofil_json_path):
-                    matchmaking_json_path = os.path.join(output_dir, f"Match_{vorname}_{nachname}_{self.timestamp}.json")
-                    schema_path = os.path.join(self.base_dir, "scripts", "matchmaking_json_schema.json")
-                    future_match = executor.submit(
-                        generate_matchmaking_json,
-                        cv_json_path,
-                        stellenprofil_json_path,
-                        matchmaking_json_path,
-                        schema_path,
-                        language=language
-                    )
-
-                # 3. Feedback
-                feedback_json_path = os.path.join(output_dir, f"CV_Feedback_{vorname}_{nachname}_{self.timestamp}.json")
-                feedback_schema_path = os.path.join(self.base_dir, "scripts", "cv_feedback_json_schema.json")
-                future_feedback = executor.submit(
-                    generate_cv_feedback_json,
-                    cv_json_path,
-                    feedback_json_path,
-                    feedback_schema_path,
-                    stellenprofil_json_path,
-                    language=language
-                )
-
-                # Collect results
-                word_path = future_word.result()
-                self.update_progress(3, "completed" if word_path else "error")
-                
-                if future_match:
-                    try:
-                        future_match.result() # Wait for completion
-                        self.update_progress(4, "completed")
-                    except Exception:
-                        self.update_progress(4, "error")
-                        
-                try:
-                    future_feedback.result() # Wait for completion
-                    self.update_progress(5, "completed")
-                except Exception:
-                    self.update_progress(5, "error")
-
-            # --- STEP 3b: Angebot Generation (Sequential, depends on Match) ---
-            angebot_json_path = None
-            mode = os.environ.get("CV_GENERATOR_MODE", "full")
-            
-            if mode == "full" and stellenprofil_json_path and matchmaking_json_path and os.path.exists(matchmaking_json_path):
-                self.update_progress(6, "running") # Angebot
-                try:
-                    angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
-                    schema_path = os.path.join(self.base_dir, "scripts", "angebot_json_schema.json")
-                    generate_angebot_json(
-                        cv_json_path,
-                        stellenprofil_json_path,
-                        matchmaking_json_path,
-                        angebot_json_path,
-                        schema_path,
-                        language=language
-                    )
-                    self.update_progress(6, "completed")
-                except Exception as e:
-                    print(f"❌ Fehler bei Angebots-Generierung: {e}")
-                    self.update_progress(6, "error")
-            else:
-                self.update_progress(6, "skipped")
-
+            word_path, matchmaking_json_path, feedback_json_path, angebot_json_path = self.generate_outputs(
+                cv_json_path, stellenprofil_json_path, output_dir, vorname, nachname, language, stellenprofil_path
+            )
             if not word_path:
                 self.stop_processing_dialog()
                 show_error(
@@ -368,25 +374,11 @@ class CVPipeline:
                     details="Bitte überprüfen Sie die Konsole für weitere Details."
                 )
                 return None
-
-            # --- STEP 4: Dashboard ---
-            self.update_progress(7, "running") # Dashboard
-            dashboard_path = generate_dashboard(
-                cv_json_path=cv_json_path,
-                match_json_path=matchmaking_json_path if stellenprofil_json_path and os.path.exists(stellenprofil_json_path) else None,
-                feedback_json_path=feedback_json_path,
-                output_dir=output_dir,
-                model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
-                pipeline_mode="CLI Pipeline",
-                cv_filename=cv_filename,
-                job_filename=stellenprofil_filename,
-                angebot_json_path=angebot_json_path,
-                language=language
+            dashboard_path = self.generate_dashboard_and_summary(
+                cv_json_path, matchmaking_json_path, feedback_json_path, output_dir, language,
+                cv_filename, stellenprofil_filename, angebot_json_path, word_path
             )
-            self.update_progress(7, "completed")
-
             self.stop_processing_dialog()
-            
             # Success Message
             print("\n" + "="*60)
             print("✅ PIPELINE ERFOLGREICH ABGESCHLOSSEN")
@@ -397,54 +389,35 @@ class CVPipeline:
             if dashboard_path:
                 print(f"📊 Dashboard:  {dashboard_path}")
             print("="*60 + "\n")
-            
             success_msg = "Der Lebenslauf wurde erfolgreich generiert und ist bereit zur Verwendung."
-            
-            # Construct structured details
             details = "📂 INPUT DATEIEN:\n"
             details += f"• CV PDF: {cv_filename}\n"
             if stellenprofil_filename:
                 details += f"• Stellenprofil PDF: {stellenprofil_filename}\n"
-            
             details += "\n📤 OUTPUT DATEIEN:\n"
             details += f"• Word CV: {os.path.basename(word_path)}\n"
             details += f"• CV JSON: {os.path.basename(cv_json_path)}\n"
-            
             if stellenprofil_json_path:
                 details += f"• Stellenprofil JSON: {os.path.basename(stellenprofil_json_path)}\n"
-                
             if matchmaking_json_path:
-                 details += f"• Matchmaking JSON: {os.path.basename(matchmaking_json_path)}\n"
-            
+                details += f"• Matchmaking JSON: {os.path.basename(matchmaking_json_path)}\n"
             if angebot_json_path:
-                 details += f"• Angebot JSON: {os.path.basename(angebot_json_path)}\n"
-                 
+                details += f"• Angebot JSON: {os.path.basename(angebot_json_path)}\n"
             if feedback_json_path:
                 details += f"• Feedback JSON: {os.path.basename(feedback_json_path)}\n"
-
             if dashboard_path:
                 details += f"• Dashboard HTML: {os.path.basename(dashboard_path)}\n"
-                
             details += f"\n📍 Speicherort: {os.path.dirname(word_path)}"
-            
-            # Stop processing dialog before showing success dialog
             self.stop_processing_dialog()
-            
-            # Wait a moment for Tkinter cleanup to ensure main thread is ready for new dialog
             time.sleep(1.0)
-
-            # Extract match score if available
             match_score = None
             if matchmaking_json_path and os.path.exists(matchmaking_json_path):
                 try:
                     with open(matchmaking_json_path, 'r', encoding='utf-8') as f:
                         match_data = json.load(f)
-                        # Try to get score from match_score.score_gesamt
                         score_val = match_data.get("match_score", {}).get("score_gesamt")
                         if score_val is not None:
-                            # Handle string or int
                             if isinstance(score_val, str):
-                                # Remove % if present
                                 score_val = score_val.replace('%', '').strip()
                                 if score_val.isdigit():
                                     match_score = int(score_val)
@@ -452,12 +425,8 @@ class CVPipeline:
                                 match_score = int(score_val)
                 except Exception as e:
                     print(f"⚠️  Konnte Match-Score nicht lesen: {e}")
-
-            # Dialog handles opening files now
             show_success(success_msg, details=details, file_path=word_path, dashboard_path=dashboard_path, match_score=match_score, angebot_json_path=angebot_json_path)
-                
             return word_path
-
         except Exception as e:
             self.stop_processing_dialog()
             print(f"\n❌ Fehler in Pipeline: {str(e)}")
