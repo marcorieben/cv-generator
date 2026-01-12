@@ -416,13 +416,13 @@ class GradioFullUI:
             # Build success message
             files_generated = []
             if cv_json_path:
-                files_generated.append(f"✅ CV JSON: {os.path.basename(cv_json_path)}")
+                files_generated.append(f"[OK] CV JSON: {os.path.basename(cv_json_path)}")
             if word_path:
-                files_generated.append(f"✅ CV Word: {os.path.basename(word_path)}")
+                files_generated.append(f"[OK] CV Word: {os.path.basename(word_path)}")
             if dashboard_path:
-                files_generated.append(f"✅ Dashboard: {os.path.basename(dashboard_path)}")
+                files_generated.append(f"[OK] Dashboard: {os.path.basename(dashboard_path)}")
             if match_json_path:
-                files_generated.append(f"✅ Matchmaking: {os.path.basename(match_json_path)}")
+                files_generated.append(f"[OK] Matchmaking: {os.path.basename(match_json_path)}")
 
             # Add mock mode indicator
             if model == "mock":
@@ -435,7 +435,7 @@ class GradioFullUI:
             output_dir = ""
             if cv_json_path:
                 output_dir = os.path.dirname(cv_json_path)
-                success_msg += f"\n\n📁 Output: {output_dir}"
+                success_msg += f"\n\nOutput: {output_dir}"
 
             # Show match score
             show_offer_btn = False
@@ -444,9 +444,9 @@ class GradioFullUI:
             if pipeline_mode in ["Analysis", "Full"] and match_score is not None:
                 match_score_display = f"### Match Score: {match_score}%\n\n"
                 if match_score >= 70:
-                    match_score_display += "✅ **Excellent match!** "
+                    match_score_display += "**Excellent match!** "
                 elif match_score >= 50:
-                    match_score_display += "⚠️ **Good match with gaps.** "
+                    match_score_display += "**Good match with gaps.** "
                 else:
                     match_score_display += "❌ **Low match.** "
 
@@ -544,7 +544,7 @@ class GradioFullUI:
             angebot_word_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{timestamp}.docx")
             generate_angebot_word(angebot_json_path, angebot_word_path, language=language)
 
-            success_msg = f"✅ Offer generated!\n\n📄 {os.path.basename(angebot_word_path)}"
+            success_msg = f"Offer generated!\n\n{os.path.basename(angebot_word_path)}"
 
             return (success_msg, angebot_word_path, self.get_history_display())
 
