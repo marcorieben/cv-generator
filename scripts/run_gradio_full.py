@@ -415,6 +415,7 @@ class GradioFullUI:
             dashboard_path = results.get("dashboard_path")
             match_json_path = results.get("match_json")
             match_score = results.get("match_score")
+            stellenprofil_json_path = results.get("stellenprofil_json")
 
             # Read dashboard HTML
             dashboard_html = None
