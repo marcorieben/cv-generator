@@ -564,6 +564,46 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         </div>
     """
 
+    # --- VALIDATION SECTION ---
+    # Always show validation section, even if empty
+    html_content += f"""
+        <h2 style="color: var(--primary-color); margin-top: 30px;">Technische Validierung</h2>
+        <div class="grid">
+            <div class="card" style="grid-column: 1 / -1;">
+                <div class="card-header">
+                    <span>{'⚠️ Validierungshinweise' if validation_warnings else '✅ Validierung erfolgreich'}</span>
+                </div>
+                <div style="margin-bottom: 10px; color: #666; font-size: 14px;">
+                    Ergebnis der technischen Prüfung der CV-Struktur (Pflichtfelder, Datentypen, Längen).
+                </div>
+                <div style="max-height: 300px; overflow-y: auto;">
+    """
+    
+    if validation_warnings:
+        for warning in validation_warnings:
+             html_content += f"""
+                <div class="feedback-item warning">
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>Struktur-Check</strong>
+                        <span style="font-size: 11px; text-transform: uppercase; opacity: 0.7;">Info</span>
+                    </div>
+                    <div>{warning}</div>
+                </div>
+            """
+    else:
+        html_content += """
+            <div style="text-align: center; padding: 20px; color: #27ae60;">
+                <div style="font-size: 24px; margin-bottom: 10px;">✨</div>
+                <div>Keine strukturellen Fehler oder Warnungen gefunden.</div>
+            </div>
+        """
+        
+    html_content += """
+                </div>
+            </div>
+        </div>
+    """
+
     # --- FEEDBACK SECTION ---
     if feedback_data:
         summary = feedback_data.get("zusammenfassung", {})
