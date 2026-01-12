@@ -156,18 +156,22 @@ def normalize_json_structure(data):
         if "Referenzprojekte" in data["Ausgewählte_Referenzprojekte"]:
             data["Ausgewählte_Referenzprojekte"] = data["Ausgewählte_Referenzprojekte"]["Referenzprojekte"]
     
-    # Korrektur 4: Normalisiere alle Zeitformate zu MM/YYYY
-    # Aus- und Weiterbildung
+    # Korrektur 4: Normalisiere alle Zeitformate
+    # Aus- und Weiterbildung (Nur Jahr YYYY)
     if "Aus_und_Weiterbildung" in data and isinstance(data["Aus_und_Weiterbildung"], list):
         for item in data["Aus_und_Weiterbildung"]:
-            if "Zeitraum" in item:
-                item["Zeitraum"] = normalize_date_format(item["Zeitraum"])
+            if "Zeitraum" in item and isinstance(item["Zeitraum"], str):
+                norm = normalize_date_format(item["Zeitraum"])
+                # MM/YYYY -> YYYY (auch in Ranges)
+                item["Zeitraum"] = re.sub(r'\d{2}/(\d{4})', r'\1', norm)
     
-    # Trainings & Zertifizierungen
+    # Trainings & Zertifizierungen (Nur Jahr YYYY)
     if "Trainings_und_Zertifizierungen" in data and isinstance(data["Trainings_und_Zertifizierungen"], list):
         for item in data["Trainings_und_Zertifizierungen"]:
-            if "Zeitraum" in item:
-                item["Zeitraum"] = normalize_date_format(item["Zeitraum"])
+            if "Zeitraum" in item and isinstance(item["Zeitraum"], str):
+                norm = normalize_date_format(item["Zeitraum"])
+                # MM/YYYY -> YYYY (auch in Ranges)
+                item["Zeitraum"] = re.sub(r'\d{2}/(\d{4})', r'\1', norm)
     
     # Referenzprojekte
     if "Ausgewählte_Referenzprojekte" in data and isinstance(data["Ausgewählte_Referenzprojekte"], list):
@@ -368,7 +372,7 @@ Deine Aufgabe: Extrahiere alle Informationen aus dem bereitgestellten CV-Text un
 
 WICHTIGE REGELN:
 1. Verwende NUR Felder, die im Schema definiert sind - KEINE zusätzlichen Felder
-2. Bei fehlenden Informationen: Markiere mit "! fehlt – bitte prüfen!"
+2. Bei fehlenden Informationen: Markiere mit "! bitte prüfen !"
 3. Keine Informationen erfinden oder raten
 4. Halte dich strikt an die Feldnamen und Struktur des Schemas
 5. Sprachen: Level 1-5 numerisch. Normalisiere unterschiedliche Skalen auf 1-5:
@@ -379,19 +383,23 @@ WICHTIGE REGELN:
    - 4er-Skala: 1=1, 2=2, 3=4, 4=5
    - Text (A1-C2): A1/A2=1, B1=2, B2=3, C1=4, C2=5
    Sortiere absteigend nach Level.
-6. Maximal 5 Bullet Points pro Referenzprojekt
+6. REFERENZPROJEKTE UND BERUFSERFAHRUNG: Erfasse VOLLSTÄNDIG ALLE beruflichen Stationen, Projekte und Arbeitsverhältnisse aus dem gesamten Lebenslauf. Es gibt keine zeitliche Beschränkung nach hinten.
+   - WICHTIG: Das Feld 'Ausgewählte_Referenzprojekte' muss entgegen seinem Namen VOLLSTÄNDIG ALLE beruflichen Stationen enthalten (nicht nur eine Auswahl). Es dient als vollständiger chronologischer Lebenslauf.
+   - Es ist ein kritischer Fehler, Stationen auszulassen, nur weil sie älter sind oder nicht als "Projekt" bezeichnet werden.
+   - Jede Station muss als eigenes Objekt in 'Ausgewählte_Referenzprojekte' erscheinen.
+   - TÄTIGKEITEN/BULLET POINTS: Erfasse JEDE Tätigkeit ABSOLUT VOLLSTÄNDIG und WÖRTLICH so, wie sie im CV steht. 
+   - WICHTIG: Es darf KEIN Wort ausgelassen, gekürzt oder zusammengefasst werden. Übernimm die gesamte Beschreibung des Aufpunkts unverändert. Die Beschränkung auf 5 Bullets entfällt komplett.
 7. WICHTIG: Verwende "Inhalt" (NICHT "BulletList") für Fachwissen_und_Schwerpunkte
 8. WICHTIG: Fachwissen_und_Schwerpunkte ist direkt auf oberster Ebene (NICHT in "Expertise" verschachtelt)
 9. WICHTIG: Fachwissen_und_Schwerpunkte hat IMMER genau 3 Kategorien in dieser Reihenfolge:
    - 1. "Projektmethodik"
    - 2. "Tech Stack"
    - 3. "Weitere Skills"
-10. ZEITFORMATE: Konvertiere ALLE Zeitangaben zu MM/YYYY Format (z.B. "01/2020", "12/2023")
-11. AUS- UND WEITERBILDUNG vs. TRAININGS:
-    - Aus_und_Weiterbildung: NUR akademische/formale Abschlüsse (Bachelor, Master, PhD, CAS, DAS, MAS, Diplome)
-    - Trainings_und_Zertifizierungen: Kurse, Workshops, Zertifikate, Weiterbildungen ohne akademischen Abschluss
+10. ZEITFORMATE: Konvertiere Zeitangaben zu MM/YYYY (z.B. "01/2020"). Ausnahme: "Aus_und_Weiterbildung" sowie "Trainings_und_Zertifizierungen" verwenden NUR das Jahr YYYY (z.B. "2020" oder "2020 - 2022").
+11. ALLE ZERTIFIKATE ERFASSEN: Erfasse ausnahmslos JEDES im PDF erwähnte Zertifikat und Training. Unabhängig vom Alter, Typ oder Bekanntheitsgrad. Gehe das Dokument chronologisch durch und stelle sicher, dass die Liste VOLLSTÄNDIG ist. Ein Auslassen von Zertifikaten ist nicht zulässig.
 12. KURZPROFIL: Verwende den Vornamen der Person und schreibe in der 3. Person. Sei sachlich, hebe nur echte Stärken hervor, die aus dem CV ersichtlich sind. KEINE Übertreibungen oder Erfindungen!
 13. ROLLE in Referenzprojekten: Maximal 8 Wörter! Kurz und prägnant formulieren.
+14. SCHWEIZER RECHTSCHREIBUNG: Nutze ausschliesslich die Schweizer Schreibweise. Ersetze jedes 'ß' durch 'ss' (z.B. 'gross' statt 'groß', 'gemäss' statt 'gemäß').
 
 SCHEMA:
 {json.dumps(schema, ensure_ascii=False, indent=2)}
@@ -399,10 +407,16 @@ SCHEMA:
 Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
 
     user_content = f"Extrahiere die CV-Daten aus folgendem Text:\n\n{cv_text}"
-
-    # HINWEIS: Wir übergeben KEINEN Stellenprofil-Kontext mehr, um Halluzinationen zu vermeiden.
-    # Die Extraktion soll rein objektiv auf Basis des PDFs erfolgen.
-    # Das Matching erfolgt in einem separaten Schritt.
+    
+    # Falls Stellenprofil-Kontext vorhanden ist, diesen hinzufügen um die Extraktion zu fokussieren
+    if job_profile_context:
+        user_content = (
+            f"KONTEXT (Ziel-Stellenprofil):\n{json.dumps(job_profile_context, ensure_ascii=False)}\n\n"
+            f"Nutze diesen Kontext, um im CV besonders auf relevante Erfahrungen, Zertifikate und Skills zu achten, "
+            f"die für dieses Profil gefordert sind. Falls das Projektprofil spezifische Zertifizierungen verlangt, "
+            f"prüfe den CV extrem sorgfältig auf diese Begriffe. Die Extraktion soll aber weiterhin faktenbasiert auf dem CV-Text beruhen.\n\n"
+            f"{user_content}"
+        )
 
     try:
         response = client.chat.completions.create(

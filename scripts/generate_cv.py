@@ -164,6 +164,49 @@ def abs_path(relative_path):
     return os.path.join(script_dir, relative_path)
 
 
+def remove_cell_borders(cell):
+    """Entfernt alle Rahmen einer Tabellenzelle mittels XML-Manipulation und setzt Padding auf 0"""
+    from docx.oxml import parse_xml, OxmlElement
+    from docx.oxml.ns import nsdecls, qn
+    tcPr = cell._element.get_or_add_tcPr()
+    
+    # Rahmen entfernen
+    tcBorders = parse_xml(r'<w:tcBorders %s>'
+                          r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+                          r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+                          r'<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+                          r'<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+                          r'</w:tcBorders>' % nsdecls('w'))
+    # Entferne existierende Rahmen
+    existing = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tcBorders')
+    if existing is not None:
+        tcPr.remove(existing)
+    tcPr.append(tcBorders)
+
+    # Padding auf 0 setzen
+    tcMar = OxmlElement('w:tcMar')
+    for margin in ['top', 'left', 'bottom', 'right']:
+        node = OxmlElement(f'w:{margin}')
+        node.set(qn('w:w'), '0')
+        node.set(qn('w:type'), 'dxa')
+        tcMar.append(node)
+    tcPr.append(tcMar)
+
+def set_cell_padding_zero(cell):
+    """Setzt alle internen Zellenabstände (Padding) auf 0"""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    tc = cell._element
+    tcPr = tc.get_or_add_tcPr()
+    tcMar = OxmlElement('w:tcMar')
+    for margin in ['top', 'left', 'bottom', 'right']:
+        node = OxmlElement(f'w:{margin}')
+        node.set(qn('w:w'), '0')
+        node.set(qn('w:type'), 'dxa')
+        tcMar.append(node)
+    tcPr.append(tcMar)
+
+
 # -------------------------------------
 # Stil-Funktionen für Formatierung
 # -------------------------------------
@@ -208,11 +251,13 @@ def add_heading_2(doc, text, bold=None):
 def add_normal_text(doc, text):
     p = doc.add_paragraph()
     s = styles["text"]
+    p.paragraph_format.space_before = Pt(s.get("space_before", 0))
+    p.paragraph_format.space_after = Pt(s.get("space_after", 6))
     add_text_with_highlight(p, text, s["font"], s["size"], s["color"])
     return p
 
 
-def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, bold=False):
+def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, bold=False, italic=False):
     """Helper function to add text (highlighting wird am Ende global durchgeführt)"""
     run = paragraph.add_run(text)
     run.font.name = font_name
@@ -220,6 +265,8 @@ def add_text_with_highlight(paragraph, text, font_name, font_size, font_color, b
     run.font.color.rgb = RGBColor(*font_color) if isinstance(font_color, (list, tuple)) else font_color
     if bold:
         run.font.bold = True
+    if italic:
+        run.font.italic = True
 
 
 def highlight_missing_data_in_document(doc):
@@ -313,69 +360,6 @@ def highlight_missing_data_in_document(doc):
                                     text_run.font.bold = run.font.bold
 
 
-def add_bullet_item(doc, text):
-    s = styles["bullet"]
-    s_text = styles["text"]
-    
-    # Erstelle Absatz mit List Bullet Style
-    p = doc.add_paragraph(style='List Bullet')
-    
-    # Wende Formatierung aus styles.json an
-    p.paragraph_format.left_indent = Pt(s["indent"])
-    p.paragraph_format.space_before = Pt(s["space_before"])
-    p.paragraph_format.space_after = Pt(s["space_after"])
-    p.paragraph_format.line_spacing = s["line_spacing"]
-    
-    # Hanging indent: Text-Zeilen rücken ein, erste Zeile (mit Symbol) nicht
-    if "hanging_indent" in s:
-        hanging = s["hanging_indent"]
-        p.paragraph_format.left_indent = Pt(hanging)
-        p.paragraph_format.first_line_indent = Pt(-hanging)
-    
-    # Konfiguriere das Bullet-Zeichen auf "■" mit Farbe aus styles.json
-    from docx.oxml import OxmlElement
-    from docx.oxml.ns import qn
-    
-    pPr = p._element.get_or_add_pPr()
-    
-    # Numbering-Eigenschaften für custom bullet
-    numPr = pPr.find(qn('w:numPr'))
-    if numPr is None:
-        numPr = OxmlElement('w:numPr')
-        pPr.append(numPr)
-        
-        # Level setzen (0 = erste Ebene)
-        ilvl = OxmlElement('w:ilvl')
-        ilvl.set(qn('w:val'), '0')
-        numPr.append(ilvl)
-    
-    # Run-Properties für das Bullet-Symbol erstellen
-    rPr = OxmlElement('w:rPr')
-    
-    # Font für Bullet-Symbol
-    rFonts = OxmlElement('w:rFonts')
-    rFonts.set(qn('w:ascii'), s["font"])
-    rFonts.set(qn('w:hAnsi'), s["font"])
-    rPr.append(rFonts)
-    
-    # Farbe für Bullet-Symbol aus styles.json
-    color = OxmlElement('w:color')
-    bullet_color = s["color"]
-    color_hex = '%02x%02x%02x' % (bullet_color[0], bullet_color[1], bullet_color[2])
-    color.set(qn('w:val'), color_hex.upper())
-    rPr.append(color)
-    
-    # Größe für Bullet-Symbol
-    sz = OxmlElement('w:sz')
-    sz.set(qn('w:val'), str(s.get("symbol_size", s["size"]) * 2))  # Word verwendet halbe Punkte
-    rPr.append(sz)
-    
-    # Text mit Highlighting hinzufügen
-    add_text_with_highlight(p, text, s_text["font"], s_text["size"], s_text["color"])
-    
-    return p
-
-
 def get_available_width(doc):
     """Calculate available page width in inches based on margins"""
     from docx.shared import Inches, Cm
@@ -426,7 +410,7 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
 
     # Helper function to set cell background to white and remove individual cell borders
     def set_cell_background_and_borders(cell, fill_color='FFFFFF'):
-        """Set cell background color and remove borders"""
+        """Set cell background color, remove borders and set padding to 0"""
         tcPr = cell._element.get_or_add_tcPr()
         shd = OxmlElement('w:shd')
         shd.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}fill', fill_color)
@@ -435,6 +419,16 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
         # Remove cell borders
         tcBorders = parse_xml(r'<w:tcBorders %s><w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/></w:tcBorders>' % nsdecls('w'))
         tcPr.append(tcBorders)
+
+        # Set padding to 0
+        from docx.oxml.ns import qn
+        tcMar = OxmlElement('w:tcMar')
+        for margin in ['top', 'left', 'bottom', 'right']:
+            node = OxmlElement(f'w:{margin}')
+            node.set(qn('w:w'), '0')
+            node.set(qn('w:type'), 'dxa')
+            tcMar.append(node)
+        tcPr.append(tcMar)
 
     s = styles["text"]
     
@@ -535,99 +529,6 @@ def add_basic_info_table(doc, hauptrolle_desc, nationalität, ausbildung):
             pass
 
 
-def add_bullet_table(doc, items, max_items_per_column=4):
-    # Calculate number of columns based on item count
-    num_cols = max(1, (len(items) + max_items_per_column - 1) // max_items_per_column)
-    
-    if num_cols == 1:
-        # Single column: just use regular bullet items
-        for item in items:
-            add_bullet_item(doc, item)
-        return
-
-    # Multi-column: create a table with no visible borders
-    rows_per_col = (len(items) + num_cols - 1) // num_cols
-    table = doc.add_table(rows=rows_per_col, cols=num_cols)
-
-    # Remove table borders via XML (don't rely on built-in styles)
-    from docx.oxml import parse_xml
-    from docx.oxml.ns import nsdecls
-    tbl = table._element
-    tblPr = tbl.tblPr
-    if tblPr is None:
-        tblPr = parse_xml(r'<w:tblPr %s></w:tblPr>' % nsdecls('w'))
-        tbl.insert(0, tblPr)
-
-    tblBorders = parse_xml(r'<w:tBorders %s>'
-                          r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                          r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                          r'<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                          r'<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                          r'<w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                          r'<w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                          r'</w:tBorders>' % nsdecls('w'))
-    # remove existing and append
-    existing_borders = tblPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tBorders')
-    if existing_borders is not None:
-        tblPr.remove(existing_borders)
-    tblPr.append(tblBorders)
-
-    # helper to remove cell borders (ensures no visible lines)
-    def remove_cell_borders(cell):
-        tcPr = cell._element.get_or_add_tcPr()
-        tcBorders = parse_xml(r'<w:tcBorders %s>'
-                              r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'</w:tcBorders>' % nsdecls('w'))
-        # remove any existing tcBorders
-        existing = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tcBorders')
-        if existing is not None:
-            tcPr.remove(existing)
-        tcPr.append(tcBorders)
-
-    # Fill table cells with items (column-wise distribution)
-    s = styles["bullet"]
-    for idx, item in enumerate(items):
-        col = idx // rows_per_col
-        row = idx % rows_per_col
-        cell = table.rows[row].cells[col]
-        
-        # Remove any cell borders so the table is visually borderless
-        try:
-            remove_cell_borders(cell)
-        except Exception:
-            pass
-
-        # Clear default paragraph
-        cell.text = ""
-
-        # Add bullet paragraph to cell
-        p = cell.paragraphs[0] if cell.paragraphs else cell.add_paragraph()
-        p.paragraph_format.space_before = Pt(s.get("space_before", 0))
-        p.paragraph_format.space_after = Pt(s.get("space_after", 0))
-        p.paragraph_format.line_spacing = s.get("line_spacing", 1.0)
-        
-        # Hanging indent: Text-Zeilen rücken ein, erste Zeile (mit Symbol) nicht
-        if "hanging_indent" in s:
-            hanging = s["hanging_indent"]
-            p.paragraph_format.left_indent = Pt(hanging)
-            p.paragraph_format.first_line_indent = Pt(-hanging)
-
-        # Bullet-Symbol aus styles.json
-        bullet_symbol = s.get("symbol", "■") + " "
-        bullet = p.add_run(bullet_symbol)
-        bullet.font.name = s["font"]
-        bullet.font.size = Pt(s.get("symbol_size", s["size"]))
-        c = s["color"]
-        bullet.font.color.rgb = RGBColor(c[0], c[1], c[2])
-
-        run = p.add_run(item)
-        run.font.name = s["font"]
-        run.font.size = Pt(s["size"])
-
-
 def add_fachwissen_table(doc, skills_data):
     """
     Render Fachwissen_und_Schwerpunkte as a 2-column table.
@@ -670,20 +571,6 @@ def add_fachwissen_table(doc, skills_data):
     for row in table.rows:
         for idx, width in enumerate(widths):
             row.cells[idx].width = width
-    
-    # Helper to remove cell borders
-    def remove_cell_borders(cell):
-        tcPr = cell._element.get_or_add_tcPr()
-        tcBorders = parse_xml(r'<w:tcBorders %s>'
-                              r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'</w:tcBorders>' % nsdecls('w'))
-        existing = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tcBorders')
-        if existing is not None:
-            tcPr.remove(existing)
-        tcPr.append(tcBorders)
     
     s_text = styles["text"]
     s_bullet = styles["bullet"]
@@ -775,20 +662,6 @@ def add_education_table(doc, education_data):
         for idx, width in enumerate(widths):
             row.cells[idx].width = width
     
-    # Helper to remove cell borders
-    def remove_cell_borders(cell):
-        tcPr = cell._element.get_or_add_tcPr()
-        tcBorders = parse_xml(r'<w:tcBorders %s>'
-                              r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'</w:tcBorders>' % nsdecls('w'))
-        existing = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tcBorders')
-        if existing is not None:
-            tcPr.remove(existing)
-        tcPr.append(tcBorders)
-    
     s_text = styles["text"]
     
     # Fill rows
@@ -868,19 +741,6 @@ def add_trainings_table(doc, trainings_data):
     for row in table.rows:
         for idx, width in enumerate(widths):
             row.cells[idx].width = width
-
-    def remove_cell_borders(cell):
-        tcPr = cell._element.get_or_add_tcPr()
-        tcBorders = parse_xml(r'<w:tcBorders %s>'
-                              r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'</w:tcBorders>' % nsdecls('w'))
-        existing = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tcBorders')
-        if existing is not None:
-            tcPr.remove(existing)
-        tcPr.append(tcBorders)
 
     s_text = styles["text"]
 
@@ -975,20 +835,6 @@ def add_header_with_logo(doc):
     if existing_borders is not None:
         tblPr.remove(existing_borders)
     tblPr.append(tblBorders)
-    
-    # Remove cell borders for all cells
-    def remove_cell_borders(cell):
-        tcPr = cell._element.get_or_add_tcPr()
-        tcBorders = parse_xml(r'<w:tcBorders %s>'
-                              r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'</w:tcBorders>' % nsdecls('w'))
-        existing = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tcBorders')
-        if existing is not None:
-            tcPr.remove(existing)
-        tcPr.append(tcBorders)
     
     for cell in table.rows[0].cells:
         remove_cell_borders(cell)
@@ -1120,10 +966,12 @@ def generate_cv(json_path, output_dir=None, interactive=True):
     else:
         print(f"Warnung: Template nicht gefunden ({template_path}). Erstelle leeres Dokument.")
         doc = Document()
-        # Set page margins: 1.5 cm all sides
+        # Set page margins: 1.5 cm all sides and A4 size
         from docx.shared import Cm
         sections = doc.sections
         for section in sections:
+            section.page_height = Cm(29.7)
+            section.page_width = Cm(21.0)
             section.top_margin = Cm(1.5)
             section.bottom_margin = Cm(1.5)
             section.left_margin = Cm(1.5)
@@ -1221,7 +1069,7 @@ def generate_cv(json_path, output_dir=None, interactive=True):
 
 
 def select_json_file():
-    """Öffnet einen Datei-Dialog zur Auswahl einer JSON-Datei (standardmäßig im output/-Ordner)"""
+    """Oeffnet einen Datei-Dialog zur Auswahl einer JSON-Datei (standardmässig im output/-Ordner)"""
     try:
         from dialogs import select_json_file as picker
     except ImportError:
@@ -1297,7 +1145,9 @@ def add_sprachen_table(doc, sprachen_data):
     col_width = available_width / 6
     for row in table.rows:
         for idx in range(6):
-            row.cells[idx].width = col_width
+            cell = row.cells[idx]
+            cell.width = col_width
+            set_cell_padding_zero(cell)
         # Set smaller row height for compact display
         from docx.shared import Pt
         row.height = Pt(18)  # Smaller row height
@@ -1399,20 +1249,6 @@ def add_referenzprojekt_section(doc, projekt):
         for idx, width in enumerate(widths):
             row.cells[idx].width = width
     
-    # Remove cell borders function
-    def remove_cell_borders(cell):
-        tcPr = cell._element.get_or_add_tcPr()
-        tcBorders = parse_xml(r'<w:tcBorders %s>'
-                              r'<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-                              r'<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'  
-                              r'</w:tcBorders>' % nsdecls('w'))
-        existing = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tcBorders')
-        if existing is not None:
-            tcPr.remove(existing)
-        tcPr.append(tcBorders)
-    
     # Row 1: Kunde (merge both columns for 100% width)
     row1_cell = table.rows[0].cells[0].merge(table.rows[0].cells[1])
     remove_cell_borders(row1_cell)
@@ -1424,8 +1260,13 @@ def add_referenzprojekt_section(doc, projekt):
     p_kunde.paragraph_format.space_after = Pt(3)
     
     # Row 2: Zeitraum (20%) | Rolle (80%)
-    cell_zeitraum = table.rows[1].cells[0]
-    cell_rolle = table.rows[1].cells[1]
+    from docx.enum.table import WD_ROW_HEIGHT_RULE
+    row2 = table.rows[1]
+    row2.height = Cm(0.7)
+    row2.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+    
+    cell_zeitraum = row2.cells[0]
+    cell_rolle = row2.cells[1]
     remove_cell_borders(cell_zeitraum)
     remove_cell_borders(cell_rolle)
     
@@ -1481,8 +1322,8 @@ def add_referenzprojekt_section(doc, projekt):
                 # Add text with normal size
                 add_text_with_highlight(p, taetigkeit, s_text["font"], s_text["size"], s_text["color"])
                 
-                p.paragraph_format.space_before = Pt(0)
-                p.paragraph_format.space_after = Pt(3)
+                p.paragraph_format.space_before = Pt(s_bullet.get("space_before", 0))
+                p.paragraph_format.space_after = Pt(s_bullet.get("space_after", 3))
                 p.paragraph_format.line_spacing = s_bullet.get("line_spacing", 1.0)
                 
                 # Set tab stop at the text start position
@@ -1503,13 +1344,14 @@ def add_referenzprojekt_section(doc, projekt):
     run_tech_label.font.name = s_text["font"]
     run_tech_label.font.size = Pt(s_text["size"])
     run_tech_label.font.color.rgb = RGBColor(*s_text["color"])
-    run_tech_label.bold = True
+    run_tech_label.italic = True
+    run_tech_label.bold = False
     p_tech_label.paragraph_format.space_before = Pt(0)
     p_tech_label.paragraph_format.space_after = Pt(0)
     
     cell_tech_content.text = ""
     p_tech_content = cell_tech_content.paragraphs[0]
-    add_text_with_highlight(p_tech_content, technologien, s_text["font"], s_text["size"], s_text["color"])
+    add_text_with_highlight(p_tech_content, technologien, s_text["font"], s_text["size"], s_text["color"], italic=True)
     p_tech_content.paragraph_format.space_before = Pt(0)
     p_tech_content.paragraph_format.space_after = Pt(0)
     
@@ -1525,13 +1367,14 @@ def add_referenzprojekt_section(doc, projekt):
     run_meth_label.font.name = s_text["font"]
     run_meth_label.font.size = Pt(s_text["size"])
     run_meth_label.font.color.rgb = RGBColor(*s_text["color"])
-    run_meth_label.bold = True
+    run_meth_label.italic = True
+    run_meth_label.bold = False
     p_meth_label.paragraph_format.space_before = Pt(0)
     p_meth_label.paragraph_format.space_after = Pt(0)
     
     cell_meth_content.text = ""
     p_meth_content = cell_meth_content.paragraphs[0]
-    add_text_with_highlight(p_meth_content, methodik, s_text["font"], s_text["size"], s_text["color"])
+    add_text_with_highlight(p_meth_content, methodik, s_text["font"], s_text["size"], s_text["color"], italic=True)
     p_meth_content.paragraph_format.space_before = Pt(0)
     p_meth_content.paragraph_format.space_after = Pt(0)
     

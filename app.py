@@ -11,6 +11,15 @@ from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
 
 # --- Helper Functions ---
+def reset_all_pipeline_states():
+    """Resets all session state variables related to the pipeline dialog/view."""
+    st.session_state.show_pipeline_dialog = False
+    st.session_state.show_results_view = False
+    if "current_generation_results" in st.session_state:
+        del st.session_state.current_generation_results
+    # Note: we don't necessarily want to delete st.session_state.generation_results 
+    # as that's used for the background 'ERGEBNISSE' view if needed.
+
 @st.dialog("KI-Modell Übersicht", width="large")
 def show_model_info_dialog():
     st.markdown("""
@@ -25,31 +34,39 @@ def show_model_info_dialog():
     | **gpt-3.5-turbo** | ⚠️ **Legacy** | **~$0.005** | Nicht empfohlen (Formatierungsfehler). |
     | **mock** | 🧪 **Test** | **Gratis** | Nur für Entwicklung (Dummy-Daten). |
     
-    **Empfehlung:** Nutzen Sie standardmäßig `gpt-4o-mini`. Wechseln Sie nur zu `gpt-4o`, wenn die Extraktion ungenau ist.
+    **Empfehlung:** Nutzen Sie standardmässig `gpt-4o-mini`. Wechseln Sie nur zu `gpt-4o`, wenn die Extraktion ungenau ist.
     """)
 
 def get_git_history(limit=10):
-    """Fetches the recent git commit history."""
+    """Fetches the recent git commit history with detailed body."""
+    commits = []
     try:
         import subprocess
-        # Get commit hash, date, author, and message
-        # Format: %h|%cd|%an|%s
-        cmd = ["git", "log", f"-n {limit}", "--pretty=format:%h|%cd|%an|%s", "--date=short"]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        # Get commit hash, date, author, subject, and body
+        # Format: %h|%cd|%an|%s|%b
+        # %b is the body of the commit message
+        # Using --date=format:"%Y-%m-%d %H:%M:%S" for full timestamp
+        cmd = ["git", "log", "-n", str(limit), "--pretty=format:COMMIT_START%h|%cd|%an|%s|%bCOMMIT_END", "--date=format:%Y-%m-%d %H:%M:%S"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, encoding='utf-8')
         
-        commits = []
-        for line in result.stdout.splitlines():
-            parts = line.split("|")
+        raw_commits = result.stdout.split("COMMIT_START")
+        for raw in raw_commits:
+            if not raw.strip():
+                continue
+            
+            content = raw.replace("COMMIT_END", "").strip()
+            parts = content.split("|", 4)
             if len(parts) >= 4:
                 commits.append({
                     "hash": parts[0],
                     "date": parts[1],
                     "author": parts[2],
-                    "message": parts[3]
+                    "message": parts[3],
+                    "body": parts[4] if len(parts) > 4 else ""
                 })
         return commits
     except Exception as e:
-        return [{"hash": "-", "date": "-", "author": "System", "message": f"Konnte Git-History nicht laden: {str(e)}"}]
+        return [{"hash": "-", "date": "-", "author": "System", "message": f"Konnte Git-History nicht laden: {str(e)}", "body": ""}]
 
 @st.dialog("Applikations-Informationen", width="large")
 def show_app_info_dialog():
@@ -113,13 +130,22 @@ def show_app_info_dialog():
 
         if is_relevant:
             visible_count += 1
-            st.markdown(f"""
-            <div style="display: flex; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;">
-                <div style="width: 85px; color: #888; font-family: monospace; flex-shrink: 0;">{commit['date']}</div>
-                <div style="width: 130px; font-weight: 600; color: #2c3e50; flex-shrink: 0;">{category}</div>
-                <div style="color: #333; flex-grow: 1;">{clean_msg}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            
+            # Use st.expander for detailed view
+            with st.expander(f"{commit['date']} | {category} | {clean_msg}"):
+                st.markdown(f"**Commit Hash:** `{commit['hash']}`")
+                st.markdown(f"**Autor:** {commit['author']}")
+                
+                if commit.get('body'):
+                    st.markdown("**Details:**")
+                    # Clean up body (remove leading/trailing whitespace and handle markdown)
+                    body = commit['body'].strip()
+                    if body:
+                        st.info(body)
+                    else:
+                        st.caption("Keine weiteren Details vorhanden.")
+                else:
+                    st.caption("Keine weiteren Details vorhanden.")
             
     if visible_count == 0:
         st.caption("Keine relevanten Änderungen in den letzten Commits gefunden.")
@@ -159,11 +185,11 @@ with col2:
     authenticator.login('main')
 
     if st.session_state["authentication_status"] is False:
-        st.error('Username/password is incorrect')
-        st.info('Forgot your password? Please contact the administrator.')
+        st.error('Benutzername/Passwort ist falsch')
+        st.info('Passwort vergessen? Bitte kontaktieren Sie den Administrator.')
         st.stop()
     elif st.session_state["authentication_status"] is None:
-        st.warning('Please enter your username and password')
+        st.warning('Bitte geben Sie Ihren Benutzernamen und Ihr Passwort ein')
         st.stop()
 
 # If we get here, the user is authenticated
@@ -232,6 +258,9 @@ def get_api_key():
 # --- Sidebar Settings ---
 with st.sidebar:
     st.title("⚙️ Einstellungen")
+    
+    # Placeholder for logo at the top
+    logo_placeholder = st.empty()
     
     # --- Settings Menu ---
     with st.expander("👤 Persönliche Einstellungen", expanded=False):
@@ -350,18 +379,15 @@ with st.sidebar:
             "mock": {"cost": "0.00", "rec": "🧪 Test"}
         }
 
-        def reset_pipeline_state():
-            st.session_state.show_pipeline_dialog = False
-            st.session_state.show_results_view = False
-
         col_sel, col_info = st.columns([0.85, 0.15])
         with col_sel:
             selected_model = st.selectbox(
                 "Modell auswählen:",
                 options=model_options,
                 index=0,
+                key="model_selection_sidebar",
                 format_func=lambda x: f"{x} ({model_details.get(x, {}).get('rec', '')})",
-                on_change=reset_pipeline_state
+                on_change=reset_all_pipeline_states
             )
         with col_info:
             st.markdown("<div style='height: 28px'></div>", unsafe_allow_html=True)
@@ -425,10 +451,11 @@ with st.sidebar:
                 except:
                     display_time = timestamp
 
-                name = item.get("candidate_name", "Unbekannt")
+                candidate_name = item.get("candidate_name", "Unbekannt")
                 
-                with st.expander(f"{display_time} - {name}", expanded=False):
-                    st.caption(f"Modus: {item.get('mode')}")
+                with st.expander(f"{display_time} - {candidate_name}", expanded=False):
+                    model_used = item.get("model_name", "Unbekannt")
+                    st.caption(f"Modus: {item.get('mode')} | Modell: {model_used}")
                     
                     # 1. Visual Score Bar
                     score = item.get("match_score")
@@ -465,12 +492,12 @@ with st.sidebar:
     st.divider()
     
     # --- User Info & Logout (Bottom) ---
-    st.write(f'Welcome *{name}*')
-    authenticator.logout('Logout', 'sidebar')
+    st.write(f'Willkommen *{name}*')
+    authenticator.logout('Abmelden', 'sidebar')
 
 # --- Main Content ---
 st.title("📄 CV Generator")
-st.markdown("Generieren Sie maßgeschneiderte Lebensläufe basierend auf PDF-Inputs.")
+st.markdown("Generieren Sie massgeschneiderte Lebensläufe basierend auf PDF-Inputs.")
 
 # Mode Selection with Cards
 st.subheader("Wählen Sie Ihren Modus")
@@ -531,68 +558,75 @@ is_mock = os.environ.get("MODEL_NAME") == "mock"
 
 # Helper function for custom upload UI
 def render_custom_uploader(label, key_prefix, file_type=["pdf"]):
-    # Check for delete action via query param (triggered by HTML link)
-    delete_key = f"delete_{key_prefix}"
-    # Handle query params safely (Streamlit >= 1.30)
-    try:
-        if delete_key in st.query_params:
-            st.session_state[f"{key_prefix}_file"] = None
-            st.query_params.clear()
-            st.rerun()
-    except:
-        pass # Fallback for older versions or errors
-
-    # Title is ALWAYS visible
-    st.subheader(label)
-    
-    # Persistent state key for the file object
-    file_state_key = f"{key_prefix}_file"
+    # Use shared session state keys for CV and Job Profile to persist across mode switches
+    if "cv" in key_prefix.lower():
+        file_state_key = "shared_cv_file"
+    elif "job" in key_prefix.lower():
+        file_state_key = "shared_job_file"
+    else:
+        file_state_key = f"{key_prefix}_file"
     
     # Initialize state if needed
     if file_state_key not in st.session_state:
         st.session_state[file_state_key] = None
     
-    uploaded_file = st.session_state[file_state_key]
+    # Title is ALWAYS visible
+    st.subheader(label)
     
+    # We use a stable widget key based on the key_prefix
+    widget_key = f"{key_prefix}_widget"
+    
+    # Native Streamlit uploader is the most reliable for drag-and-drop
+    uploaded_file = st.file_uploader(
+        label, 
+        type=file_type, 
+        key=widget_key, 
+        label_visibility="collapsed"
+    )
+    
+    # Sync uploader state to session state
     if uploaded_file:
-        # SUCCESS STATE: Custom Green Box (HTML) with Integrated Delete Link
+        # Check if it's a NEW file upload (compare name and size for stability)
+        prev_file = st.session_state.get(file_state_key)
+        is_new_file = False
+        if prev_file is None:
+            is_new_file = True
+        elif uploaded_file.name != prev_file.name or uploaded_file.size != prev_file.size:
+            is_new_file = True
+
+        if is_new_file:
+            st.session_state[file_state_key] = uploaded_file
+            # Reset pipeline and results when a new file is uploaded
+            # This prevents the dashboard from reappearing when changing files
+            if "generation_results" in st.session_state:
+                del st.session_state.generation_results
+            if "current_generation_results" in st.session_state:
+                del st.session_state.current_generation_results
+            st.session_state.show_pipeline_dialog = False
+            st.session_state.show_results_view = False
+        else:
+            # Keep the existing file object (to maintain ID stability)
+            pass
+    elif st.session_state[file_state_key] is not None:
+        # If the widget is empty but we have something in session state,
+        # the user intentionally removed the file.
+        st.session_state[file_state_key] = None
+        # Also reset pipeline states when a file is removed
+        st.session_state.show_pipeline_dialog = False
+        st.session_state.show_results_view = False
+        if "generation_results" in st.session_state:
+            del st.session_state.generation_results
+
+    # Visual Feedback (Success State)
+    current_file = st.session_state[file_state_key]
+    if current_file:
         st.markdown(f"""
-            <div style="
-                background-color: #d4edda;
-                border: 1px solid #c3e6cb;
-                color: #155724;
-                padding: 10px 15px;
-                border-radius: 5px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            ">
-                <div style="display: flex; align-items: center;">
-                    <span style="font-size: 1.5em; margin-right: 15px;">✅</span>
-                    <div>
-                        <div style="font-weight: bold;">Datei erfolgreich hochgeladen</div>
-                        <div style="font-size: 0.9em; color: #155724;">{uploaded_file.name} ({round(uploaded_file.size / 1024, 1)} KB)</div>
-                    </div>
-                </div>
-                <a href="?{delete_key}=true" target="_self" style="text-decoration: none; font-size: 1.2em; margin-left: 10px; cursor: pointer;" title="Datei entfernen">🗑️</a>
+            <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px 15px; border-radius: 5px; margin-top: -10px; margin-bottom: 10px;">
+                <strong>✅ Datei aktiv:</strong> {current_file.name}
             </div>
         """, unsafe_allow_html=True)
                 
-        return uploaded_file
-    else:
-        # UPLOAD STATE: Standard uploader
-        # Use a temporary widget key. When file is uploaded, we save it and rerun.
-        widget_key = f"{key_prefix}_widget"
-        new_file = st.file_uploader(label, type=file_type, key=widget_key, label_visibility="collapsed")
-        
-        if new_file:
-            st.session_state[file_state_key] = new_file
-            # Reset pipeline state on new upload
-            st.session_state.show_pipeline_dialog = False
-            st.session_state.show_results_view = False
-            st.rerun()
-            
-        return None
+    return current_file
 
 # Dynamic Columns based on Mode
 if mode.startswith("Basic"):
@@ -659,15 +693,19 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
     else:
         phase = "processing"
 
-    # Custom CSS to adjust dialog width based on phase
+    # Custom CSS to adjust dialog width and height based on phase
     if phase == "results":
         st.markdown("""
             <style>
             div[data-testid="stDialog"] div[role="dialog"] {
                 width: 98vw !important;
                 max-width: 100vw !important;
+                height: 95vh !important;
+                min-height: 95vh !important;
             }
-            div[data-testid="stDialog"] div[role="dialog"] > div {
+            div[data-testid="stDialog"] div[role="dialog"] > div:nth-child(2) {
+                 height: calc(95vh - 80px) !important;
+                 overflow-y: auto !important;
                  width: 100% !important;
                  max-width: 100% !important;
                  padding-left: 1rem !important;
@@ -688,151 +726,79 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
             }
             </style>
         """, unsafe_allow_html=True)
-    
-    # Determine Phase: 'processing' or 'results'
-    if "generation_results" in st.session_state and st.session_state.get("show_results_view"):
-        phase = "results"
-    else:
-        phase = "processing"
 
     if phase == "processing":
-        st.subheader("Verarbeitung läuft...")
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        st.caption("ℹ️ Hinweis: Die Verarbeitung kann je nach Komplexität der Dateien 1-3 Minuten dauern.")
-        
-        # Define steps based on mode
-        all_steps = [
-            (0, "Stellenprofil analysieren", "🔍"),
-            (1, "CV analysieren", "📄"),
-            (2, "Qualitätsprüfung & Validierung", "✅"),
-            (3, "Word-Dokument erstellen", "📝"),
-            (4, "Match-Making Analyse", "🤝"),
-            (5, "CV-Feedback generieren", "💡"),
-            (6, "Angebot erstellen", "💼"),
-            (7, "Dashboard erstellen", "📊")
-        ]
-        
-        visible_steps = []
-        if mode == "Basic (Nur CV)":
-                visible_steps = [s for s in all_steps if s[0] in [1, 2, 3, 7]]
-        elif mode == "Analyse & Matching":
-                visible_steps = [s for s in all_steps if s[0] in [0, 1, 2, 3, 4, 5, 7]]
-        else:
-                visible_steps = all_steps
-
-        # Create placeholders for each step
-        step_placeholders = {}
-        for idx, label, icon in visible_steps:
-            step_placeholders[idx] = st.empty()
-
-        def render_step(idx, label, icon, status):
-            color = "#cccccc"
-            status_icon = "⚪"
-            font_weight = "normal"
-            bg_color = "white"
+        with st.status("🚀 Dokumente werden verarbeitet...", expanded=True) as status:
+            log_container = st.empty()
             
-            if status == "running":
-                color = "#FF7900"
-                status_icon = "🔄"
-                font_weight = "bold"
-                bg_color = "#FFF5EB"
-            elif status == "completed":
-                color = "#28a745"
-                status_icon = "✅"
-                bg_color = "#F8F9FA"
-            
-            step_placeholders[idx].markdown(
-                f"""
-                <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 12px; background-color: {bg_color}; border-radius: 8px; border: 1px solid #eee;">
-                    <div style="font-size: 24px; margin-right: 15px; width: 40px; text-align: center; color: {color};">{icon}</div>
-                    <div style="flex-grow: 1; font-family: 'Segoe UI', sans-serif; color: #444;">
-                        <div style="font-weight: {font_weight}; font-size: 16px;">{label}</div>
-                    </div>
-                    <div style="font-size: 20px; color: {color};">{status_icon}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            def progress_callback(pct, text, state="running"):
+                log_container.write(f"**Aktueller Schritt:** {text}")
+                status.update(label=f"🔄 {text} ({pct}%)", state="running")
 
-        # Initialize steps
-        initial_status = "completed" if "current_generation_results" in st.session_state else "pending"
-        for idx, label, icon in visible_steps:
-            render_step(idx, label, icon, initial_status)
-
-        def update_progress(percent, text, state):
-            progress_bar.progress(percent)
-            status_text.markdown(f"**{text}**")
-            
-            for idx, label, icon in visible_steps:
-                status = "pending"
-                if percent >= 100: status = "completed"
-                elif percent >= 90:
-                    if idx < 7: status = "completed"
-                    elif idx == 7: status = "running"
-                elif percent >= 70:
-                    if idx < 3: status = "completed"
-                    elif idx in [3, 4, 5, 6]: status = "running"
-                elif percent >= 50:
-                    if idx < 2: status = "completed"
-                    elif idx == 2: status = "running"
-                elif percent >= 30:
-                    if idx < 1: status = "completed"
-                    elif idx == 1: status = "running"
-                elif percent >= 10:
-                    if idx == 0: status = "running"
-                render_step(idx, label, icon, status)
-
-        generator = StreamlitCVGenerator(os.getcwd())
-        use_job_file = job_file if mode != "Basic (Nur CV)" else None
-        
-        # 1. Check Cache
-        if "current_generation_results" in st.session_state:
-            results = st.session_state.current_generation_results
-            progress_bar.progress(100)
-            status_text.markdown("**Fertig!**")
-        else:
-            # 2. Run Generation
-            results = generator.run(
-                cv_file=cv_file,
-                job_file=use_job_file,
-                api_key=api_key,
-                progress_callback=update_progress,
-                custom_styles=custom_styles,
-                custom_logo_path=custom_logo_path,
-                pipeline_mode=mode
-            )
-            st.session_state.current_generation_results = results
-            
-            # 3. Save History (Only on fresh run)
-            if results["success"]:
-                history_entry = {
-                    "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
-                    "candidate_name": os.path.basename(results["cv_json"]).split('_')[1] + " " + os.path.basename(results["cv_json"]).split('_')[2] if results.get("cv_json") else "Unbekannt",
-                    "mode": mode,
-                    "word_path": results.get("word_path"),
-                    "cv_json": results.get("cv_json"),
-                    "dashboard_path": results.get("dashboard_path"),
-                    "match_score": results.get("match_score"),
-                    "stellenprofil_json": results.get("stellenprofil_json"),
-                    "match_json": results.get("match_json"),
-                    "offer_word_path": results.get("offer_word_path")
+            try:
+                # Prepare inputs
+                current_custom_styles = {
+                    "primary_color": primary_color,
+                    "secondary_color": secondary_color,
+                    "font": selected_font
                 }
-                save_to_history(history_entry)
-
-        if results["success"]:
-            for idx, label, icon in visible_steps:
-                render_step(idx, label, icon, "completed")
+                current_custom_logo_path = st.session_state.get("custom_logo_path")
                 
-            st.success("✅ Generierung erfolgreich abgeschlossen!")
-            
-            st.session_state.generation_results = results
-            if st.button("Ergebnisse anzeigen", type="primary", use_container_width=True):
-                st.session_state.show_results_view = True
-                st.rerun()
-        else:
-            st.error(f"Fehler: {results['error']}")
+                # Check Cache
+                if "current_generation_results" in st.session_state:
+                    results = st.session_state.current_generation_results
+                else:
+                    # Run Pipeline
+                    generator = StreamlitCVGenerator(os.getcwd())
+                    results = generator.run(
+                        cv_file=cv_file,
+                        job_file=job_file if mode != "Basic (Nur CV)" else None,
+                        api_key=api_key,
+                        progress_callback=progress_callback,
+                        custom_styles=current_custom_styles,
+                        custom_logo_path=current_custom_logo_path,
+                        pipeline_mode=mode
+                    )
+                    st.session_state.current_generation_results = results
+                
+                if results.get("success"):
+                    # Save to History
+                    if "history_saved" not in st.session_state:
+                        history_entry = {
+                            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                            "candidate_name": f"{results.get('vorname', 'Unbekannt')} {results.get('nachname', '')}".strip(),
+                            "mode": mode,
+                            "word_path": results.get("word_path"),
+                            "cv_json": results.get("cv_json"),
+                            "dashboard_path": results.get("dashboard_path"),
+                            "match_score": results.get("match_score"),
+                            "model_name": results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
+                            "stellenprofil_json": results.get("stellenprofil_json"),
+                            "match_json": results.get("match_json"),
+                            "offer_word_path": results.get("offer_word_path")
+                        }
+                        save_to_history(history_entry)
+                        st.session_state.history_saved = True
 
+                    st.session_state.generation_results = results
+                    status.update(label="✅ Verarbeitung abgeschlossen!", state="complete", expanded=False)
+                    st.success("✅ Generierung erfolgreich abgeschlossen!")
+                    
+                    if st.button("Ergebnisse anzeigen", type="primary", use_container_width=True):
+                        st.session_state.show_results_view = True
+                        st.rerun()
+                else:
+                    st.error(f"Fehler: {results.get('error')}")
+                    status.update(label="❌ Fehler aufgetreten", state="error")
+                    if st.button("Schließen"):
+                        st.rerun()
+
+            except Exception as e:
+                st.error(f"Unerwarteter Fehler: {str(e)}")
+                status.update(label="❌ Fehler", state="error")
+                if st.button("Schließen"):
+                        st.rerun()
+    
     elif phase == "results":
         results = st.session_state.generation_results
         st.subheader("🎉 Ergebnisse")
@@ -845,6 +811,9 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 parts = filename.split('_')
                 if len(parts) >= 3: candidate_name = f"{parts[1]} {parts[2]}"
             except: pass
+        
+        model_used = results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini"))
+        st.caption(f"Modus: {results.get('mode', 'Unbekannt')} | KI-Modell: {model_used}")
             
         # Format button label with truncation
         cv_btn_label = f"📄 Word-CV - {candidate_name}"
@@ -908,8 +877,9 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                          with open(offer_word_path, "rb") as f:
                             st.download_button("📄 Angebot herunterladen", f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
                     else:
-                        if st.button("Angebot erstellen", use_container_width=True):
-                            with st.spinner("Erstelle Angebot..."):
+                        off_btn_key = f"gen_offer_btn_{results.get('cv_json', '')}"
+                        if st.button("Angebot erstellen", use_container_width=True, key=off_btn_key):
+                            with st.status("🚀 Erstelle Angebot...", expanded=True) as status:
                                 try:
                                     cv_json = results["cv_json"]
                                     stellenprofil_json = results["stellenprofil_json"]
@@ -919,13 +889,29 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                                     angebot_json_path = os.path.join(output_dir, f"Angebot_{base_name}.json")
                                     angebot_word_path = os.path.join(output_dir, f"Angebot_{base_name}.docx")
                                     schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
+                                    
+                                    status.write("🧠 KI-Inhalte generieren...")
                                     generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path)
+                                    
+                                    status.write("📝 Word-Dokument formatieren...")
                                     generate_angebot_word(angebot_json_path, angebot_word_path)
-                                    results["offer_word_path"] = angebot_word_path
-                                    st.session_state.generation_results = results
-                                    st.rerun()
+                                    
+                                    # Verify existence
+                                    if os.path.exists(angebot_word_path):
+                                        results["offer_word_path"] = angebot_word_path
+                                        st.session_state.generation_results = results
+                                        st.session_state.show_pipeline_dialog = True
+                                        st.session_state.show_results_view = True
+                                        status.update(label="✅ Angebot bereit!", state="complete", expanded=False)
+                                        st.success("✅ Angebot erfolgreich erstellt!")
+                                        st.rerun()
+                                    else:
+                                        st.error("Datei wurde generiert, aber nicht im Dateisystem gefunden.")
                                 except Exception as e:
+                                    status.update(label="❌ Fehler", state="error")
                                     st.error(f"Fehler bei der Angebotserstellung: {e}")
+                                    import traceback
+                                    st.code(traceback.format_exc()) # Show details for debugging
                 with off_col2:
                     if not is_offer_ready:
                         st.caption("Erstellt ein Angebot basierend auf den Analysedaten.")
@@ -938,9 +924,10 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
         if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
             with open(results["dashboard_path"], "r", encoding='utf-8') as f:
                 html_content = f.read()
-                st.components.v1.html(html_content, height=800, scrolling=True)
+                # Use a larger height to fill the expanded dialog
+                st.components.v1.html(html_content, height=1200, scrolling=True)
                 
-        if st.button("Schließen", use_container_width=True):
+        if st.button("Schliessen", use_container_width=True):
             st.session_state.show_pipeline_dialog = False
             st.session_state.show_results_view = False
             if "current_generation_results" in st.session_state:

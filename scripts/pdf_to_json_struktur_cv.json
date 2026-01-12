@@ -22,12 +22,12 @@
     "list_handling": [
       "Listen nur verwenden, wenn sie im Dokument vorhanden sind",
       "Keine Zusammenfassung mehrerer Punkte in einem Listeneintrag",
-      "Granularität des Dokuments beibehalten",
-      "Maximal 5 Bullets pro Referenzprojekt"
+      "Granularität des Dokuments beibehalten"
     ],
 
     "prioritisation": [
-      "Vollständigkeit: ALLE Referenzprojekte erfassen, nicht nur erste 3",
+      "Vollständigkeit: ALLE beruflichen Stationen und Referenzprojekte erfassen (keine zeitliche Begrenzung)",
+      "Vollständigkeit: ALLE Trainings und Zertifizierungen erfassen (KEINE Auslassungen, auch wenn die Liste lang ist)",
       "Berufserfahrung und konkrete Projekte höher priorisieren als Marketing-Texte",
       "Wiederholungen nur einmal erfassen",
       "Technische Details und Methodiken präzise erfassen"
@@ -114,7 +114,7 @@
   "Aus_und_Weiterbildung": [
     {
       "Zeitraum": "",
-      "_hint_Zeitraum": "Format: MM/YYYY - MM/YYYY oder MM/YYYY. Bei fehlenden Informationen: ! bitte prüfen !",
+      "_hint_Zeitraum": "Format: YYYY - YYYY oder YYYY. Bei fehlenden Informationen: ! bitte prüfen !",
 
       "Institution": "",
       "_hint_Institution": "Name der Bildungsinstitution",
@@ -128,7 +128,7 @@
   "Trainings_und_Zertifizierungen": [
     {
       "Zeitraum": "",
-      "_hint_Zeitraum": "Format: MM/YYYY - MM/YYYY oder MM/YYYY. Bei fehlenden Informationen: ! bitte prüfen !",
+      "_hint_Zeitraum": "Format: YYYY - YYYY oder YYYY. Bei fehlenden Informationen: ! bitte prüfen !",
 
       "Institution": "",
       "_hint_Institution": "Anbieter des Trainings/der Zertifizierung",
@@ -137,7 +137,7 @@
       "_hint_Titel": "Bezeichnung des Trainings oder der Zertifizierung"
     }
   ],
-  "_hint_Trainings_und_Zertifizierungen": "Kurse, Workshops, Zertifikate, berufliche Weiterbildungen OHNE akademischen Abschluss",
+  "_hint_Trainings_und_Zertifizierungen": "VOLLSTÄNDIGKEIT: Erfasse JEDES im Dokument erwähnte Training und Zertifikat ohne Ausnahme. Erfasse auch fachfremde oder sehr spezifische Weiterbildungen. KEINE Auslassungen, unabhängig vom Alter.",
 
   "Sprachen": [
     {
@@ -153,23 +153,23 @@
   "Ausgewählte_Referenzprojekte": [
     {
       "Zeitraum": "",
-      "_hint_Zeitraum": "Projektlaufzeit von Start bis Ende im Format MM/YYYY - MM/YYYY (z.B. '01/2023 - 12/2024'). Bei laufenden Projekten: MM/YYYY - Heute. Bei fehlenden Informationen: ! bitte prüfen !",
+      "_hint_Zeitraum": "Projekt- oder Anstellungszeitraum von Start bis Ende im Format MM/YYYY - MM/YYYY (z.B. '01/2023 - 12/2024'). Bei laufenden Stationen: MM/YYYY - Heute. Bei fehlenden Informationen: ! bitte prüfen !",
 
       "Rolle": "",
-      "_hint_Rolle": "Spezifische Rolle oder Funktion des Kandidaten im Projekt (z.B. 'Projektleiter', 'Senior Developer', 'Scrum Master'). WICHTIG: Maximal 8 Wörter! Kurz und prägnant formulieren. Bei fehlenden Informationen: ! bitte prüfen !",
+      "_hint_Rolle": "Spezifische Rolle, Funktion oder Jobtitel (z.B. 'Senior Projektleiter', 'Software Engineer'). WICHTIG: Maximal 8 Wörter! Kurz und prägnant formulieren. Bei fehlenden Informationen: ! bitte prüfen !",
 
       "Kunde": "",
-      "_hint_Kunde": "Name des Auftraggebers, Unternehmens oder der Organisation für die das Projekt durchgeführt wurde. Bei fehlenden Informationen: ! bitte prüfen !",
+      "_hint_Kunde": "Name des Auftraggebers oder Arbeitgebers. Bei fehlenden Informationen: ! bitte prüfen !",
 
       "Tätigkeiten": [],
-      "_hint_Tätigkeiten": "Maximal 5 konkrete Tätigkeiten oder Verantwortlichkeiten im Projekt. Fokus auf Ergebnisse und Impact. Bei fehlenden Informationen: ['! bitte prüfen !']",
+      "_hint_Tätigkeiten": "Übernehme JEDEN Bullet Point ABSOLUT VOLLSTÄNDIG und WÖRTLICH aus dem CV. Es darf kein Wort gekürzt, ausgelassen oder zusammengefasst werden. Auch sehr lange Sätze müssen 1:1 übernommen werden. Nenne alle Verantwortlichkeiten und Resultate exakt so wie im Original. Bei fehlenden Informationen: ['! bitte prüfen !']",
 
       "Technologien": "",
-      "_hint_Technologien": "Kommagetrennte Liste ALLER im Projekt eingesetzten Technologien, Tools, Programmiersprachen und Plattformen (z.B. 'Java, Spring Boot, PostgreSQL, Docker, Kubernetes, Jenkins'). Bei fehlenden Informationen: ! bitte prüfen !",
+      "_hint_Technologien": "Kommagetrennte Liste ALLER im Projekt/Arbeitsverhältnis eingesetzten Technologien, Tools und Plattformen. Bei fehlenden Informationen: ! bitte prüfen !",
 
       "Methodik": "",
-      "_hint_Methodik": "Spezifische Projektmethodik(en), die im Projekt angewendet wurde(n), kommagetrennt (z.B. 'Scrum', 'SAFe', 'Kanban', 'HERMES', 'Waterfall', 'Agile'). Keine generischen Begriffe wie 'Projektmanagement' oder 'Beratung'. Bei fehlenden Informationen: ! bitte prüfen !"
+      "_hint_Methodik": "Spezifische Methodik(en) (z.B. 'Scrum', 'SAFe', 'HERMES'). Keine generischen Begriffe. Bei fehlenden Informationen: ! bitte prüfen !"
     }
   ],
-  "_hint_Ausgewählte_Referenzprojekte": "WICHTIG: ALLE Referenzprojekte im CV müssen vollständig und inhaltlich detailliert erfasst werden, nicht nur die ersten 3. Jedes Projekt muss alle erforderlichen Felder enthalten."
+  "_hint_Ausgewählte_Referenzprojekte": "WICHTIG: Erfasse lückenlos JEDE berufliche Station (Festanstellung, Projekt, Freelance) aus dem gesamten Dokument. Das Feld muss entgegen seinem Namen VOLLSTÄNDIG sein und den gesamten Werdegang abbilden. Ein Auslassen von Stationen ist nicht zulässig."
 }

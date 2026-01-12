@@ -20,9 +20,10 @@ def generate_cv_feedback_json(cv_json_path, output_path, schema_path, stellenpro
 
     # Prepare prompt for OpenAI
     system_prompt = (
-        "Du bist ein CV-Qualitätsprüfer. Analysiere das folgende CV-JSON (und optional das Stellenprofil) gemäß der Feedback-Schema-Vorgabe. "
+        "Du bist ein CV-Qualitätsprüfer. Analysiere das folgende CV-JSON (und optional das Stellenprofil) gemäss der Feedback-Schema-Vorgabe. "
         "Fülle die Struktur exakt aus, keine Felder hinzufügen oder weglassen. "
-        "Nutze ausschließlich die bereitgestellten JSON-Daten. "
+        "Nutze ausschliesslich die bereitgestellten JSON-Daten. "
+        "Nutze ausschliesslich die Schweizer Rechtschreibung (kein 'ß', sondern 'ss').\n"
         "Schema (nur als Vorgabe, nicht ausgeben):\n" +
         json.dumps(schema, ensure_ascii=False, indent=2)
     )
@@ -32,7 +33,7 @@ def generate_cv_feedback_json(cv_json_path, output_path, schema_path, stellenpro
     if stellenprofil_data:
         user_prompt += "\n\nStellenprofil JSON:\n" + json.dumps(stellenprofil_data, ensure_ascii=False, indent=2)
 
-    model_name = os.environ.get("MODEL_NAME", "gpt-3.5-turbo-1106")
+    model_name = os.environ.get("MODEL_NAME", "gpt-4o-mini")
     
     if model_name == "mock":
         print("🧪 TEST-MODUS (Feedback): Verwende Mock-Daten")

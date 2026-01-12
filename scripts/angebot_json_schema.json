@@ -8,7 +8,8 @@
       "Angebotsinhalte nur aus Stellenprofil-JSON, CV-JSON und Matching-Result ableiten",
       "Keine neuen Fähigkeiten oder Erfahrungen erfinden",
       "Angebot sachlich, professionell und kundenspezifisch formulieren",
-      "Struktur exakt einhalten"
+      "Struktur exakt einhalten",
+      "WICHTIG: Nutze konsequent die 'Wir-Form' (Wir als Orange Business), niemals die 'Ich-Form'."
     ],
 
     "composition_rules": [
@@ -57,7 +58,7 @@
     "_hint_organisationseinheit": "ART / Programm / Bereich",
 
     "kurzkontext": "",
-    "_hint_kurzkontext": "Einleitender Kontext zur ausgeschriebenen Rolle"
+    "_hint_kurzkontext": "Persönliche Einleitung inkl. Hinweis auf die Position als [Rollenbezeichnung] sowie: 'Bitte entnehmen Sie alle Details dem beiliegenden CV; dieses Schreiben dient als Zusammenfassung und Bewertung unsererseits.'"
   },
 
   "kandidatenvorschlag": {
@@ -101,13 +102,13 @@
     "muss_kriterien": [
       {
         "kriterium": "",
-        "_hint_kriterium": "Muss-Kriterium aus dem Stellenprofil",
+        "_hint_kriterium": "Muss-Kriterium aus dem Stellenprofil (Struktur identisch mit Matchmaking)",
 
         "erfuellt": "",
-        "_hint_erfuellt": "true / false",
+        "_hint_erfuellt": "MUSS einer dieser Werte sein: erfüllt / teilweise erfüllt / potenziell erfüllt / nicht erfüllt / nicht explizit erwähnt / ! bitte prüfen !",
 
         "begruendung": "",
-        "_hint_begruendung": "Begründung aus CV / Matching"
+        "_hint_begruendung": "Detaillierte Begründung aus dem Matching-Resultat"
       }
     ],
 
@@ -117,32 +118,50 @@
         "_hint_kriterium": "Soll-Kriterium aus dem Stellenprofil",
 
         "erfuellt": "",
-        "_hint_erfuellt": "true / false",
+        "_hint_erfuellt": "MUSS einer dieser Werte sein: erfüllt / teilweise erfüllt / potenziell erfüllt / nicht erfüllt / nicht explizit erwähnt / ! bitte prüfen !",
 
         "begruendung": "",
-        "_hint_begruendung": "Begründung aus CV / Matching"
+        "_hint_begruendung": "Detaillierte Begründung aus dem Matching-Resultat"
       }
-    ]
+    ],
+
+    "weitere_kriterien": [
+      {
+        "kriterium": "",
+        "erfuellt": "",
+        "begruendung": ""
+      }
+    ],
+    "_hint_weitere_kriterien": "Fähigkeiten aus 'weitere_kriterien_abgleich' des Matchings",
+
+    "soft_skills": [
+      {
+        "kriterium": "",
+        "erfuellt": "",
+        "begruendung": ""
+      }
+    ],
+    "_hint_soft_skills": "Persönliche Kompetenzen aus 'soft_skills_abgleich' des Matchings"
   },
 
   "gesamtbeurteilung": {
     "zusammenfassung": "",
-    "_hint_zusammenfassung": "Verdichtete Argumentation, warum der Kandidat geeignet ist",
+    "_hint_zusammenfassung": "Detaillierte Argumentation (3-5 Sätze). WICHTIG: Weise als ALLERERSTES darauf hin, dass der Kandidat und die Rolle ideal matchen. Erfinde keinen Inhalt und schneide die Informationen exakt auf die vorliegenden Daten zu.",
 
     "mehrwert_fuer_kunden": [
       ""
     ],
-    "_hint_mehrwert_fuer_kunden": "Kundenspezifische Nutzenargumente",
+    "_hint_mehrwert_fuer_kunden": "3-4 Impact-Punkte mit **Fettschrift**. Nenne die 3-5 wichtigsten Matches als Argument, warum der Kandidat einen Mehrwert bringt. Beziehe dich explizit auf die Übereinstimmungen aus 'gefundene_top_matches'.",
 
     "empfehlung": "",
-    "_hint_empfehlung": "Klare Angebots-Empfehlung"
+    "_hint_empfehlung": "Klare Angebots-Empfehlung. Wir-Form verwenden."
   },
 
   "abschluss": {
     "verfuegbarkeit_gespraech": "",
-    "_hint_verfuegbarkeit_gespraech": "Hinweis auf Gesprächsbereitschaft",
+    "_hint_verfuegbarkeit_gespraech": "Hinweis auf Gesprächsbereitschaft. Wir-Form ('Wir stehen für ein Gespräch zur Verfügung...').",
 
     "kontakt_hinweis": "",
-    "_hint_kontakt_hinweis": "Standardformulierung für Rückfragen"
+    "_hint_kontakt_hinweis": "Wir-Form verwenden ('Wir freuen uns auf Ihre Rückmeldung')."
   }
 }

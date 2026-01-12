@@ -1,5 +1,5 @@
 """
-Tests für Dialog-Größen und Sichtbarkeit
+Tests für Dialog-Grössen und Sichtbarkeit
 Stellt sicher, dass alle Dialog-Elemente sichtbar sind
 """
 import pytest
@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 
 
 class TestDialogDimensions:
-    """Tests für Dialog-Größen und -Layout"""
+    """Tests für Dialog-Grössen und -Layout"""
     
     def test_success_dialog_height_without_details(self):
         """SuccessDialog ohne Details sollte Standard-Höhe haben"""
@@ -34,9 +34,8 @@ class TestDialogDimensions:
                 details="Some details here"
             )
             
-            # Höhe bleibt Standard - nur wenn Details UND file_path/dashboard vorhanden wird es größer
-            assert dialog.height == SuccessDialog.DEFAULT_HEIGHT, \
-                f"SuccessDialog mit nur Details sollte {SuccessDialog.DEFAULT_HEIGHT}px hoch sein, ist aber {dialog.height}px"
+            # Höhe bleibt Standard - nur wenn Details UND file_path/dashboard vorhanden wird es grösser
+            assert dialog.height == SuccessDialog.DEFAULT_HEIGHT
 
     def test_success_dialog_height_with_file_path(self):
         """SuccessDialog mit nur file_path bleibt bei Standard-Höhe"""
@@ -54,7 +53,7 @@ class TestDialogDimensions:
                 f"SuccessDialog mit nur file_path sollte {SuccessDialog.DEFAULT_HEIGHT}px hoch sein, ist aber {dialog.height}px"
 
     def test_success_dialog_height_with_both(self):
-        """SuccessDialog mit Details UND file_path sollte größer sein"""
+        """SuccessDialog mit Details UND file_path sollte grösser sein"""
         with patch('tkinter.Tk'):
             from scripts.dialogs import SuccessDialog
             
@@ -127,7 +126,7 @@ class TestDialogDimensions:
 
 
 class TestDialogMinimumDimensions:
-    """Tests die sicherstellen, dass Dialoge groß genug für alle Elemente sind"""
+    """Tests die sicherstellen, dass Dialoge gross genug für alle Elemente sind"""
     
     def test_warning_dialog_minimum_height_for_buttons(self):
         """WarningDialog muss hoch genug sein, dass Buttons sichtbar sind"""
