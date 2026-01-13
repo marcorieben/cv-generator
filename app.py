@@ -510,7 +510,7 @@ with st.sidebar:
         if not history:
             st.caption(get_text("ui", "history_empty", st.session_state.language))
         else:
-            for item in history:
+            for i, item in enumerate(history):
                 timestamp = item.get("timestamp", "")
                 # Format timestamp nicely if possible (YYYYMMDD_HHMMSS -> DD.MM.YYYY HH:MM)
                 try:
@@ -520,11 +520,11 @@ with st.sidebar:
                     display_time = timestamp
 
                 candidate_name = item.get("candidate_name", get_text( "ui", "history_unknown", st.session_state.language))
-                
+
                 with st.expander(f"{display_time} - {candidate_name}", expanded=False):
                     model_used = item.get("model_name", get_text( "ui", "history_unknown", st.session_state.language))
                     st.caption(f"Modus: {item.get('mode')} | Modell: {model_used}")
-                    
+
                     # 1. Visual Score Bar
                     score = item.get("match_score")
                     if score:
@@ -537,7 +537,7 @@ with st.sidebar:
                                 bar_color = "#f39c12" # Orange
                             else:
                                 bar_color = "#c0392b" # Red
-                                
+
                             st.markdown(f"""
                                 <div style="margin-bottom: 5px; font-size: 0.8em; color: #666;">{get_text( 'dashboard', 'matching_score', st.session_state.language)}: {score}%</div>
                                 <div style="background-color: #eee; border-radius: 4px; height: 8px; width: 100%; margin-bottom: 15px;">
@@ -548,7 +548,7 @@ with st.sidebar:
                             pass
 
                     # 2. Action Buttons
-                    if st.button(get_text( 'ui', 'history_details_btn', st.session_state.language), key=f"hist_btn_{timestamp}", use_container_width=True):
+                    if st.button(get_text( 'ui', 'history_details_btn', st.session_state.language), key=f"hist_btn_{timestamp}_{i}", use_container_width=True):
                         st.session_state.generation_results = item
                         st.session_state.show_pipeline_dialog = True
                         st.session_state.show_results_view = True
