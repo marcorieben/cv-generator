@@ -977,9 +977,11 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                         }
                     else:
                         # Single CV Mode: Process one CV
+                        # Extract single CV from list if needed (Advanced mode with 1 CV)
+                        single_cv_file = cv_file[0] if isinstance(cv_file, list) else cv_file
                         generator = StreamlitCVGenerator(os.getcwd())
                         results = generator.run(
-                            cv_file=cv_file,
+                            cv_file=single_cv_file,
                             job_file=job_file if mode != "Basic (Nur CV)" else None,
                             api_key=api_key,
                             progress_callback=progress_callback,
