@@ -242,7 +242,7 @@ username = st.session_state["username"]
 with st.sidebar:
     # Logo (Top Left)
     if os.path.exists("templates/logo.png"):
-        st.image("templates/logo.png", use_container_width=True)
+        st.image("templates/logo.png", width='stretch')
 
     
     st.divider()
@@ -304,17 +304,17 @@ with st.sidebar:
     lang_cols = st.columns(3)
     
     # Simple logic to handle language buttons
-    if lang_cols[0].button("DE", use_container_width=True, 
+    if lang_cols[0].button("DE", width='stretch', 
                            type="primary" if st.session_state.language == "de" else "secondary"):
         st.session_state.language = "de"
         st.rerun()
         
-    if lang_cols[1].button("EN", use_container_width=True,
+    if lang_cols[1].button("EN", width='stretch',
                            type="primary" if st.session_state.language == "en" else "secondary"):
         st.session_state.language = "en"
         st.rerun()
         
-    if lang_cols[2].button("FR", use_container_width=True,
+    if lang_cols[2].button("FR", width='stretch',
                            type="primary" if st.session_state.language == "fr" else "secondary"):
         st.session_state.language = "fr"
         st.rerun()
@@ -360,7 +360,7 @@ with st.sidebar:
             st.session_state.custom_logo_path = logo_path
             
             # Display Logo in Sidebar (Top) - using the placeholder created earlier
-            logo_placeholder.image(uploaded_logo, use_container_width=True)
+            logo_placeholder.image(uploaded_logo, width='stretch')
         
         # Apply CSS dynamically based on user selection
         st.markdown(f"""
@@ -505,7 +505,7 @@ with st.sidebar:
     # --- Application Info ---
     with st.expander(get_text("ui", "app_info", st.session_state.language), expanded=False):
         st.caption(get_text("ui", "app_info_desc", st.session_state.language))
-        if st.button(get_text("ui", "show_details", st.session_state.language), use_container_width=True):
+        if st.button(get_text("ui", "show_details", st.session_state.language), width='stretch'):
             show_app_info_dialog()
 
     st.divider()
@@ -562,7 +562,7 @@ with st.sidebar:
                             pass
 
                     # 2. Action Buttons
-                    if st.button(get_text( 'ui', 'history_details_btn', st.session_state.language), key=f"hist_btn_{timestamp}_{i}", use_container_width=True):
+                    if st.button(get_text( 'ui', 'history_details_btn', st.session_state.language), key=f"hist_btn_{timestamp}_{i}", width='stretch'):
                         st.session_state.generation_results = item
                         st.session_state.show_pipeline_dialog = True
                         st.session_state.show_results_view = True
@@ -606,7 +606,7 @@ if "selected_mode" not in st.session_state:
 
 # Create clickable columns (using buttons as proxies for cards) - Now only 2 modes
 with col_m1:
-    if st.button(get_text( "ui", "mode_basic", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Basic") else "secondary"):
+    if st.button(get_text( "ui", "mode_basic", st.session_state.language), width='stretch', type="primary" if st.session_state.selected_mode.startswith("Basic") else "secondary"):
         st.session_state.selected_mode = "Basic (Nur CV)"
         # Reset pipeline state
         st.session_state.show_pipeline_dialog = False
@@ -616,7 +616,7 @@ with col_m1:
 
 # Analysis mode merged into Advanced
 with col_m2:
-    if st.button("Advanced", use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Advanced") else "secondary"):
+    if st.button("Advanced", width='stretch', type="primary" if st.session_state.selected_mode.startswith("Advanced") else "secondary"):
         st.session_state.selected_mode = "Advanced (CV + Stellenprofil + Match + Feedback)"
         # Reset pipeline state
         st.session_state.show_pipeline_dialog = False
@@ -638,7 +638,7 @@ st.divider()
 if mode.startswith("Advanced"):
     test_mode_col, _ = st.columns([1, 4])
     with test_mode_col:
-        if st.button("🧪 Test Mode (Advanced)", use_container_width=True):
+        if st.button("🧪 Test Mode (Advanced)", width='stretch'):
             # Set mock mode and populate test data
             os.environ["MODEL_NAME"] = "mock"
             # Pre-select mock files - unified for both single and batch
@@ -1036,7 +1036,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     status.update(label=get_text('ui', 'processing_complete_label', st.session_state.language), state="complete", expanded=False)
                     st.success(get_text('ui', 'generation_success', st.session_state.language))
                     
-                    if st.button(get_text("ui", "show_results", st.session_state.language), type="primary", use_container_width=True):
+                    if st.button(get_text("ui", "show_results", st.session_state.language), type="primary", width='stretch'):
                         st.session_state.show_results_view = True
                         st.rerun()
                 else:
@@ -1052,7 +1052,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                             st.warning(f"⚠️ {len(failed)} von {len(batch_results)} CVs konnten nicht verarbeitet werden")
                             st.session_state.generation_results = results
                             
-                            if st.button(get_text("ui", "show_results", st.session_state.language), type="primary", use_container_width=True):
+                            if st.button(get_text("ui", "show_results", st.session_state.language), type="primary", width='stretch'):
                                 st.session_state.show_results_view = True
                                 st.rerun()
                         else:
@@ -1112,15 +1112,15 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 with res_col1:
                     if results.get("word_path") and os.path.exists(results["word_path"]):
                         with open(results["word_path"], "rb") as f:
-                            st.download_button(cv_btn_label, f, os.path.basename(results["word_path"]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+                            st.download_button(cv_btn_label, f, os.path.basename(results["word_path"]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", width='stretch')
                 with res_col2:
                     if results.get("cv_json") and os.path.exists(results["cv_json"]):
                         with open(results["cv_json"], "rb") as f:
-                            st.download_button(get_text( "ui", "json_data_btn", st.session_state.language), f, os.path.basename(results["cv_json"]), "application/json", use_container_width=True)
+                            st.download_button(get_text( "ui", "json_data_btn", st.session_state.language), f, os.path.basename(results["cv_json"]), "application/json", width='stretch')
                 with res_col3:
                     if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
                         with open(results["dashboard_path"], "rb") as f:
-                            st.download_button(get_text( "ui", "dashboard_btn", st.session_state.language), f, os.path.basename(results["dashboard_path"]), "text/html", use_container_width=True)
+                            st.download_button(get_text( "ui", "dashboard_btn", st.session_state.language), f, os.path.basename(results["dashboard_path"]), "text/html", width='stretch')
 
             # Offer Generation Section
             # Try to infer stellenprofil_json if missing (for history items)
@@ -1160,10 +1160,10 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     with off_col1:
                         if is_offer_ready:
                              with open(offer_word_path, "rb") as f:
-                                st.download_button(get_text("ui", "offer_download_btn", st.session_state.language), f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
+                                st.download_button(get_text("ui", "offer_download_btn", st.session_state.language), f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", width='stretch', type="primary")
                         else:
                             off_btn_key = f"gen_offer_btn_{results.get('cv_json', '')}"
-                            if st.button(get_text("ui", "offer_create_btn", st.session_state.language), use_container_width=True, key=off_btn_key):
+                            if st.button(get_text("ui", "offer_create_btn", st.session_state.language), width='stretch', key=off_btn_key):
                                 with st.status(get_text("ui", "status_offer", st.session_state.language), expanded=True) as status:
                                     try:
                                         cv_json = results["cv_json"]
@@ -1212,7 +1212,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     # Use a larger height to fill the expanded dialog
                     st.components.v1.html(html_content, height=1200, scrolling=True)
                     
-            if st.button(get_text("ui", "close_btn", st.session_state.language), use_container_width=True):
+            if st.button(get_text("ui", "close_btn", st.session_state.language), width='stretch'):
                 st.session_state.show_pipeline_dialog = False
                 st.session_state.show_results_view = False
                 if "current_generation_results" in st.session_state:
@@ -1222,7 +1222,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
 # Left-align the start button (approx 33% width)
 btn_col, _ = st.columns([1, 2])
 with btn_col:
-    if st.button(get_text("ui", "start_generation_btn", st.session_state.language), disabled=start_disabled, type="primary", use_container_width=True):
+    if st.button(get_text("ui", "start_generation_btn", st.session_state.language), disabled=start_disabled, type="primary", width='stretch'):
         st.session_state.show_pipeline_dialog = True
         st.session_state.show_results_view = False
         if "current_generation_results" in st.session_state:

@@ -296,21 +296,21 @@ def display_batch_comparison_dashboard(results: List[Dict[str, Any]], job_profil
     with col1:
         try:
             fig1 = create_match_score_chart(results, language)
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig1, width='stretch')
         except Exception as e:
             st.error(f"Error creating match score chart: {e}")
     
     with col2:
         try:
             fig2 = create_must_soll_chart(results, language)
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width='stretch')
         except Exception as e:
             st.error(f"Error creating Muss/Soll chart: {e}")
     
     with col3:
         try:
             fig3 = create_quality_chart(results, language)
-            st.plotly_chart(fig3, use_container_width=True)
+            st.plotly_chart(fig3, width='stretch')
         except Exception as e:
             st.error(f"Error creating quality chart: {e}")
     
@@ -394,13 +394,13 @@ def display_candidate_expander(result: Dict[str, Any], batch_dir: str, language:
         
         with col_offer:
             if not (result.get("offer_word_path") and os.path.exists(result.get("offer_word_path", ""))):
-                if st.button(f"✨ Create Offer", key=f"offer_{candidate_name}", use_container_width=True):
+                if st.button(f"✨ Create Offer", key=f"offer_{candidate_name}", width='stretch'):
                     st.info("📌 Offer generation would be integrated here with generate_angebot_word module")
             else:
                 st.success("✅ Offer created")
         
         with col_reprocess:
-            if st.button("🔄 Re-process", key=f"reprocess_{candidate_name}", use_container_width=True):
+            if st.button("🔄 Re-process", key=f"reprocess_{candidate_name}", width='stretch'):
                 st.info("📌 Re-processing would be integrated with batch runner")
 
 
