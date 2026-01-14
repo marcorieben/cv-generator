@@ -70,7 +70,8 @@ class StreamlitCVGenerator:
             custom_styles: Dict[str, Any] = None,
             custom_logo_path: str = None,
             pipeline_mode: str = None,
-            language: str = "de") -> Dict[str, Any]:
+            language: str = "de",
+            job_profile_context: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Runs the CV generation pipeline.
         
@@ -83,6 +84,7 @@ class StreamlitCVGenerator:
             custom_logo_path: Path to custom logo file
             pipeline_mode: The selected pipeline mode (e.g. "Basic", "Full")
             language: Target language (de, en, fr)
+            job_profile_context: Pre-extracted Stellenprofil data (from batch mode)
         """
         # Load translations
         trans_path = os.path.join(self.base_dir, "scripts", "translations.json")
@@ -121,8 +123,10 @@ class StreamlitCVGenerator:
 
         try:
             # --- PHASE 1: PDF Extraction ---
-            stellenprofil_data = None
-            if job_file:
+            stellenprofil_data = job_profile_context  # Use pre-extracted context if provided (batch mode)
+            
+            if job_file and not job_profile_context:
+                # Extract Stellenprofil from job_file if not provided as context
                 if progress_callback: progress_callback(10, get_text('ui', 'status_extract_job', language), "running")
                 job_schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
                 stellenprofil_data = pdf_to_json(job_file, None, job_schema_path, target_language=language)

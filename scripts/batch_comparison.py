@@ -16,6 +16,7 @@ import traceback
 import sys
 
 from scripts.streamlit_pipeline import StreamlitCVGenerator
+from scripts.pdf_to_json import pdf_to_json
 
 
 def run_batch_comparison(
@@ -68,52 +69,75 @@ def run_batch_comparison(
         except Exception as e:
             print(f"Warning: Could not seek job_file: {str(e)}", file=sys.stderr)
     
-    # Read job profile once
-    job_profile_data = None
-    job_profile_content = None
+    # PHASE 1: Process Stellenprofil PDF first
+    # This is the semantic driver for all CV extractions
+    stellenprofil_data = None
     try:
-        job_content = job_file.read()
-        job_profile_content = job_content
-        job_profile_data = json.loads(job_content)
+        print(f"\n📋 Processing Stellenprofil PDF...", file=sys.stderr)
+        
+        # Use the same Stellenprofil schema as Mode 2/3
+        job_schema_path = os.path.join(base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
+        
+        # Extract Stellenprofil from PDF using LLM
+        stellenprofil_data = pdf_to_json(
+            job_file, 
+            output_path=None, 
+            schema_path=job_schema_path,
+            target_language=language
+        )
+        
+        if not stellenprofil_data:
+            return [{
+                "success": False,
+                "error": "Failed to extract Stellenprofil from PDF. Check file format and content."
+            }]
+        
+        print(f"✅ Stellenprofil extracted successfully", file=sys.stderr)
+    
     except Exception as e:
+        error_details = f"{str(e)}"
+        tb_str = traceback.format_exc()
+        print(f"❌ Failed to extract Stellenprofil:\n{tb_str}", file=sys.stderr)
         return [{
             "success": False,
-            "error": f"Failed to read job profile: {str(e)}"
+            "error": f"Stellenprofil extraction failed: {error_details}"
         }]
     
-    # Process each CV file
+    if progress_callback:
+        progress_callback(10, "Stellenprofil verarbeitet, beginne mit CVs...", "running")
+    
+    # PHASE 2: Process each CV with Stellenprofil context
     for idx, cv_file in enumerate(cv_files):
         result = {
             "success": False,
             "candidate_name": cv_file.name.replace(".pdf", ""),
             "cv_file": cv_file,
-            "job_profile": job_profile_data,
+            "job_profile": stellenprofil_data,
             "error": None
         }
         
-        progress_pct = int((idx / len(cv_files)) * 100)
+        progress_pct = int(10 + (idx / len(cv_files)) * 80)
         if progress_callback:
             progress_callback(progress_pct, f"Verarbeite {cv_file.name}...", "running")
         
         try:
             print(f"\n📄 Processing CV {idx+1}/{len(cv_files)}: {cv_file.name}", file=sys.stderr)
             
-            # Reset job file pointer for each CV
-            job_file.seek(0)
-            
             # Initialize the generator for this CV
             generator = StreamlitCVGenerator(base_dir)
             
-            # Run the standard pipeline (PDF extraction, analysis, Word generation)
-            # Don't pass progress_callback - it's for individual CV, not batch
+            # Run the standard pipeline with Stellenprofil context
+            # The CV extraction will be job-profile-aware
+            # Note: We don't pass job_file here - Stellenprofil is already extracted
             cv_result = generator.run(
                 cv_file=cv_file,
-                job_file=job_file,
+                job_file=None,  # Don't re-extract job profile for each CV
                 api_key=api_key,
                 custom_styles=custom_styles,
                 custom_logo_path=custom_logo_path,
                 pipeline_mode=pipeline_mode,
-                language=language
+                language=language,
+                job_profile_context=stellenprofil_data  # Pass extracted Stellenprofil as context
             )
             
             print(f"Generator result: success={cv_result.get('success')}, error={cv_result.get('error')}", file=sys.stderr)

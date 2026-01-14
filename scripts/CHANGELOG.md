@@ -18,3 +18,4 @@
 2026-01-14 09:06:15 | DOCS | add batch error handling guide and update TODO documentation
 2026-01-14 09:12:39 | BUGFIX | correct batch processing pipeline output mapping and file pointer handling
 2026-01-14 09:20:34 | IMPROVE | add detailed batch processing diagnostics and progress tracking
+2026-01-14 09:22:42 | BUGFIX | reset job_file pointer before reading in batch comparison
