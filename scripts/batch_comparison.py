@@ -61,6 +61,13 @@ def run_batch_comparison(
     batch_results = []
     base_dir = os.getcwd()
     
+    # Ensure job file pointer is at start
+    if hasattr(job_file, 'seek'):
+        try:
+            job_file.seek(0)
+        except Exception as e:
+            print(f"Warning: Could not seek job_file: {str(e)}", file=sys.stderr)
+    
     # Read job profile once
     job_profile_data = None
     job_profile_content = None
