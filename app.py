@@ -1015,26 +1015,25 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     # Save to History
                     if "history_saved" not in st.session_state:
                         if mode.startswith("Batch"):
-                            # For batch mode, create entries for each successful CV
+                            # For batch mode, create ONE entry for the entire batch with all results
                             batch_folder = results.get("batch_folder", "")
-                            for batch_result in results.get("batch_results", []):
-                                if batch_result.get("success"):
-                                    history_entry = {
-                                        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
-                                        "candidate_name": f"{batch_result.get('vorname', 'Unbekannt')} {batch_result.get('nachname', '')}".strip(),
-                                        "mode": mode,
-                                        "word_path": batch_result.get("word_path"),
-                                        "cv_json": batch_result.get("cv_json"),
-                                        "dashboard_path": batch_result.get("dashboard_path"),
-                                        "match_score": batch_result.get("match_score"),
-                                        "model_name": batch_result.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
-                                        "stellenprofil_json": batch_result.get("stellenprofil_json"),
-                                        "match_json": batch_result.get("match_json"),
-                                        "offer_word_path": batch_result.get("offer_word_path"),
-                                        "batch_folder": batch_folder,
-                                        "is_batch": True
-                                    }
-                                    save_to_history(history_entry)
+                            batch_results = results.get("batch_results", [])
+                            successful_count = sum(1 for r in batch_results if r.get("success"))
+                            failed_count = len(batch_results) - successful_count
+                            
+                            # Create a single batch history entry with all candidate data
+                            history_entry = {
+                                "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                                "candidate_name": f"Batch ({successful_count}/{len(batch_results)})",  # Show success rate
+                                "mode": mode,
+                                "model_name": results.get("batch_results", [{}])[0].get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
+                                "batch_folder": batch_folder,
+                                "is_batch": True,
+                                "batch_results": batch_results,  # Store all candidate results
+                                "job_profile_name": results.get("job_profile_name", ""),
+                                "stellenprofil_json": results.get("batch_results", [{}])[0].get("stellenprofil_json") if batch_results else None
+                            }
+                            save_to_history(history_entry)
                         else:
                             # Single CV mode: save single entry
                             history_entry = {
