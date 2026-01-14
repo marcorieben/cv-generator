@@ -10,6 +10,11 @@ from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
 from scripts.batch_comparison import run_batch_comparison
+from scripts.batch_results_display import (
+    display_batch_results,
+    get_batch_output_dir,
+    move_candidate_files_to_batch
+)
 
 # Page config must be the first Streamlit command
 st.set_page_config(
@@ -1025,134 +1030,144 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
     
     elif phase == "results":
         results = st.session_state.generation_results
-        st.subheader(get_text( "ui", "results_title", st.session_state.language))
         
-        # Extract name for title and buttons
-        candidate_name = get_text( "ui", "history_unknown", st.session_state.language)
-        if results.get("cv_json"):
-            try:
-                filename = os.path.basename(results["cv_json"])
-                parts = filename.split('_')
-                if len(parts) >= 3: candidate_name = f"{parts[1]} {parts[2]}"
-            except: pass
-        
-        model_used = results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini"))
-        st.caption(f"{get_text( 'ui', 'history_mode', st.session_state.language)}: {results.get('mode', get_text( 'ui', 'history_unknown', st.session_state.language))} | {get_text( 'ui', 'history_model', st.session_state.language)}: {model_used}")
+        # Check if batch mode
+        if results.get("batch_results"):
+            # Batch Results Display
+            display_batch_results(
+                results.get("batch_results", []),
+                results.get("stellenprofil_json"),
+                st.session_state.language
+            )
+        else:
+            # Single CV Results Display
+            st.subheader(get_text( "ui", "results_title", st.session_state.language))
             
-        # Format button label with truncation
-        cv_btn_label = f"{get_text( 'ui', 'word_cv_btn', st.session_state.language)} - {candidate_name}"
-        if len(cv_btn_label) > 30:
-            cv_btn_label = cv_btn_label[:27] + "..."
-        
-        # Downloads Section
-        with st.success(get_text( "ui", "downloads_title", st.session_state.language), icon="📥"):
-            res_col1, res_col2, res_col3 = st.columns(3)
-            with res_col1:
-                if results.get("word_path") and os.path.exists(results["word_path"]):
-                    with open(results["word_path"], "rb") as f:
-                        st.download_button(cv_btn_label, f, os.path.basename(results["word_path"]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
-            with res_col2:
-                if results.get("cv_json") and os.path.exists(results["cv_json"]):
-                    with open(results["cv_json"], "rb") as f:
-                        st.download_button(get_text( "ui", "json_data_btn", st.session_state.language), f, os.path.basename(results["cv_json"]), "application/json", use_container_width=True)
-            with res_col3:
-                if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
-                    with open(results["dashboard_path"], "rb") as f:
-                        st.download_button(get_text( "ui", "dashboard_btn", st.session_state.language), f, os.path.basename(results["dashboard_path"]), "text/html", use_container_width=True)
-
-        # Offer Generation Section
-        # Try to infer stellenprofil_json if missing (for history items)
-        if not results.get("stellenprofil_json") and results.get("cv_json"):
-            output_dir = os.path.dirname(results["cv_json"])
-            # Look for any file starting with stellenprofil_ in the same dir
-            try:
-                for f in os.listdir(output_dir):
-                    if f.startswith("stellenprofil_") and f.endswith(".json"):
-                        results["stellenprofil_json"] = os.path.join(output_dir, f)
-                        break
-            except: pass
-
-        # Try to infer match_json if missing
-        if not results.get("match_json") and results.get("cv_json"):
-            output_dir = os.path.dirname(results["cv_json"])
-            try:
-                for f in os.listdir(output_dir):
-                    if f.startswith("Match_") and f.endswith(".json"):
-                        results["match_json"] = os.path.join(output_dir, f)
-                        break
-            except: pass
-
-        if results.get("stellenprofil_json") and os.path.exists(results["stellenprofil_json"]):
-            st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+            # Extract name for title and buttons
+            candidate_name = get_text( "ui", "history_unknown", st.session_state.language)
+            if results.get("cv_json"):
+                try:
+                    filename = os.path.basename(results["cv_json"])
+                    parts = filename.split('_')
+                    if len(parts) >= 3: candidate_name = f"{parts[1]} {parts[2]}"
+                except: pass
             
-            offer_word_path = results.get("offer_word_path")
-            is_offer_ready = offer_word_path and os.path.exists(offer_word_path)
-            
-            # Dynamic container style to differentiate states
-            if is_offer_ready:
-                offer_container = st.success(get_text("ui", "offer_ready", st.session_state.language), icon="✅")
-            else:
-                offer_container = st.info(get_text("ui", "offer_create_title", st.session_state.language), icon="✨")
-            
-            with offer_container:
-                off_col1, off_col2, off_col3 = st.columns(3)
-                with off_col1:
-                    if is_offer_ready:
-                         with open(offer_word_path, "rb") as f:
-                            st.download_button(get_text("ui", "offer_download_btn", st.session_state.language), f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
-                    else:
-                        off_btn_key = f"gen_offer_btn_{results.get('cv_json', '')}"
-                        if st.button(get_text("ui", "offer_create_btn", st.session_state.language), use_container_width=True, key=off_btn_key):
-                            with st.status(get_text("ui", "status_offer", st.session_state.language), expanded=True) as status:
-                                try:
-                                    cv_json = results["cv_json"]
-                                    stellenprofil_json = results["stellenprofil_json"]
-                                    match_json = results.get("match_json")
-                                    output_dir = os.path.dirname(cv_json)
-                                    base_name = os.path.basename(cv_json).replace("cv_", "").replace(".json", "")
-                                    angebot_json_path = os.path.join(output_dir, f"Angebot_{base_name}.json")
-                                    angebot_word_path = os.path.join(output_dir, f"Angebot_{base_name}.docx")
-                                    schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
-                                    
-                                    status.write("🧠 KI-Inhalte generieren...")
-                                    generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path, language=st.session_state.language)
-                                    
-                                    status.write("📝 Word-Dokument formatieren...")
-                                    generate_angebot_word(angebot_json_path, angebot_word_path)
-                                    
-                                    # Verify existence
-                                    if os.path.exists(angebot_word_path):
-                                        results["offer_word_path"] = angebot_word_path
-                                        st.session_state.generation_results = results
-                                        st.session_state.show_pipeline_dialog = True
-                                        st.session_state.show_results_view = True
-                                        status.update(label=get_text('ui', 'offer_ready_label', st.session_state.language), state="complete", expanded=False)
-                                        st.success(get_text('ui', 'offer_success', st.session_state.language))
-                                        st.rerun()
-                                    else:
-                                        st.error(get_text('ui', 'file_not_found_on_disk', st.session_state.language))
-                                except Exception as e:
-                                    status.update(label=get_text('ui', 'error_label', st.session_state.language), state="error")
-                                    st.error(f"{get_text('ui', 'offer_error', st.session_state.language)} {e}")
-                                    import traceback
-                                    st.code(traceback.format_exc()) # Show details for debugging
-                with off_col2:
-                    if not is_offer_ready:
-                        st.caption(get_text('ui', 'offer_button_caption', st.session_state.language))
-                    else:
-                        st.caption(get_text('ui', 'offer_ready_caption', st.session_state.language))
-
-        st.markdown("<div style='margin-top: 40px; margin-bottom: 20px; border-top: 1px solid #ddd;'></div>", unsafe_allow_html=True)
-
-        # Show Dashboard Preview
-        if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
-            with open(results["dashboard_path"], "r", encoding='utf-8') as f:
-                html_content = f.read()
-                # Use a larger height to fill the expanded dialog
-                st.components.v1.html(html_content, height=1200, scrolling=True)
+            model_used = results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini"))
+            st.caption(f"{get_text( 'ui', 'history_mode', st.session_state.language)}: {results.get('mode', get_text( 'ui', 'history_unknown', st.session_state.language))} | {get_text( 'ui', 'history_model', st.session_state.language)}: {model_used}")
                 
-        if st.button(get_text("ui", "close_btn", st.session_state.language), use_container_width=True):
-            st.session_state.show_pipeline_dialog = False
+            # Format button label with truncation
+            cv_btn_label = f"{get_text( 'ui', 'word_cv_btn', st.session_state.language)} - {candidate_name}"
+            if len(cv_btn_label) > 30:
+                cv_btn_label = cv_btn_label[:27] + "..."
+            
+            # Downloads Section
+            with st.success(get_text( "ui", "downloads_title", st.session_state.language), icon="📥"):
+                res_col1, res_col2, res_col3 = st.columns(3)
+                with res_col1:
+                    if results.get("word_path") and os.path.exists(results["word_path"]):
+                        with open(results["word_path"], "rb") as f:
+                            st.download_button(cv_btn_label, f, os.path.basename(results["word_path"]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+                with res_col2:
+                    if results.get("cv_json") and os.path.exists(results["cv_json"]):
+                        with open(results["cv_json"], "rb") as f:
+                            st.download_button(get_text( "ui", "json_data_btn", st.session_state.language), f, os.path.basename(results["cv_json"]), "application/json", use_container_width=True)
+                with res_col3:
+                    if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
+                        with open(results["dashboard_path"], "rb") as f:
+                            st.download_button(get_text( "ui", "dashboard_btn", st.session_state.language), f, os.path.basename(results["dashboard_path"]), "text/html", use_container_width=True)
+
+            # Offer Generation Section
+            # Try to infer stellenprofil_json if missing (for history items)
+            if not results.get("stellenprofil_json") and results.get("cv_json"):
+                output_dir = os.path.dirname(results["cv_json"])
+                # Look for any file starting with stellenprofil_ in the same dir
+                try:
+                    for f in os.listdir(output_dir):
+                        if f.startswith("stellenprofil_") and f.endswith(".json"):
+                            results["stellenprofil_json"] = os.path.join(output_dir, f)
+                            break
+                except: pass
+
+            # Try to infer match_json if missing
+            if not results.get("match_json") and results.get("cv_json"):
+                output_dir = os.path.dirname(results["cv_json"])
+                try:
+                    for f in os.listdir(output_dir):
+                        if f.startswith("Match_") and f.endswith(".json"):
+                            results["match_json"] = os.path.join(output_dir, f)
+                            break
+                except: pass
+            if results.get("stellenprofil_json") and os.path.exists(results["stellenprofil_json"]):
+                st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+                
+                offer_word_path = results.get("offer_word_path")
+                is_offer_ready = offer_word_path and os.path.exists(offer_word_path)
+                
+                # Dynamic container style to differentiate states
+                if is_offer_ready:
+                    offer_container = st.success(get_text("ui", "offer_ready", st.session_state.language), icon="✅")
+                else:
+                    offer_container = st.info(get_text("ui", "offer_create_title", st.session_state.language), icon="✨")
+                
+                with offer_container:
+                    off_col1, off_col2, off_col3 = st.columns(3)
+                    with off_col1:
+                        if is_offer_ready:
+                             with open(offer_word_path, "rb") as f:
+                                st.download_button(get_text("ui", "offer_download_btn", st.session_state.language), f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
+                        else:
+                            off_btn_key = f"gen_offer_btn_{results.get('cv_json', '')}"
+                            if st.button(get_text("ui", "offer_create_btn", st.session_state.language), use_container_width=True, key=off_btn_key):
+                                with st.status(get_text("ui", "status_offer", st.session_state.language), expanded=True) as status:
+                                    try:
+                                        cv_json = results["cv_json"]
+                                        stellenprofil_json = results["stellenprofil_json"]
+                                        match_json = results.get("match_json")
+                                        output_dir = os.path.dirname(cv_json)
+                                        base_name = os.path.basename(cv_json).replace("cv_", "").replace(".json", "")
+                                        angebot_json_path = os.path.join(output_dir, f"Angebot_{base_name}.json")
+                                        angebot_word_path = os.path.join(output_dir, f"Angebot_{base_name}.docx")
+                                        schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
+                                        
+                                        status.write("🧠 KI-Inhalte generieren...")
+                                        generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path, language=st.session_state.language)
+                                        
+                                        status.write("📝 Word-Dokument formatieren...")
+                                        generate_angebot_word(angebot_json_path, angebot_word_path)
+                                        
+                                        # Verify existence
+                                        if os.path.exists(angebot_word_path):
+                                            results["offer_word_path"] = angebot_word_path
+                                            st.session_state.generation_results = results
+                                            st.session_state.show_pipeline_dialog = True
+                                            st.session_state.show_results_view = True
+                                            status.update(label=get_text('ui', 'offer_ready_label', st.session_state.language), state="complete", expanded=False)
+                                            st.success(get_text('ui', 'offer_success', st.session_state.language))
+                                            st.rerun()
+                                        else:
+                                            st.error(get_text('ui', 'file_not_found_on_disk', st.session_state.language))
+                                    except Exception as e:
+                                        status.update(label=get_text('ui', 'error_label', st.session_state.language), state="error")
+                                        st.error(f"{get_text('ui', 'offer_error', st.session_state.language)} {e}")
+                                        import traceback
+                                        st.code(traceback.format_exc()) # Show details for debugging
+                    with off_col2:
+                        if not is_offer_ready:
+                            st.caption(get_text('ui', 'offer_button_caption', st.session_state.language))
+                        else:
+                            st.caption(get_text('ui', 'offer_ready_caption', st.session_state.language))
+
+            st.markdown("<div style='margin-top: 40px; margin-bottom: 20px; border-top: 1px solid #ddd;'></div>", unsafe_allow_html=True)
+
+            # Show Dashboard Preview
+            if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
+                with open(results["dashboard_path"], "r", encoding='utf-8') as f:
+                    html_content = f.read()
+                    # Use a larger height to fill the expanded dialog
+                    st.components.v1.html(html_content, height=1200, scrolling=True)
+                    
+            if st.button(get_text("ui", "close_btn", st.session_state.language), use_container_width=True):
+                st.session_state.show_pipeline_dialog = False
             st.session_state.show_results_view = False
             if "current_generation_results" in st.session_state:
                 del st.session_state.current_generation_results

@@ -185,10 +185,60 @@
       "en": "📋 View Files",
       "fr": "📋 Afficher les fichiers"
     },
-    "test_mode_active": {
-      "de": "🧪 **Test-Modus aktiv**",
-      "en": "🧪 **Test mode active**",
-      "fr": "🧪 **Mode test actif**"
+    "batch_results_title": {
+      "de": "🎉 Batch-Vergleich Ergebnisse",
+      "en": "🎉 Batch Comparison Results",
+      "fr": "🎉 Résultats de comparaison par lots"
+    },
+    "batch_processed": {
+      "de": "Verarbeitet",
+      "en": "Processed",
+      "fr": "Traité"
+    },
+    "batch_failed": {
+      "de": "Fehlgeschlagen",
+      "en": "Failed",
+      "fr": "Échoué"
+    },
+    "batch_dashboard_title": {
+      "de": "📊 Vergleichs-Dashboard",
+      "en": "📊 Comparison Dashboard",
+      "fr": "📊 Tableau de bord de comparaison"
+    },
+    "batch_candidates_title": {
+      "de": "👥 Kandidaten",
+      "en": "👥 Candidates",
+      "fr": "👥 Candidats"
+    },
+    "match_score_chart": {
+      "de": "Gesamtübereinstimmung (%)",
+      "en": "Total Match Score (%)",
+      "fr": "Score de correspondance total (%)"
+    },
+    "must_soll_chart": {
+      "de": "Anforderungsabdeckung (%)",
+      "en": "Requirements Coverage (%)",
+      "fr": "Couverture des exigences (%)"
+    },
+    "quality_chart": {
+      "de": "CV-Qualität (%)",
+      "en": "CV Quality (%)",
+      "fr": "Qualité du CV (%)"
+    },
+    "candidate_label": {
+      "de": "Kandidat",
+      "en": "Candidate",
+      "fr": "Candidat"
+    },
+    "shortlist_btn": {
+      "de": "🎯 Zur Auswahlliste hinzufügen",
+      "en": "🎯 Add to shortlist",
+      "fr": "🎯 Ajouter à la sélection"
+    },
+    "offer_badge": {
+      "de": "🟠 Angebot bereit",
+      "en": "🟠 Offer ready",
+      "fr": "🟠 Offre prête"
     },
     "test_mode_desc": {
       "de": "Es wird ein beispielhafter Lebenslauf verwendet.",
