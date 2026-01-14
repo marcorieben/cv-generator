@@ -36,3 +36,4 @@
 2026-01-14 12:26:05 | BUGFIX | prevent pipeline rerun when viewing results in Mode 3
 2026-01-14 12:34:13 | BUGFIX | prevent unconditional state reset in results view
 2026-01-14 15:28:49 | REFACTOR | unify Mode 3 and Mode 4 into single Analysis mode
+2026-01-14 16:29:55 | REFACTOR | consolidate to 2-mode unified architecture (Basic + Advanced)
