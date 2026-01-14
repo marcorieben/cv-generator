@@ -15,6 +15,9 @@ from scripts.generate_angebot_word import generate_angebot_word
 from scripts.visualize_results import generate_dashboard
 from scripts.naming_conventions import (
     extract_job_profile_name,
+    extract_job_profile_name_from_file,
+    extract_candidate_name_from_file,
+    extract_candidate_name,
     get_output_folder_path,
     get_cv_json_filename,
     get_match_json_filename,
@@ -147,12 +150,24 @@ class StreamlitCVGenerator:
             if progress_callback: progress_callback(30, get_text('ui', 'status_extract_cv', language), "running")
             cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data, target_language=language)
             
-            # Extract job profile name for unified naming convention
-            job_profile_name = extract_job_profile_name(stellenprofil_data)
+            # Extract job profile name from both data and filename (filename takes priority if meaningful)
+            job_profile_name_from_data = extract_job_profile_name(stellenprofil_data)
+            job_profile_name_from_file = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else str(job_file)) if job_file else None
             
-            # Save JSONs with unified naming convention
+            # Use filename extraction if it's not generic, otherwise use data extraction
+            if job_profile_name_from_file and job_profile_name_from_file != "jobprofile":
+                job_profile_name = job_profile_name_from_file
+            else:
+                job_profile_name = job_profile_name_from_data
+            
+            # Extract candidate name from both data and filename (data takes priority for accuracy)
             vorname = cv_data.get("Vorname", get_text('ui', 'history_unknown', language))
             nachname = cv_data.get("Nachname", "")
+            candidate_name_from_data = extract_candidate_name(cv_data) if (vorname or nachname) else None
+            candidate_name_from_file = extract_candidate_name_from_file(cv_file.name if hasattr(cv_file, 'name') else str(cv_file)) if cv_file else None
+            
+            # Use data extraction if available (more accurate), otherwise use filename
+            candidate_folder_name = candidate_name_from_data if candidate_name_from_data and candidate_name_from_data != "candidate" else candidate_name_from_file
             
             # Use provided output_dir (batch mode) or create new folder (standard mode)
             if output_dir:
@@ -160,9 +175,12 @@ class StreamlitCVGenerator:
                 os.makedirs(output_dir, exist_ok=True)
                 final_output_dir = output_dir
             else:
-                # Standard mode: create new folder jobprofileName_cv_timestamp
+                # Standard mode: create new folder with jobprofileName_candidateName_timestamp
                 base_output = os.path.join(self.base_dir, "output")
-                final_output_dir = get_output_folder_path(base_output, job_profile_name, "cv", self.timestamp)
+                # For non-batch mode, include candidate name in folder path for better organization
+                folder_name = f"{job_profile_name}_{candidate_folder_name}_{self.timestamp}"
+                final_output_dir = os.path.join(base_output, folder_name)
+                os.makedirs(final_output_dir, exist_ok=True)
             
             # Save CV JSON with unified naming
             cv_json_filename = get_cv_json_filename(job_profile_name, vorname, nachname, self.timestamp)

@@ -70,6 +70,32 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
     return "jobprofile"
 
 
+def extract_candidate_name_from_file(cv_file_path: str) -> str:
+    """
+    Extract candidate name from uploaded CV file name.
+    
+    Takes filename (e.g., "Max_Mustermann.pdf" or "Max.pdf") and converts to
+    sanitized form (e.g., "max_mustermann" or "max")
+    
+    Args:
+        cv_file_path: File path or filename
+        
+    Returns:
+        Sanitized candidate name
+    """
+    if not cv_file_path:
+        return "candidate"
+    
+    # Extract filename without extension
+    filename = os.path.basename(cv_file_path)
+    name_without_ext = os.path.splitext(filename)[0]
+    
+    # Sanitize: remove special chars, lowercase
+    sanitized = sanitize_filename(name_without_ext, max_length=50)
+    
+    return sanitized if sanitized else "candidate"
+
+
 def extract_candidate_name(cv_data: Optional[Dict[str, Any]]) -> str:
     """
     Extract candidate name from CV JSON data.
