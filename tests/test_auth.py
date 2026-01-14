@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from generate_keys import generate_hash
+from scripts.utils.generate_keys import generate_hash
 
 class TestAuthentication:
     def test_config_yaml_structure(self):

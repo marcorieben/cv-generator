@@ -48,6 +48,9 @@ mv .git/hooks/pre-commit.disabled .git/hooks/pre-commit
 ## 📝 Was der Hook macht
 
 Der Hook:
+- Prüft `translations.json` auf Duplikate
+- Aktualisiert Test-Artefakte automatisch
+- Aktualisiert `requirements.txt` automatisch
 - Findet automatisch das richtige Python (.venv)
 - Führt `pytest -v` aus
 - Zeigt Coverage-Report
@@ -65,3 +68,4 @@ Der Hook:
 **Status:** ✅ Aktiv  
 **Location:** `.git/hooks/pre-commit`  
 **Tests:** 15 Unit Tests (JSON Validation)
+**Hook Scripts:** `tests/hooks/`

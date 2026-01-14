@@ -3,10 +3,35 @@ import json
 from openai import OpenAI
 from datetime import datetime
 
-def generate_cv_feedback_json(cv_json_path, output_path, schema_path, stellenprofil_json_path=None):
+def load_translations():
+    """Lädt die Übersetzungen aus der translations.json Datei."""
+    try:
+        paths = [
+            os.path.join(os.path.dirname(__file__), "translations.json"),
+            os.path.join("scripts", "translations.json"),
+            "translations.json"
+        ]
+        for path in paths:
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        return {}
+    except:
+        return {}
+
+def get_text(translations, section, key, lang="de"):
+    """Holt einen übersetzten Text."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
+    except:
+        return f"[{key}]"
+
+def generate_cv_feedback_json(cv_json_path, output_path, schema_path, stellenprofil_json_path=None, language='de'):
     """
     Generate a CV feedback JSON using the provided CV JSON and the feedback schema prompt.
     """
+    translations = load_translations()
+    
     # Load schema
     with open(schema_path, 'r', encoding='utf-8') as f:
         schema = json.load(f)
@@ -19,11 +44,15 @@ def generate_cv_feedback_json(cv_json_path, output_path, schema_path, stellenpro
             stellenprofil_data = json.load(f)
 
     # Prepare prompt for OpenAI
-    system_prompt = (
-        "Du bist ein CV-Qualitätsprüfer. Analysiere das folgende CV-JSON (und optional das Stellenprofil) gemäss der Feedback-Schema-Vorgabe. "
-        "Fülle die Struktur exakt aus, keine Felder hinzufügen oder weglassen. "
-        "Nutze ausschliesslich die bereitgestellten JSON-Daten. "
-        "Nutze ausschliesslich die Schweizer Rechtschreibung (kein 'ß', sondern 'ss').\n"
+    language_map = {
+        'de': 'Deutsch (Schweizer Rechtschreibung)',
+        'en': 'English',
+        'fr': 'Français'
+    }
+    target_language = language_map.get(language, language)
+
+    prompt_template = get_text(translations, 'system', 'feedback_prompt', language)
+    system_prompt = prompt_template.replace("{target_language}", target_language) + "\n" + (
         "Schema (nur als Vorgabe, nicht ausgeben):\n" +
         json.dumps(schema, ensure_ascii=False, indent=2)
     )

@@ -69,7 +69,8 @@ class StreamlitCVGenerator:
             progress_callback: Callable[[int, str, str], None] = None,
             custom_styles: Dict[str, Any] = None,
             custom_logo_path: str = None,
-            pipeline_mode: str = None) -> Dict[str, Any]:
+            pipeline_mode: str = None,
+            language: str = "de") -> Dict[str, Any]:
         """
         Runs the CV generation pipeline.
         
@@ -81,7 +82,22 @@ class StreamlitCVGenerator:
             custom_styles: Dict with keys 'primary_color', 'secondary_color', 'font'
             custom_logo_path: Path to custom logo file
             pipeline_mode: The selected pipeline mode (e.g. "Basic", "Full")
+            language: Target language (de, en, fr)
         """
+        # Load translations
+        trans_path = os.path.join(self.base_dir, "scripts", "translations.json")
+        translations = {}
+        try:
+            with open(trans_path, "r", encoding="utf-8") as f:
+                translations = json.load(f)
+        except:
+            pass
+
+        def get_text(section, key, lang="de"):
+            try:
+                return translations.get(section, {}).get(key, {}).get(lang, key)
+            except:
+                return key
         
         # Set API Key
         if api_key:
@@ -107,16 +123,16 @@ class StreamlitCVGenerator:
             # --- PHASE 1: PDF Extraction ---
             stellenprofil_data = None
             if job_file:
-                if progress_callback: progress_callback(10, "Analysiere Stellenprofil...", "running")
+                if progress_callback: progress_callback(10, get_text('ui', 'status_extract_job', language), "running")
                 job_schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
-                stellenprofil_data = pdf_to_json(job_file, None, job_schema_path)
+                stellenprofil_data = pdf_to_json(job_file, None, job_schema_path, target_language=language)
 
-            if progress_callback: progress_callback(30, "Analysiere CV...", "running")
-            cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data)
+            if progress_callback: progress_callback(30, get_text('ui', 'status_extract_cv', language), "running")
+            cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data, target_language=language)
             
             # Save JSONs
-            vorname = cv_data.get("Vorname", "Unbekannt")
-            nachname = cv_data.get("Nachname", "Unbekannt")
+            vorname = cv_data.get("Vorname", get_text('ui', 'history_unknown', language))
+            nachname = cv_data.get("Nachname", "")
             output_dir = os.path.join(self.base_dir, "output", f"{vorname}_{nachname}_{self.timestamp}")
             os.makedirs(output_dir, exist_ok=True)
             
@@ -135,13 +151,14 @@ class StreamlitCVGenerator:
                 results["stellenprofil_json"] = stellenprofil_json_path
 
             # --- STEP 3: Validation ---
-            if progress_callback: progress_callback(50, "Validiere Daten...", "running")
-            critical, info = validate_json_structure(cv_data)
+            if progress_callback: progress_callback(50, get_text('ui', 'status_validate', language), "running")
+            critical, info = validate_json_structure(cv_data, language=language)
             if critical:
-                raise ValueError(f"Validierungsfehler: {'; '.join(critical)}")
+                val_error_prefix = get_text('validation', 'error_prefix', language) if 'validation' in translations else "Validierungsfehler"
+                raise ValueError(f"{val_error_prefix}: {'; '.join(critical)}")
 
             # --- STEP 4: Generation (Word, Match, Feedback) ---
-            if progress_callback: progress_callback(70, "Generiere Dokumente...", "running")
+            if progress_callback: progress_callback(70, get_text('ui', 'status_generate', language), "running")
             
             word_path = None
             matchmaking_json_path = None
@@ -149,7 +166,7 @@ class StreamlitCVGenerator:
             
             with ThreadPoolExecutor(max_workers=3) as executor:
                 # Word (interactive=False to suppress dialogs)
-                future_word = executor.submit(generate_cv, cv_json_path, output_dir, interactive=False)
+                future_word = executor.submit(generate_cv, cv_json_path, output_dir, interactive=False, language=language)
                 
                 # Match
                 future_match = None
@@ -161,7 +178,8 @@ class StreamlitCVGenerator:
                         cv_json_path,
                         stellenprofil_json_path,
                         matchmaking_json_path,
-                        schema_path
+                        schema_path,
+                        language=language
                     )
                 
                 # Feedback
@@ -172,7 +190,8 @@ class StreamlitCVGenerator:
                     cv_json_path,
                     feedback_json_path,
                     feedback_schema_path,
-                    stellenprofil_json_path
+                    stellenprofil_json_path,
+                    language=language
                 )
                 
                 word_path = future_word.result()
@@ -182,15 +201,15 @@ class StreamlitCVGenerator:
             # --- STEP 4.5: Offer (Background) ---
             angebot_json_path = None
             if pipeline_mode == "Full" and stellenprofil_json_path and matchmaking_json_path:
-                if progress_callback: progress_callback(85, "Erstelle Angebot...", "running")
+                if progress_callback: progress_callback(85, get_text('ui', 'status_offer', language), "running")
                 try:
                     angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
                     # Generate JSON
-                    generate_angebot_json(cv_json_path, stellenprofil_json_path, matchmaking_json_path, angebot_json_path)
+                    generate_angebot_json(cv_json_path, stellenprofil_json_path, matchmaking_json_path, angebot_json_path, language=language)
                     
                     # Generate Word
                     angebot_word_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.docx")
-                    generate_angebot_word(angebot_json_path, angebot_word_path)
+                    generate_angebot_word(angebot_json_path, angebot_word_path, language=language)
                     
                     results["offer_word_path"] = angebot_word_path
                 except Exception as e:
@@ -200,7 +219,7 @@ class StreamlitCVGenerator:
             results["match_json"] = matchmaking_json_path
 
             # --- STEP 5: Dashboard ---
-            if progress_callback: progress_callback(90, "Erstelle Dashboard...", "running")
+            if progress_callback: progress_callback(90, get_text('ui', 'status_dashboard', language), "running")
             
             dashboard_path = generate_dashboard(
                 cv_json_path=cv_json_path,
@@ -212,9 +231,13 @@ class StreamlitCVGenerator:
                 pipeline_mode=pipeline_mode,
                 cv_filename=cv_file.name if hasattr(cv_file, 'name') else os.path.basename(str(cv_file)),
                 job_filename=job_file.name if job_file and hasattr(job_file, 'name') else (os.path.basename(str(job_file)) if job_file else None),
-                angebot_json_path=angebot_json_path
+                angebot_json_path=angebot_json_path,
+                language=language
             )
             results["dashboard_path"] = dashboard_path
+
+            # Final success
+            if progress_callback: progress_callback(100, get_text('ui', 'status_complete', language), "complete")
             
             # Get Match Score
             if matchmaking_json_path and os.path.exists(matchmaking_json_path):
@@ -233,10 +256,9 @@ class StreamlitCVGenerator:
                     pass
 
             results["success"] = True
-            if progress_callback: progress_callback(100, "Fertig!", "completed")
             
         except Exception as e:
             results["error"] = str(e)
-            if progress_callback: progress_callback(100, f"Fehler: {str(e)}", "error")
+            if progress_callback: progress_callback(100, f"{get_text('ui', 'error_status', language)}: {str(e)}", "error")
             
         return results

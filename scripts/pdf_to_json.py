@@ -5,10 +5,31 @@ Converts CV PDFs to structured JSON using the defined schema
 
 import os
 import json
+import sys
 from openai import OpenAI
 from pypdf import PdfReader
 from dotenv import load_dotenv
 import re
+
+
+def get_text(translations, section, key, lang="de"):
+    """Helper to get translated text from the dictionary."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, key)
+    except:
+        return key
+
+
+def load_translations():
+    """Loads translations from scripts/translations.json."""
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    trans_path = os.path.join(base_dir, "scripts", "translations.json")
+    try:
+        with open(trans_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"⚠️ Warning: Could not load translations: {e}")
+        return {}
 
 
 def normalize_date_format(date_str):
@@ -26,33 +47,47 @@ def normalize_date_format(date_str):
         return date_str
     
     # Wenn "heute", "Heute", "today" etc. -> unverändert
-    if date_str.strip().lower() in ['heute', 'today', 'present', 'aktuell']:
+    if date_str.strip().lower() in ['heute', 'today', 'present', 'aktuell', 'aujourd\'hui', 'maintenant']:
         return date_str
     
-    # Monatsnamen Mapping (Deutsch und Englisch)
-    months_de = {
-        'januar': '01', 'jan': '01', 'jan.': '01',
-        'februar': '02', 'feb': '02', 'feb.': '02',
-        'märz': '03', 'mrz': '03', 'mar': '03', 'mar.': '03', 'mär': '03', 'mär.': '03',
-        'april': '04', 'apr': '04', 'apr.': '04',
-        'mai': '05',
-        'juni': '06', 'jun': '06', 'jun.': '06',
-        'juli': '07', 'jul': '07', 'jul.': '07',
-        'august': '08', 'aug': '08', 'aug.': '08',
-        'september': '09', 'sep': '09', 'sep.': '09', 'sept': '09', 'sept.': '09',
-        'oktober': '10', 'okt': '10', 'okt.': '10', 'oct': '10', 'oct.': '10',
-        'november': '11', 'nov': '11', 'nov.': '11',
-        'dezember': '12', 'dez': '12', 'dez.': '12', 'dec': '12', 'dec.': '12'
+    # Monatsnamen Mapping (Deutsch, Englisch und Französisch)
+    months_map = {
+        'januar': '01', 'jan': '01', 'jan.': '01', 'january': '01', 'janvier': '01', 'janv': '01',
+        'februar': '02', 'feb': '02', 'feb.': '02', 'february': '02', 'février': '02', 'fév': '02',
+        'märz': '03', 'mrz': '03', 'mar': '03', 'mar.': '03', 'mär': '03', 'mär.': '03', 'march': '03', 'mars': '03',
+        'april': '04', 'apr': '04', 'apr.': '04', 'avril': '04', 'avr': '04',
+        'mai': '05', 'may': '05',
+        'juni': '06', 'jun': '06', 'jun.': '06', 'june': '06', 'juin': '06',
+        'juli': '07', 'jul': '07', 'jul.': '07', 'july': '07', 'juillet': '07', 'juil': '07',
+        'august': '08', 'aug': '08', 'aug.': '08', 'août': '08',
+        'september': '09', 'sep': '09', 'sep.': '09', 'sept': '09', 'sept.': '09', 'septembre': '09',
+        'oktober': '10', 'okt': '10', 'okt.': '10', 'oct': '10', 'oct.': '10', 'october': '10', 'octobre': '10',
+        'november': '11', 'nov': '11', 'nov.': '11', 'novembre': '11',
+        'dezember': '12', 'dez': '12', 'dez.': '12', 'dec': '12', 'dec.': '12', 'december': '12', 'décembre': '12', 'déc': '12'
     }
     
-    # Pattern: "YYYY - YYYY" oder ähnliche Ranges - ZUERST behandeln!
-    if ' - ' in date_str or ' – ' in date_str or ' — ' in date_str:
-        separator = ' - ' if ' - ' in date_str else (' – ' if ' – ' in date_str else ' — ')
-        parts = date_str.split(separator)
-        if len(parts) == 2:
-            start = normalize_date_format(parts[0].strip())
-            end = normalize_date_format(parts[1].strip())
-            return f"{start} - {end}"
+    # Pattern: "YYYY - YYYY" oder ähnliche Ranges
+    # Wir machen das ohne Rekursion um Hänger zu vermeiden
+    for sep in [' - ', ' – ', ' — ', '-']:
+        if sep in date_str:
+            parts = date_str.split(sep)
+            if len(parts) == 2:
+                # Behandle beide Teile einzeln (ohne Rekursion)
+                def norm_part(p):
+                    p = p.strip()
+                    if p.lower() in ['heute', 'today', 'present', 'aktuell', 'aujourd\'hui', 'maintenant']:
+                        return p
+                    if re.match(r'^\d{4}$', p):
+                        return f"01/{p}"
+                    # Check month mapping
+                    for m_name, m_num in months_map.items():
+                        if m_name in p.lower():
+                            year_match = re.search(r'\d{4}', p)
+                            if year_match:
+                                return f"{m_num}/{year_match.group(0)}"
+                    return p
+                
+                return f"{norm_part(parts[0])} - {norm_part(parts[1])}"
     
     # Pattern: "MM/YYYY" oder "MM.YYYY" -> bereits korrekt oder leicht anpassbar
     if re.match(r'^\d{2}[/\.]\d{4}$', date_str.strip()):
@@ -70,18 +105,21 @@ def normalize_date_format(date_str):
         month_part = parts[0].strip('.').lower()
         year_part = parts[-1]  # Last part is usually year
         
-        # Check if month is in German names
-        if month_part in months_de and re.match(r'^\d{4}$', year_part):
-            return f"{months_de[month_part]}/{year_part}"
+        # Check if month is in our names map
+        if month_part in months_map and re.match(r'^\d{4}$', year_part):
+            return f"{months_map[month_part]}/{year_part}"
     
     # Fallback: unverändert zurückgeben
     return date_str
 
 
-def normalize_json_structure(data):
+def normalize_json_structure(data, language="de"):
     """
     Korrigiert verschachtelte Strukturen von OpenAI zum erwarteten Format
     """
+    translations = load_translations()
+    missing_marker = get_text(translations, "system", "missing_data_marker", language)
+
     # Korrektur 0: Hauptausbildung -> Ausbildung (Abwärtskompatibilität)
     if "Hauptausbildung" in data and "Ausbildung" not in data:
         data["Ausbildung"] = data["Hauptausbildung"]
@@ -138,17 +176,17 @@ def normalize_json_structure(data):
         
         # Falls Kategorien leer sind, Platzhalter einfügen
         if not projektmethodik_items:
-            projektmethodik_items = ["! fehlt – bitte prüfen!"]
+            projektmethodik_items = [missing_marker]
         if not tech_stack_items:
-            tech_stack_items = ["! fehlt – bitte prüfen!"]
+            tech_stack_items = [missing_marker]
         if not weitere_skills_items:
-            weitere_skills_items = ["! fehlt – bitte prüfen!"]
+            weitere_skills_items = [missing_marker]
         
         # Ersetze mit fester Struktur
         data["Fachwissen_und_Schwerpunkte"] = [
-            {"Kategorie": "Projektmethodik", "Inhalt": projektmethodik_items},
-            {"Kategorie": "Tech Stack", "Inhalt": tech_stack_items},
-            {"Kategorie": "Weitere Skills", "Inhalt": weitere_skills_items}
+            {"Kategorie": get_text(translations, "skills_categories", "methodology", language), "Inhalt": projektmethodik_items},
+            {"Kategorie": get_text(translations, "skills_categories", "tech_stack", language), "Inhalt": tech_stack_items},
+            {"Kategorie": get_text(translations, "skills_categories", "other_skills", language), "Inhalt": weitere_skills_items}
         ]
     
     # Korrektur 3: Verschachtelte Referenzprojekte
@@ -181,18 +219,25 @@ def normalize_json_structure(data):
     
     # Korrektur 5: Normalisiere Sprachen Level und Namen
     if "Sprachen" in data and isinstance(data["Sprachen"], list):
-        # Mapping für gängige Sprachen (Englisch -> Deutsch)
-        language_mapping = {
-            "english": "Englisch",
-            "german": "Deutsch",
-            "french": "Französisch",
-            "italian": "Italienisch",
-            "spanish": "Spanisch",
-            "portuguese": "Portugiesisch",
-            "russian": "Russisch",
-            "chinese": "Chinesisch",
-            "japanese": "Japanisch"
-        }
+        # Mapping für gängige Sprachen (Mapping basierend auf Zielsprache)
+        if language == "en":
+            language_mapping = {
+                "english": "English", "german": "German", "french": "French",
+                "italian": "Italian", "spanish": "Spanish", "portuguese": "Portuguese",
+                "russian": "Russian", "chinese": "Chinese", "japanese": "Japanese"
+            }
+        elif language == "fr":
+            language_mapping = {
+                "english": "Anglais", "german": "Allemand", "french": "Français",
+                "italian": "Italien", "spanish": "Espagnol", "portuguese": "Portugais",
+                "russian": "Russe", "chinese": "Chinois", "japanese": "Japonais"
+            }
+        else: # Standard: Deutsch
+            language_mapping = {
+                "english": "Englisch", "german": "Deutsch", "french": "Französisch",
+                "italian": "Italienisch", "spanish": "Spanisch", "portuguese": "Portugiesisch",
+                "russian": "Russisch", "chinese": "Chinesisch", "japanese": "Japanisch"
+            }
 
         for item in data["Sprachen"]:
             # 5a: Sprache Name normalisieren
@@ -291,7 +336,7 @@ def load_schema(schema_path="scripts/pdf_to_json_struktur_cv.json"):
         return json.load(f)
 
 
-def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_struktur_cv.json", job_profile_context=None):
+def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_struktur_cv.json", job_profile_context=None, target_language="de"):
     """
     Konvertiert eine PDF-CV zu strukturiertem JSON via OpenAI API
     
@@ -300,6 +345,7 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
         output_path: Optionaler Pfad für JSON-Output (wenn None, nur zurückgeben)
         schema_path: Pfad zur Schema-Datei
         job_profile_context: Optionales Dictionary mit Stellenprofildaten zur Kontextualisierung
+        target_language: Zielsprache für die Extraktion (de, en, fr)
         
     Returns:
         Dictionary mit den extrahierten CV-Daten
@@ -365,17 +411,26 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
     print("🤖 Sende Anfrage an OpenAI API...")
     client = OpenAI(api_key=api_key)
     
+    # Load translations
+    translations = load_translations()
+    missing_marker = get_text(translations, "system", "missing_data_marker", target_language)
+    
     # System Prompt mit Schema
-    system_prompt = f"""Du bist ein Experte für CV-Extraktion und arbeitest für eine IT-Beratungsfirma.
+    is_cv = "cv" in schema_path.lower()
+    role_name = "Experte für CV-Extraktion" if is_cv else "Experte für die Analyse von IT-Projektangeboten und Stellenprofilen"
+    task_desc = "Extrahiere alle Informationen aus dem bereitgestellten CV-Text" if is_cv else "Extrahiere alle Anforderungen und Rahmendaten aus dem bereitgestellten Stellenprofil"
+    
+    system_prompt = f"""Du bist ein {role_name} und arbeitest für eine IT-Beratungsfirma.
 
-Deine Aufgabe: Extrahiere alle Informationen aus dem bereitgestellten CV-Text und erstelle ein strukturiertes JSON gemäss dem folgenden Schema.
+Deine Aufgabe: {task_desc} und erstelle ein strukturiertes JSON gemäss dem folgenden Schema.
+Zielsprache für die Extraktion ist: {target_language.upper()} (de=Deutsch, en=Englisch, fr=Französisch).
 
 WICHTIGE REGELN:
 1. Verwende NUR Felder, die im Schema definiert sind - KEINE zusätzlichen Felder
-2. Bei fehlenden Informationen: Markiere mit "! bitte prüfen !"
+2. Bei fehlenden Informationen: Markiere mit "{missing_marker}"
 3. Keine Informationen erfinden oder raten
 4. Halte dich strikt an die Feldnamen und Struktur des Schemas
-5. Sprachen: Level 1-5 numerisch. Normalisiere unterschiedliche Skalen auf 1-5:
+5. [NUR FÜR CV] Sprachen: Level 1-5 numerisch. Normalisiere unterschiedliche Skalen auf 1-5:
    - WICHTIG: Wenn grafische Elemente (Sterne, Punkte, Balken) vorhanden sind, haben diese VORRANG vor Textbeschreibungen.
    - Zähle die vollen Sterne/Punkte: ★★★★★ = 5, ★★★★☆ = 4.
    - 5er-Skala (Standard): 1=1, ..., 5=5
@@ -383,30 +438,33 @@ WICHTIGE REGELN:
    - 4er-Skala: 1=1, 2=2, 3=4, 4=5
    - Text (A1-C2): A1/A2=1, B1=2, B2=3, C1=4, C2=5
    Sortiere absteigend nach Level.
-6. REFERENZPROJEKTE UND BERUFSERFAHRUNG: Erfasse VOLLSTÄNDIG ALLE beruflichen Stationen, Projekte und Arbeitsverhältnisse aus dem gesamten Lebenslauf. Es gibt keine zeitliche Beschränkung nach hinten.
+6. [NUR FÜR CV] REFERENZPROJEKTE UND BERUFSERFAHRUNG: Erfasse VOLLSTÄNDIG ALLE beruflichen Stationen, Projekte und Arbeitsverhältnisse aus dem gesamten Lebenslauf. Es gibt keine zeitliche Beschränkung nach hinten.
    - WICHTIG: Das Feld 'Ausgewählte_Referenzprojekte' muss entgegen seinem Namen VOLLSTÄNDIG ALLE beruflichen Stationen enthalten (nicht nur eine Auswahl). Es dient als vollständiger chronologischer Lebenslauf.
    - Es ist ein kritischer Fehler, Stationen auszulassen, nur weil sie älter sind oder nicht als "Projekt" bezeichnet werden.
    - Jede Station muss als eigenes Objekt in 'Ausgewählte_Referenzprojekte' erscheinen.
    - TÄTIGKEITEN/BULLET POINTS: Erfasse JEDE Tätigkeit ABSOLUT VOLLSTÄNDIG und WÖRTLICH so, wie sie im CV steht. 
    - WICHTIG: Es darf KEIN Wort ausgelassen, gekürzt oder zusammengefasst werden. Übernimm die gesamte Beschreibung des Aufpunkts unverändert. Die Beschränkung auf 5 Bullets entfällt komplett.
-7. WICHTIG: Verwende "Inhalt" (NICHT "BulletList") für Fachwissen_und_Schwerpunkte
-8. WICHTIG: Fachwissen_und_Schwerpunkte ist direkt auf oberster Ebene (NICHT in "Expertise" verschachtelt)
-9. WICHTIG: Fachwissen_und_Schwerpunkte hat IMMER genau 3 Kategorien in dieser Reihenfolge:
+7. [NUR FÜR CV] WICHTIG: Verwende "Inhalt" (NICHT "BulletList") für Fachwissen_und_Schwerpunkte
+8. [NUR FÜR CV] WICHTIG: Fachwissen_und_Schwerpunkte ist direkt auf oberster Ebene (NICHT in "Expertise" verschachtelt)
+9. [NUR FÜR CV] WICHTIG: Fachwissen_und_Schwerpunkte hat IMMER genau 3 Kategorien in dieser Reihenfolge:
    - 1. "Projektmethodik"
    - 2. "Tech Stack"
    - 3. "Weitere Skills"
 10. ZEITFORMATE: Konvertiere Zeitangaben zu MM/YYYY (z.B. "01/2020"). Ausnahme: "Aus_und_Weiterbildung" sowie "Trainings_und_Zertifizierungen" verwenden NUR das Jahr YYYY (z.B. "2020" oder "2020 - 2022").
-11. ALLE ZERTIFIKATE ERFASSEN: Erfasse ausnahmslos JEDES im PDF erwähnte Zertifikat und Training. Unabhängig vom Alter, Typ oder Bekanntheitsgrad. Gehe das Dokument chronologisch durch und stelle sicher, dass die Liste VOLLSTÄNDIG ist. Ein Auslassen von Zertifikaten ist nicht zulässig.
-12. KURZPROFIL: Verwende den Vornamen der Person und schreibe in der 3. Person. Sei sachlich, hebe nur echte Stärken hervor, die aus dem CV ersichtlich sind. KEINE Übertreibungen oder Erfindungen!
+11. [NUR FÜR CV] ALLE ZERTIFIKATE ERFASSEN: Erfasse ausnahmslos JEDES im PDF erwähnte Zertifikat und Training. Unabhängig vom Alter, Typ oder Bekanntheitsgrad. Gehe das Dokument chronologisch durch und stelle sicher, dass die Liste VOLLSTÄNDIG ist. Ein Auslassen von Zertifikaten ist nicht zulässig.
+12. [NUR FÜR CV] KURZPROFIL: Verwende den Vornamen der Person und schreibe in der 3. Person. Sei sachlich, hebe nur echte Stärken hervor, die aus dem CV ersichtlich sind. KEINE Übertreibungen oder Erfindungen!
 13. ROLLE in Referenzprojekten: Maximal 8 Wörter! Kurz und prägnant formulieren.
 14. SCHWEIZER RECHTSCHREIBUNG: Nutze ausschliesslich die Schweizer Schreibweise. Ersetze jedes 'ß' durch 'ss' (z.B. 'gross' statt 'groß', 'gemäss' statt 'gemäß').
+15. ZIELSPRACHE: Extrahiere und übersetze den gesamten Inhalt (ALLE Felder, ALLE Werte, ALLE Beschreibungen) konsequent in die Zielsprache: {target_language.upper()}.
+    WICHTIG: Alle Beschreibungen von Projekten, Tätigkeiten, Erfolgen und Rollen MÜSSEN in der Sprache {target_language.upper()} verfasst sein. Es ist ein Fehler, Teile in der Originalsprache zu belassen. 
+    Fachbegriffe (z.B. 'Scrum', 'Cloud Architecture', 'Python') sollten in ihrer üblichen Fachsprache bleiben.
 
 SCHEMA:
 {json.dumps(schema, ensure_ascii=False, indent=2)}
 
 Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
 
-    user_content = f"Extrahiere die CV-Daten aus folgendem Text:\n\n{cv_text}"
+    user_content = f"Extrahiere die CV-Daten (Zielsprache: {target_language.upper()}) aus folgendem Text:\n\n{cv_text}"
     
     # Falls Stellenprofil-Kontext vorhanden ist, diesen hinzufügen um die Extraktion zu fokussieren
     if job_profile_context:
@@ -430,10 +488,11 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
         )
         
         json_data = json.loads(response.choices[0].message.content)
-        print(f"✅ JSON erfolgreich erstellt")
+        print(f"✅ JSON erfolgreich erstellt. Starte Normalisierung...")
         
         # Post-Processing: Struktur korrigieren falls nötig
-        json_data = normalize_json_structure(json_data)
+        json_data = normalize_json_structure(json_data, target_language)
+        print(f"✅ Normalisierung abgeschlossen")
         
         # Optional: In Datei speichern
         if output_path:
@@ -446,4 +505,4 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
     
     except Exception as e:
         print(f"❌ Fehler: {str(e)}")
-        sys.exit(1)
+        raise e  # Weitergeben statt sys.exit, damit Pipeline Fehler abfangen kann

@@ -59,6 +59,29 @@ from scripts.dialogs import (
     select_pdf_file, show_welcome, show_processing, ModernDialog
 )
 
+def load_translations():
+    """Lädt die Übersetzungen aus der translations.json Datei."""
+    try:
+        paths = [
+            os.path.join(os.path.dirname(__file__), "translations.json"),
+            os.path.join("scripts", "translations.json"),
+            "translations.json"
+        ]
+        for path in paths:
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        return {}
+    except:
+        return {}
+
+def get_text(translations, section, key, lang="de"):
+    """Holt einen übersetzten Text."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
+    except:
+        return f"[{key}]"
+
 class CVPipeline:
     def __init__(self, base_dir: str):
         self.base_dir = base_dir
@@ -66,6 +89,7 @@ class CVPipeline:
         self.processing_dialog = None
         self.dialog_thread = None
         self.dialog_closed_event = threading.Event()
+        self.translations = load_translations()
 
     def check_internet_connection(self) -> bool:
         try:
@@ -117,15 +141,15 @@ class CVPipeline:
         if self.dialog_thread and self.dialog_thread.is_alive():
             self.dialog_thread.join(timeout=5.0)
 
-    def process_cv_pdf(self, pdf_path: str, job_profile_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def process_cv_pdf(self, pdf_path: str, job_profile_context: Optional[Dict[str, Any]] = None, language: str = "de") -> Dict[str, Any]:
         print("\n" + "="*60)
         print("SCHRITT 1: PDF -> JSON Konvertierung (CV)")
         if job_profile_context:
             print("ℹ️  Mit Stellenprofil-Kontext für massgeschneiderte Extraktion")
         print("="*60)
-        return pdf_to_json(pdf_path, output_path=None, job_profile_context=job_profile_context)
+        return pdf_to_json(pdf_path, output_path=None, job_profile_context=job_profile_context, target_language=language)
 
-    def process_job_profile_pdf(self, pdf_path: str, output_path: str) -> Dict[str, Any]:
+    def process_job_profile_pdf(self, pdf_path: str, output_path: str, language: str = "de") -> Dict[str, Any]:
         print("\n" + "="*60)
         print("SCHRITT 1b: PDF -> JSON Konvertierung (Stellenprofil)")
         print("="*60)
@@ -133,46 +157,47 @@ class CVPipeline:
         return pdf_to_json(
             pdf_path,
             output_path=output_path,
-            schema_path=schema_path
+            schema_path=schema_path,
+            target_language=language
         )
 
     def save_json(self, data: Dict[str, Any], path: str):
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
-    def validate_data(self, json_data: Dict[str, Any], json_path: str) -> bool:
+    def validate_data(self, json_data: Dict[str, Any], json_path: str, language: str = "de") -> bool:
         print("\n" + "="*60)
-        print("SCHRITT 2: JSON Validierung")
+        print(f"STEP 2: JSON VALIDATION ({language.upper()})")
         print("="*60)
-        critical, info = validate_json_structure(json_data)
+        critical, info = validate_json_structure(json_data, language=language)
         
         if critical:
-            print("❌ KRITISCHE FEHLER gefunden:")
+            print("❌ CRITICAL ERRORS found:")
             for err in critical:
                 print(f"   • {err}")
             
-            error_msg = "Die JSON-Struktur weist kritische Fehler auf, die eine Word-Generierung verhindern."
-            details = "Kritische Fehler:\n\n" + "\n".join([f"• {err}" for err in critical])
-            details += f"\n\n📋 JSON gespeichert:\n{json_path}\n\nBitte korrigieren Sie die Fehler manuell und führen Sie die Generierung erneut aus."
+            error_msg = get_text(self.translations, 'validation', 'error_prefix', language)
+            details = get_text(self.translations, 'validation', 'critical_problems', language) + "\n\n" + "\n".join([f"• {err}" for err in critical])
+            details += f"\n\n📋 JSON:\n{json_path}"
             
             # Stop dialog before showing error
             self.stop_processing_dialog()
-            show_error(error_msg, title="JSON-Validierungsfehler", details=details)
+            show_error(error_msg, title=get_text(self.translations, 'validation', 'warning_title', language), details=details)
             return False
             
         if info:
-            print("⚠️  Warnungen:")
+            print("⚠️  Warnings:")
             for warning in info:
                 print(f"   • {warning}")
         
-        print("✅ JSON-Struktur ist valid")
+        print("✅ JSON structure is valid")
         return True
 
-    def generate_word(self, json_path: str, output_dir: str) -> Optional[str]:
+    def generate_word(self, json_path: str, output_dir: str, language: str = "de") -> Optional[str]:
         print("\n" + "="*60)
         print("SCHRITT 3: Word-Dokument Generierung")
         print("="*60)
-        word_path = generate_cv(json_path, output_dir=output_dir)
+        word_path = generate_cv(json_path, output_dir=output_dir, language=language, interactive=False)
         if not word_path:
             # Don't stop dialog here, let the caller handle it or just log error
             print("❌ Word-Dokument-Generierung fehlgeschlagen.")
@@ -192,7 +217,7 @@ class CVPipeline:
         except Exception as e:
             print(f"⚠️  Konnte Dokument nicht öffnen: {e}")
 
-    def run(self, cv_path: str, stellenprofil_path: Optional[str] = None) -> Optional[str]:
+    def run(self, cv_path: str, stellenprofil_path: Optional[str] = None, language: str = "de") -> Optional[str]:
         cv_filename = os.path.basename(cv_path)
         stellenprofil_filename = os.path.basename(stellenprofil_path) if stellenprofil_path else None
         
@@ -213,14 +238,14 @@ class CVPipeline:
                 print("="*60)
                 schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
                 # Run synchronously to ensure we have data for CV extraction
-                stellenprofil_data = pdf_to_json(stellenprofil_path, None, schema_path)
+                stellenprofil_data = pdf_to_json(stellenprofil_path, None, schema_path, target_language=language)
                 self.update_progress(0, "completed")
             else:
                 self.update_progress(0, "skipped")
             
             # Process CV (with offer context if available)
             self.update_progress(1, "running") # CV analysieren
-            cv_data = self.process_cv_pdf(cv_path, job_profile_context=stellenprofil_data)
+            cv_data = self.process_cv_pdf(cv_path, job_profile_context=stellenprofil_data, language=language)
             self.update_progress(1, "completed")
             
             # Determine paths and save
@@ -244,7 +269,7 @@ class CVPipeline:
 
             # --- STEP 2: Validation ---
             self.update_progress(2, "running") # Qualitätsprüfung
-            if not self.validate_data(cv_data, cv_json_path):
+            if not self.validate_data(cv_data, cv_json_path, language=language):
                 self.update_progress(2, "error")
                 return None
             self.update_progress(2, "completed")
@@ -266,7 +291,7 @@ class CVPipeline:
             
             with ThreadPoolExecutor(max_workers=3) as executor:
                 # 1. Word Generation
-                future_word = executor.submit(self.generate_word, cv_json_path, output_dir)
+                future_word = executor.submit(self.generate_word, cv_json_path, output_dir, language=language)
                 
                 # 2. Matchmaking (if offer exists)
                 future_match = None
@@ -278,7 +303,8 @@ class CVPipeline:
                         cv_json_path,
                         stellenprofil_json_path,
                         matchmaking_json_path,
-                        schema_path
+                        schema_path,
+                        language=language
                     )
 
                 # 3. Feedback
@@ -289,7 +315,8 @@ class CVPipeline:
                     cv_json_path,
                     feedback_json_path,
                     feedback_schema_path,
-                    stellenprofil_json_path
+                    stellenprofil_json_path,
+                    language=language
                 )
 
                 # Collect results
@@ -323,7 +350,8 @@ class CVPipeline:
                         stellenprofil_json_path,
                         matchmaking_json_path,
                         angebot_json_path,
-                        schema_path
+                        schema_path,
+                        language=language
                     )
                     self.update_progress(6, "completed")
                 except Exception as e:
@@ -352,7 +380,8 @@ class CVPipeline:
                 pipeline_mode="CLI Pipeline",
                 cv_filename=cv_filename,
                 job_filename=stellenprofil_filename,
-                angebot_json_path=angebot_json_path
+                angebot_json_path=angebot_json_path,
+                language=language
             )
             self.update_progress(7, "completed")
 
