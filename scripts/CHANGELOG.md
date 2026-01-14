@@ -39,3 +39,4 @@
 2026-01-14 16:29:55 | REFACTOR | consolidate to 2-mode unified architecture (Basic + Advanced)
 2026-01-14 16:33:56 | DOCS | add Phase 3 final report and completion summary
 2026-01-14 16:42:37 | REFACTOR | replace deprecated use_container_width with width parameter
+2026-01-14 16:48:13 | BUGFIX | handle single CV from list in Advanced mode
