@@ -12,7 +12,9 @@ Dies ermöglicht eine einfachere Bedienung, bessere Visualisierung und zukünfti
 - [✓] **Secrets Management:** Implementierung einer Logik, die `st.secrets` (Cloud) und `.env` (Lokal) unterstützt.
 
 ## 🎨 Phase 2: UI-Migration (Frontend)
-- [✓] **Mode Selection:** Radio-Buttons für "Basic", "Analysis", "Full" (ersetzt `ModeSelectionDialog`).
+- [✓] **Mode Selection:** Radio-Buttons für "Basic", "Advanced" (ersetzt `ModeSelectionDialog`).
+  - **Basic**: CV only (single file)
+  - **Advanced**: Full analysis with CV + job profile + matching + feedback (1+ CVs)
 - [✓] **File Upload:** `st.file_uploader` für CV (PDF) und Stellenprofil (PDF).
 - [✓] **Konfiguration:** Eingabefelder für OpenAI API Key (falls nicht in .env).
 - [✓] **Validierung:** Prüfen, ob Dateien hochgeladen wurden, bevor der "Start"-Button aktiv wird.

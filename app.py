@@ -602,9 +602,9 @@ def card_style(selected):
 
 # Initialize mode in session state if not present
 if "selected_mode" not in st.session_state:
-    st.session_state.selected_mode = "Full (CV + Stellenprofil + Match + Feedback)"
+    st.session_state.selected_mode = "Advanced (CV + Stellenprofil + Match + Feedback)"
 
-# Create clickable columns (using buttons as proxies for cards)
+# Create clickable columns (using buttons as proxies for cards) - Now only 2 modes
 with col_m1:
     if st.button(get_text( "ui", "mode_basic", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Basic") else "secondary"):
         st.session_state.selected_mode = "Basic (Nur CV)"
@@ -614,40 +614,36 @@ with col_m1:
         st.rerun()
     st.caption(get_text( "ui", "mode_basic_desc", st.session_state.language))
 
+# Analysis mode merged into Advanced
 with col_m2:
-    if st.button(get_text( "ui", "mode_analysis", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Analysis") else "secondary"):
-        st.session_state.selected_mode = "Analysis (CV + Stellenprofil)"
+    if st.button("Advanced", use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Advanced") else "secondary"):
+        st.session_state.selected_mode = "Advanced (CV + Stellenprofil + Match + Feedback)"
         # Reset pipeline state
         st.session_state.show_pipeline_dialog = False
         st.session_state.show_results_view = False
         st.rerun()
-    st.caption("1 or multiple CVs + job profile. Single CV → single results. Multiple CVs → batch comparison.")
+    st.caption("1 or multiple CVs. Full analysis + matching + feedback for all.")
 
+# Empty placeholder for UI symmetry
 with col_m3:
-    if st.button(get_text( "ui", "mode_full", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Full") else "secondary"):
-        st.session_state.selected_mode = "Full (CV + Stellenprofil + Match + Feedback)"
-        # Reset pipeline state
-        st.session_state.show_pipeline_dialog = False
-        st.session_state.show_results_view = False
-        st.rerun()
-    st.caption(get_text( "ui", "mode_full_desc", st.session_state.language))
+    st.markdown("<div style='opacity: 0.1; padding: 20px; text-align: center;'>✨</div>", unsafe_allow_html=True)
 
 with col_m4:
-    st.markdown("<div style='opacity: 0.2; padding: 20px; text-align: center;'>✨ (Merged)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='opacity: 0.1; padding: 20px; text-align: center;'>✨</div>", unsafe_allow_html=True)
 
 mode = st.session_state.selected_mode
 st.divider()
 
-# Test Mode Button (works for both single and batch in Analysis mode)
-if mode.startswith("Analysis"):
+# Test Mode Button (works for both single and batch in Advanced mode)
+if mode.startswith("Advanced"):
     test_mode_col, _ = st.columns([1, 4])
     with test_mode_col:
-        if st.button("🧪 Test Mode (Analysis)", use_container_width=True):
+        if st.button("🧪 Test Mode (Advanced)", use_container_width=True):
             # Set mock mode and populate test data
             os.environ["MODEL_NAME"] = "mock"
             # Pre-select mock files - unified for both single and batch
-            if "cv_files_analysis" not in st.session_state or not st.session_state.cv_files_analysis:
-                st.session_state.cv_files_analysis = ["mock_cv_1.pdf", "mock_cv_2.pdf", "mock_cv_3.pdf"]
+            if "cv_files_advanced" not in st.session_state or not st.session_state.cv_files_advanced:
+                st.session_state.cv_files_advanced = ["mock_cv_1.pdf", "mock_cv_2.pdf", "mock_cv_3.pdf"]
             if "shared_job_file" not in st.session_state or not st.session_state.shared_job_file:
                 st.session_state.shared_job_file = "mock_job_profile.pdf"
             st.success("✅ Test Mode activated with mock data")
@@ -799,7 +795,7 @@ def render_batch_cv_uploader(label, key_prefix):
 
 # Dynamic Columns based on Mode
 if mode.startswith("Basic"):
-    # Left-aligned column for CV upload (using same ratio as Full mode)
+    # Left-aligned column for CV upload (using same ratio as Advanced mode)
     col1, col2 = st.columns(2)
     with col1:
         if is_mock:
@@ -811,8 +807,8 @@ if mode.startswith("Basic"):
             cv_file = render_custom_uploader(get_text( "ui", "cv_title", st.session_state.language), "cv_basic")
         job_file = None # No job file in Basic mode
     cv_files = []  # Initialize for consistency
-elif mode.startswith("Analysis"):
-    # Unified Analysis mode: Accept 1 or multiple CVs + Job Profile
+elif mode.startswith("Advanced"):
+    # Advanced mode: Accept 1 or multiple CVs + Job Profile + Matching/Feedback
     # Auto-detect single vs batch based on file count
     col1, col2 = st.columns(2)
 
@@ -823,7 +819,7 @@ elif mode.startswith("Analysis"):
             st.caption("Mock: 1-3 CVs (auto-scales to batch if multiple)")
             cv_files = []
         else:
-            cv_files = render_batch_cv_uploader(get_text( "ui", "cv_title", st.session_state.language) + " (1 or more)", "cv_analysis")
+            cv_files = render_batch_cv_uploader(get_text( "ui", "cv_title", st.session_state.language) + " (1 or more)", "cv_advanced")
 
     with col2:
         if is_mock:
@@ -832,32 +828,9 @@ elif mode.startswith("Analysis"):
             st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
             job_file = None
         else:
-            job_file = render_custom_uploader(get_text( "ui", "job_title", st.session_state.language), "job_analysis")
+            job_file = render_custom_uploader(get_text( "ui", "job_title", st.session_state.language), "job_advanced")
     
     cv_file = None
-else:
-    # Two columns for CV and Job Profile (Analysis and Full modes)
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if is_mock:
-            st.subheader(get_text( "ui", "cv_title", st.session_state.language))
-            st.success(get_text( "ui", "test_mode_active", st.session_state.language))
-            st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
-            cv_file = None
-        else:
-            cv_file = render_custom_uploader(get_text( "ui", "cv_title", st.session_state.language), "cv_full")
-
-    with col2:
-        if is_mock:
-            st.subheader(get_text( "ui", "job_title", st.session_state.language))
-            st.success(get_text( "ui", "test_mode_active", st.session_state.language))
-            st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
-            job_file = None
-        else:
-            job_file = render_custom_uploader(get_text( "ui", "job_title", st.session_state.language), "job_full")
-    
-    cv_files = []  # Initialize for consistency
 
 st.divider()
 
@@ -873,8 +846,8 @@ if is_mock:
     # In Mock mode, we don't need files or API key
     start_disabled = False
     # Use dummy files if not uploaded
-    # For Analysis mode, support both single and multiple CVs
-    if mode.startswith("Analysis"):
+    # For Advanced mode, support both single and multiple CVs
+    if mode.startswith("Advanced"):
         if not cv_files: cv_files = ["MOCK_CV1.pdf", "MOCK_CV2.pdf"]
     else:
         if not cv_file: cv_file = "MOCK_CV.pdf"
@@ -882,11 +855,11 @@ if is_mock:
     # Use dummy key if not present (to satisfy checks)
     if not api_key: api_key = "mock-key"
 else:
-    if mode.startswith("Analysis"):
-        # Analysis mode: need CV files (1 or more), job file, and acceptance
+    if mode.startswith("Advanced"):
+        # Advanced mode: need CV files (1 or more), job file, and acceptance
         start_disabled = not cv_files or not job_file or not api_key or not dsgvo_accepted
     else:
-        # Single CV modes (Basic, Full)
+        # Single CV modes (Basic)
         start_disabled = not cv_file or not api_key or not dsgvo_accepted
 
 @st.dialog(get_text('ui', 'dialog_pipeline', st.session_state.language), width="large")
@@ -963,7 +936,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     results = st.session_state.current_generation_results
                 else:
                     # Determine if batch mode or single CV based on file count
-                    # In Analysis mode, cv_file contains a list of files
+                    # In Advanced mode, cv_file contains a list of files
                     # If len > 1 or isinstance(list), it's batch; otherwise single
                     is_batch = isinstance(cv_file, list) and len(cv_file) > 1
                     
@@ -1257,11 +1230,11 @@ with btn_col:
 
 if st.session_state.get("show_pipeline_dialog"):
     # Prepare files based on mode
-    if mode.startswith("Analysis"):
-        # Analysis mode: auto-detect single vs batch based on file count
+    if mode.startswith("Advanced"):
+        # Advanced mode: auto-detect single vs batch based on file count
         # Pass cv_files (list), which can be 1 item (single) or N items (batch)
         run_cv_pipeline_dialog(cv_files, job_file, api_key, mode, st.session_state.get("custom_styles"), st.session_state.get("custom_logo_path"))
     else:
-        # For other modes (Basic, Full)
+        # For other modes (Basic)
         run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, st.session_state.get("custom_styles"), st.session_state.get("custom_logo_path"))
 
