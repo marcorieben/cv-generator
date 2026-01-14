@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
+from scripts.batch_comparison import run_batch_comparison
 
 # Page config must be the first Streamlit command
 st.set_page_config(
@@ -570,7 +571,7 @@ st.markdown(get_text( "ui", "app_subtitle", st.session_state.language))
 # Mode Selection with Cards
 st.subheader(get_text( "ui", "mode_select_title", st.session_state.language))
 
-col_m1, col_m2, col_m3 = st.columns(3)
+col_m1, col_m2, col_m3, col_m4 = st.columns(4)
 
 # Helper to style cards
 def card_style(selected):
@@ -617,6 +618,15 @@ with col_m3:
         st.session_state.show_results_view = False
         st.rerun()
     st.caption(get_text( "ui", "mode_full_desc", st.session_state.language))
+
+with col_m4:
+    if st.button(get_text( "ui", "mode_batch", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Batch") else "secondary"):
+        st.session_state.selected_mode = "Batch (Mehrere CVs + Stellenprofil)"
+        # Reset pipeline state
+        st.session_state.show_pipeline_dialog = False
+        st.session_state.show_results_view = False
+        st.rerun()
+    st.caption(get_text( "ui", "mode_batch_desc", st.session_state.language))
 
 mode = st.session_state.selected_mode
 st.divider()
@@ -696,6 +706,73 @@ def render_custom_uploader(label, key_prefix, file_type=["pdf"]):
                 
     return current_file
 
+def render_batch_cv_uploader(label, key_prefix):
+    """Upload multiple CV files for batch comparison mode."""
+    file_state_key = "batch_cv_files"
+    
+    # Initialize state if needed
+    if file_state_key not in st.session_state:
+        st.session_state[file_state_key] = []
+    
+    # Title is ALWAYS visible
+    st.subheader(label)
+    st.caption(get_text("ui", "batch_upload_hint", st.session_state.language))
+    
+    # Native Streamlit uploader for multiple files
+    widget_key = f"{key_prefix}_widget"
+    uploaded_files = st.file_uploader(
+        label,
+        type=["pdf"],
+        key=widget_key,
+        label_visibility="collapsed",
+        accept_multiple_files=True
+    )
+    
+    # Sync uploader state to session state
+    if uploaded_files:
+        # Check for new or changed files
+        new_files = []
+        for uploaded_file in uploaded_files:
+            is_new = True
+            for existing in st.session_state[file_state_key]:
+                if uploaded_file.name == existing.name and uploaded_file.size == existing.size:
+                    is_new = False
+                    break
+            if is_new:
+                new_files.append(uploaded_file)
+        
+        if new_files:
+            st.session_state[file_state_key] = uploaded_files
+            # Reset pipeline and results when files change
+            if "generation_results" in st.session_state:
+                del st.session_state.generation_results
+            if "current_generation_results" in st.session_state:
+                del st.session_state.current_generation_results
+            st.session_state.show_pipeline_dialog = False
+            st.session_state.show_results_view = False
+    else:
+        # If the widget is empty but we have files in session state, user removed them
+        if st.session_state[file_state_key]:
+            st.session_state[file_state_key] = []
+            st.session_state.show_pipeline_dialog = False
+            st.session_state.show_results_view = False
+            if "generation_results" in st.session_state:
+                del st.session_state.generation_results
+
+    # Visual Feedback (Success State)
+    current_files = st.session_state[file_state_key]
+    if current_files:
+        st.markdown(f"""
+            <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px 15px; border-radius: 5px; margin-top: -10px; margin-bottom: 10px;">
+                <strong>{get_text("ui", "files_active", st.session_state.language)}</strong> {len(current_files)} {get_text("ui", "cvs_selected", st.session_state.language)}
+            </div>
+        """, unsafe_allow_html=True)
+        with st.expander(get_text("ui", "view_files", st.session_state.language)):
+            for i, file in enumerate(current_files, 1):
+                st.write(f"{i}. {file.name}")
+                
+    return current_files
+
 # Dynamic Columns based on Mode
 if mode.startswith("Basic"):
     # Left-aligned column for CV upload (using same ratio as Full mode)
@@ -709,8 +786,33 @@ if mode.startswith("Basic"):
         else:
             cv_file = render_custom_uploader(get_text( "ui", "cv_title", st.session_state.language), "cv_basic")
         job_file = None # No job file in Basic mode
+    cv_files = []  # Initialize for consistency
+elif mode.startswith("Batch"):
+    # Batch mode: Multiple CVs + Job Profile
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if is_mock:
+            st.subheader(get_text( "ui", "cv_title", st.session_state.language))
+            st.success(get_text( "ui", "test_mode_active", st.session_state.language))
+            st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
+            cv_files = []
+        else:
+            cv_files = render_batch_cv_uploader(get_text( "ui", "cv_batch_title", st.session_state.language), "cv_batch")
+
+    with col2:
+        if is_mock:
+            st.subheader(get_text( "ui", "job_title", st.session_state.language))
+            st.success(get_text( "ui", "test_mode_active", st.session_state.language))
+            st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
+            job_file = None
+        else:
+            job_file = render_custom_uploader(get_text( "ui", "job_title", st.session_state.language), "job_batch")
+    
+    # For batch mode, we'll handle cv_files differently below
+    cv_file = None
 else:
-    # Two columns for CV and Job Profile
+    # Two columns for CV and Job Profile (Analysis and Full modes)
     col1, col2 = st.columns(2)
 
     with col1:
@@ -730,6 +832,8 @@ else:
             job_file = None
         else:
             job_file = render_custom_uploader(get_text( "ui", "job_title", st.session_state.language), "job_full")
+    
+    cv_files = []  # Initialize for consistency
 
 st.divider()
 
@@ -745,12 +849,20 @@ if is_mock:
     # In Mock mode, we don't need files or API key
     start_disabled = False
     # Use dummy files if not uploaded
-    if not cv_file: cv_file = "MOCK_CV.pdf"
-    if not job_file: job_file = "MOCK_JOB.pdf"
+    if mode.startswith("Batch"):
+        if not cv_files: cv_files = ["MOCK_CV1.pdf", "MOCK_CV2.pdf"]
+    else:
+        if not cv_file: cv_file = "MOCK_CV.pdf"
+    if not job_file and mode != "Basic (Nur CV)": job_file = "MOCK_JOB.pdf"
     # Use dummy key if not present (to satisfy checks)
     if not api_key: api_key = "mock-key"
 else:
-    start_disabled = not cv_file or not api_key or not dsgvo_accepted
+    if mode.startswith("Batch"):
+        # Batch mode: need multiple CVs, job file, and acceptance
+        start_disabled = not cv_files or not job_file or not api_key or not dsgvo_accepted
+    else:
+        # Single CV modes
+        start_disabled = not cv_file or not api_key or not dsgvo_accepted
 
 @st.dialog(get_text('ui', 'dialog_pipeline', st.session_state.language), width="large")
 def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, custom_logo_path):
@@ -816,37 +928,80 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 if "current_generation_results" in st.session_state:
                     results = st.session_state.current_generation_results
                 else:
-                    # Run Pipeline
-                    generator = StreamlitCVGenerator(os.getcwd())
-                    results = generator.run(
-                        cv_file=cv_file,
-                        job_file=job_file if mode != "Basic (Nur CV)" else None,
-                        api_key=api_key,
-                        progress_callback=progress_callback,
-                        custom_styles=current_custom_styles,
-                        custom_logo_path=current_custom_logo_path,
-                        pipeline_mode=mode,
-                        language=st.session_state.language
-                    )
+                    # Determine if batch mode or single CV
+                    is_batch = mode.startswith("Batch")
+                    
+                    if is_batch:
+                        # Batch Mode: Process multiple CVs
+                        log_container.write(f"🔄 Processing {len(cv_file)} CVs...")
+                        batch_results = run_batch_comparison(
+                            cv_files=cv_file,
+                            job_file=job_file,
+                            api_key=api_key,
+                            custom_styles=current_custom_styles,
+                            custom_logo_path=current_custom_logo_path,
+                            pipeline_mode=mode,
+                            language=st.session_state.language
+                        )
+                        # For now, wrap batch results in a success structure
+                        results = {
+                            "success": all(r.get("success", False) for r in batch_results),
+                            "batch_results": batch_results,
+                            "mode": mode,
+                            "error": None if all(r.get("success", False) for r in batch_results) else "Some CVs failed processing"
+                        }
+                    else:
+                        # Single CV Mode: Process one CV
+                        generator = StreamlitCVGenerator(os.getcwd())
+                        results = generator.run(
+                            cv_file=cv_file,
+                            job_file=job_file if mode != "Basic (Nur CV)" else None,
+                            api_key=api_key,
+                            progress_callback=progress_callback,
+                            custom_styles=current_custom_styles,
+                            custom_logo_path=current_custom_logo_path,
+                            pipeline_mode=mode,
+                            language=st.session_state.language
+                        )
                     st.session_state.current_generation_results = results
                 
                 if results.get("success"):
                     # Save to History
                     if "history_saved" not in st.session_state:
-                        history_entry = {
-                            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
-                            "candidate_name": f"{results.get('vorname', 'Unbekannt')} {results.get('nachname', '')}".strip(),
-                            "mode": mode,
-                            "word_path": results.get("word_path"),
-                            "cv_json": results.get("cv_json"),
-                            "dashboard_path": results.get("dashboard_path"),
-                            "match_score": results.get("match_score"),
-                            "model_name": results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
-                            "stellenprofil_json": results.get("stellenprofil_json"),
-                            "match_json": results.get("match_json"),
-                            "offer_word_path": results.get("offer_word_path")
-                        }
-                        save_to_history(history_entry)
+                        if mode.startswith("Batch"):
+                            # For batch mode, create entries for each successful CV
+                            for batch_result in results.get("batch_results", []):
+                                if batch_result.get("success"):
+                                    history_entry = {
+                                        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                                        "candidate_name": f"{batch_result.get('vorname', 'Unbekannt')} {batch_result.get('nachname', '')}".strip(),
+                                        "mode": mode,
+                                        "word_path": batch_result.get("word_path"),
+                                        "cv_json": batch_result.get("cv_json"),
+                                        "dashboard_path": batch_result.get("dashboard_path"),
+                                        "match_score": batch_result.get("match_score"),
+                                        "model_name": batch_result.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
+                                        "stellenprofil_json": batch_result.get("stellenprofil_json"),
+                                        "match_json": batch_result.get("match_json"),
+                                        "offer_word_path": batch_result.get("offer_word_path")
+                                    }
+                                    save_to_history(history_entry)
+                        else:
+                            # Single CV mode: save single entry
+                            history_entry = {
+                                "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                                "candidate_name": f"{results.get('vorname', 'Unbekannt')} {results.get('nachname', '')}".strip(),
+                                "mode": mode,
+                                "word_path": results.get("word_path"),
+                                "cv_json": results.get("cv_json"),
+                                "dashboard_path": results.get("dashboard_path"),
+                                "match_score": results.get("match_score"),
+                                "model_name": results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
+                                "stellenprofil_json": results.get("stellenprofil_json"),
+                                "match_json": results.get("match_json"),
+                                "offer_word_path": results.get("offer_word_path")
+                            }
+                            save_to_history(history_entry)
                         st.session_state.history_saved = True
 
                     st.session_state.generation_results = results
@@ -1013,5 +1168,11 @@ with btn_col:
             del st.session_state.current_generation_results
 
 if st.session_state.get("show_pipeline_dialog"):
-    run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, st.session_state.get("custom_styles"), st.session_state.get("custom_logo_path"))
+    # Prepare files based on mode
+    if mode.startswith("Batch"):
+        # For batch mode, pass cv_files list instead of single cv_file
+        run_cv_pipeline_dialog(cv_files, job_file, api_key, mode, st.session_state.get("custom_styles"), st.session_state.get("custom_logo_path"))
+    else:
+        # For single CV modes
+        run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, st.session_state.get("custom_styles"), st.session_state.get("custom_logo_path"))
 

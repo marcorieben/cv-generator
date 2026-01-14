@@ -105,6 +105,16 @@
       "en": "Complete workflow including matchmaking and feedback.",
       "fr": "Flux de travail complet incluant le matchmaking et le feedback."
     },
+    "mode_batch": {
+      "de": "📊 Batch\n(Mehrere CVs)",
+      "en": "📊 Batch\n(Multiple CVs)",
+      "fr": "📊 Lot\n(Plusieurs CVs)"
+    },
+    "mode_batch_desc": {
+      "de": "Vergleicht mehrere CVs mit einem Stellenprofil und erstellt Angebote.",
+      "en": "Compares multiple CVs with a job profile and creates offers.",
+      "fr": "Compare plusieurs CVs avec un profil de poste et crée des offres."
+    },
     "welcome_msg": {
       "de": "Willkommen",
       "en": "Welcome",
@@ -144,6 +154,36 @@
       "de": "📝 2. Stellenprofil",
       "en": "📝 2. Job Profile",
       "fr": "📝 2. Profil de poste"
+    },
+    "cv_batch_title": {
+      "de": "📄 1. Lebensläufe (CVs) - mehrere auswählen",
+      "en": "📄 1. Curriculum Vitae (CVs) - select multiple",
+      "fr": "📄 1. Curriculum Vitae (CVs) - sélectionner plusieurs"
+    },
+    "job_batch": {
+      "de": "📝 2. Stellenprofil",
+      "en": "📝 2. Job Profile",
+      "fr": "📝 2. Profil de poste"
+    },
+    "batch_upload_hint": {
+      "de": "Wählen Sie mehrere PDF-Dateien aus",
+      "en": "Select multiple PDF files",
+      "fr": "Sélectionnez plusieurs fichiers PDF"
+    },
+    "files_active": {
+      "de": "✅ Dateien aktiv:",
+      "en": "✅ Files active:",
+      "fr": "✅ Fichiers actifs :"
+    },
+    "cvs_selected": {
+      "de": "CVs ausgewählt",
+      "en": "CVs selected",
+      "fr": "CVs sélectionnés"
+    },
+    "view_files": {
+      "de": "📋 Dateien anzeigen",
+      "en": "📋 View Files",
+      "fr": "📋 Afficher les fichiers"
     },
     "test_mode_active": {
       "de": "🧪 **Test-Modus aktiv**",

@@ -8,3 +8,4 @@
 2026-01-07 17:56:54 | FEATURE | finalize localization, fix app initialization crash and update language selectors to DE/EN/FR codes
 2026-01-07 17:57:30 | CHORE | update changelog
 2026-01-07 17:59:26 | UI | add detailed info to changelog for multi-language update
+2026-01-14 07:16:49 | BUGFIX | skip merge commits in changelog updates to keep branches synchronized
