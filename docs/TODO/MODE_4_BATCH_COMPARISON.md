@@ -84,6 +84,12 @@ Implement Mode 4 (Batch Comparison): Upload one job profile and multiple CVs, pr
   - ✅ All 45 unit tests passing (test_auth, test_dialogs, test_integration, test_offline_generation, test_processing_dialog, test_validation)
   - ✅ Zero regressions detected in existing functionality
   - ✅ Pre-commit hooks validated all changes
+- [x] Enhance batch error reporting (COMPLETED in latest commit)
+  - ✅ Console logging for each CV processing step
+  - ✅ Partial success support (some CVs fail, others succeed)
+  - ✅ Detailed error messages with failure reasons
+  - ✅ Failed CV expander in results view
+  - ✅ Created BATCH_ERROR_HANDLING.md documentation
 - [ ] End-to-end test of Mode 4 in mock and production
   - ⏳ Ready for manual testing in Streamlit app
   - ⏳ Mock data available via Test Mode button
@@ -146,12 +152,14 @@ Implement Mode 4 (Batch Comparison): Upload one job profile and multiple CVs, pr
 | `save_mock_data_to_temp_files()` | mock_batch_data.py | Write mock data to JSON files |
 
 ### Testing Status
-- ✅ All 45 unit tests passing (7.94s runtime)
-- ✅ Coverage: 3906 statements, 31% coverage
+- ✅ All 45 unit tests passing (6.56s runtime)
+- ✅ Coverage: 3914 statements, 31% coverage
 - ✅ Zero regressions in Modes 1-3
 - ✅ Pre-commit hooks validated
 - ✅ CHANGELOG automatically updated
 - ✅ `batch_comparison.py` module resolves `ModuleNotFoundError` in app.py
+- ✅ Batch error handling with partial success support
+- ✅ Console logging for debugging batch failures
 
 ### File Structure
 ```
@@ -175,3 +183,8 @@ batch_output/
 - Offer generation ready for integration with match analysis results
 - Batch progress displayed during processing with status indicators
 - Shortlist state persists within session for offer generation workflow
+- **Error Handling:** Batch mode now supports partial success scenarios
+  - Some CVs fail → Others still processed and displayed
+  - Detailed error messages logged to console and displayed in UI
+  - Failed CVs shown in expandable section in results
+  - See [BATCH_ERROR_HANDLING.md](../BATCH_ERROR_HANDLING.md) for details
