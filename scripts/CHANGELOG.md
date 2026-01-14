@@ -34,3 +34,4 @@
 2026-01-14 11:11:21 | FEATURE | implement dynamic naming for Mode 3 folder structure
 2026-01-14 12:18:02 | BUGFIX | skip pipeline rerun when loading Mode 3 results from history
 2026-01-14 12:26:05 | BUGFIX | prevent pipeline rerun when viewing results in Mode 3
+2026-01-14 12:34:13 | BUGFIX | prevent unconditional state reset in results view

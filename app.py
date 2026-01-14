@@ -621,7 +621,7 @@ with col_m2:
         st.session_state.show_pipeline_dialog = False
         st.session_state.show_results_view = False
         st.rerun()
-    st.caption(get_text( "ui", "mode_analysis_desc", st.session_state.language))
+    st.caption("1 or multiple CVs + job profile. Single CV → single results. Multiple CVs → batch comparison.")
 
 with col_m3:
     if st.button(get_text( "ui", "mode_full", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Full") else "secondary"):
@@ -633,31 +633,25 @@ with col_m3:
     st.caption(get_text( "ui", "mode_full_desc", st.session_state.language))
 
 with col_m4:
-    if st.button(get_text( "ui", "mode_batch", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Batch") else "secondary"):
-        st.session_state.selected_mode = "Batch (Mehrere CVs + Stellenprofil)"
-        # Reset pipeline state
-        st.session_state.show_pipeline_dialog = False
-        st.session_state.show_results_view = False
-        st.rerun()
-    st.caption(get_text( "ui", "mode_batch_desc", st.session_state.language))
+    st.markdown("<div style='opacity: 0.2; padding: 20px; text-align: center;'>✨ (Merged)</div>", unsafe_allow_html=True)
 
 mode = st.session_state.selected_mode
 st.divider()
 
-# Test Mode Button (specifically for Batch)
-if mode.startswith("Batch"):
+# Test Mode Button (works for both single and batch in Analysis mode)
+if mode.startswith("Analysis"):
     test_mode_col, _ = st.columns([1, 4])
     with test_mode_col:
-        if st.button("🧪 Test Mode (Batch)", use_container_width=True):
+        if st.button("🧪 Test Mode (Analysis)", use_container_width=True):
             # Set mock mode and populate test data
             os.environ["MODEL_NAME"] = "mock"
-            # Pre-select mock files
-            if "batch_cv_files" not in st.session_state or not st.session_state.batch_cv_files:
-                st.session_state.batch_cv_files = ["mock_cv_1.pdf", "mock_cv_2.pdf", "mock_cv_3.pdf"]
+            # Pre-select mock files - unified for both single and batch
+            if "cv_files_analysis" not in st.session_state or not st.session_state.cv_files_analysis:
+                st.session_state.cv_files_analysis = ["mock_cv_1.pdf", "mock_cv_2.pdf", "mock_cv_3.pdf"]
             if "shared_job_file" not in st.session_state or not st.session_state.shared_job_file:
                 st.session_state.shared_job_file = "mock_job_profile.pdf"
-            st.success("✅ Test Mode activated with mock batch data")
-            st.info("📌 Mock data: 3 CVs, 1 job profile - ready to process")
+            st.success("✅ Test Mode activated with mock data")
+            st.info("📌 Mock data: 3 CVs, 1 job profile - works for single CV or batch")
             st.rerun()
     st.divider()
 
@@ -817,18 +811,19 @@ if mode.startswith("Basic"):
             cv_file = render_custom_uploader(get_text( "ui", "cv_title", st.session_state.language), "cv_basic")
         job_file = None # No job file in Basic mode
     cv_files = []  # Initialize for consistency
-elif mode.startswith("Batch"):
-    # Batch mode: Multiple CVs + Job Profile
+elif mode.startswith("Analysis"):
+    # Unified Analysis mode: Accept 1 or multiple CVs + Job Profile
+    # Auto-detect single vs batch based on file count
     col1, col2 = st.columns(2)
 
     with col1:
         if is_mock:
             st.subheader(get_text( "ui", "cv_title", st.session_state.language))
             st.success(get_text( "ui", "test_mode_active", st.session_state.language))
-            st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
+            st.caption("Mock: 1-3 CVs (auto-scales to batch if multiple)")
             cv_files = []
         else:
-            cv_files = render_batch_cv_uploader(get_text( "ui", "cv_batch_title", st.session_state.language), "cv_batch")
+            cv_files = render_batch_cv_uploader(get_text( "ui", "cv_title", st.session_state.language) + " (1 or more)", "cv_analysis")
 
     with col2:
         if is_mock:
@@ -837,9 +832,8 @@ elif mode.startswith("Batch"):
             st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
             job_file = None
         else:
-            job_file = render_custom_uploader(get_text( "ui", "job_title", st.session_state.language), "job_batch")
+            job_file = render_custom_uploader(get_text( "ui", "job_title", st.session_state.language), "job_analysis")
     
-    # For batch mode, we'll handle cv_files differently below
     cv_file = None
 else:
     # Two columns for CV and Job Profile (Analysis and Full modes)
@@ -879,7 +873,8 @@ if is_mock:
     # In Mock mode, we don't need files or API key
     start_disabled = False
     # Use dummy files if not uploaded
-    if mode.startswith("Batch"):
+    # For Analysis mode, support both single and multiple CVs
+    if mode.startswith("Analysis"):
         if not cv_files: cv_files = ["MOCK_CV1.pdf", "MOCK_CV2.pdf"]
     else:
         if not cv_file: cv_file = "MOCK_CV.pdf"
@@ -887,11 +882,11 @@ if is_mock:
     # Use dummy key if not present (to satisfy checks)
     if not api_key: api_key = "mock-key"
 else:
-    if mode.startswith("Batch"):
-        # Batch mode: need multiple CVs, job file, and acceptance
+    if mode.startswith("Analysis"):
+        # Analysis mode: need CV files (1 or more), job file, and acceptance
         start_disabled = not cv_files or not job_file or not api_key or not dsgvo_accepted
     else:
-        # Single CV modes
+        # Single CV modes (Basic, Full)
         start_disabled = not cv_file or not api_key or not dsgvo_accepted
 
 @st.dialog(get_text('ui', 'dialog_pipeline', st.session_state.language), width="large")
@@ -967,8 +962,10 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 if "current_generation_results" in st.session_state:
                     results = st.session_state.current_generation_results
                 else:
-                    # Determine if batch mode or single CV
-                    is_batch = mode.startswith("Batch")
+                    # Determine if batch mode or single CV based on file count
+                    # In Analysis mode, cv_file contains a list of files
+                    # If len > 1 or isinstance(list), it's batch; otherwise single
+                    is_batch = isinstance(cv_file, list) and len(cv_file) > 1
                     
                     if is_batch:
                         # Batch Mode: Process multiple CVs
@@ -1023,8 +1020,8 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 if results.get("success"):
                     # Save to History
                     if "history_saved" not in st.session_state:
-                        if mode.startswith("Batch"):
-                            # For batch mode, create ONE entry for the entire batch with all results
+                        if is_batch:
+                            # For batch mode (multiple CVs), create ONE entry for the entire batch with all results
                             batch_folder = results.get("batch_folder", "")
                             batch_results = results.get("batch_results", [])
                             successful_count = sum(1 for r in batch_results if r.get("success"))
@@ -1260,10 +1257,11 @@ with btn_col:
 
 if st.session_state.get("show_pipeline_dialog"):
     # Prepare files based on mode
-    if mode.startswith("Batch"):
-        # For batch mode, pass cv_files list instead of single cv_file
+    if mode.startswith("Analysis"):
+        # Analysis mode: auto-detect single vs batch based on file count
+        # Pass cv_files (list), which can be 1 item (single) or N items (batch)
         run_cv_pipeline_dialog(cv_files, job_file, api_key, mode, st.session_state.get("custom_styles"), st.session_state.get("custom_logo_path"))
     else:
-        # For single CV modes
+        # For other modes (Basic, Full)
         run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, st.session_state.get("custom_styles"), st.session_state.get("custom_logo_path"))
 
