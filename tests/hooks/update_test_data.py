@@ -45,7 +45,7 @@ def update_test_data():
     # 2. Generate Word CV
     print("   📝 Generating Word CV...")
     try:
-        word_path = generate_cv(str(cv_json_path), str(output_dir))
+        word_path = generate_cv(str(cv_json_path), str(output_dir), interactive=False)
         print(f"      ✅ Created: {Path(word_path).name}")
     except Exception as e:
         print(f"      ❌ Failed: {e}")

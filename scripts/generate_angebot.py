@@ -3,11 +3,38 @@ import json
 from openai import OpenAI
 from datetime import datetime
 
-def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path, output_path, schema_path):
+def abs_path(relative_path):
+    """Gibt den absoluten Pfad relativ zum Skript-Verzeichnis zurück"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(script_dir, relative_path)
+
+def load_translations():
+    """Lädt die Übersetzungen aus der translations.json Datei."""
+    translations_path = abs_path("translations.json")
+    if os.path.exists(translations_path):
+        try:
+            with open(translations_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            pass
+    return {}
+
+def get_text(translations, section, key, lang="de"):
+    """Holt einen übersetzten Text."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
+    except:
+        return f"[{key}]"
+
+def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path, output_path, schema_path=None, language='de'):
     """
     Generate an Offer (Angebot) JSON using the provided CV, Stellenprofil, and Match JSONs.
     """
+    translations = load_translations()
     # Load schema
+    if not schema_path:
+        schema_path = abs_path("angebot_json_schema.json")
+        
     with open(schema_path, 'r', encoding='utf-8') as f:
         schema = json.load(f)
     
@@ -135,17 +162,27 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         "match": {
             "score": match_data.get("match_score", {}).get("score_gesamt", 0) if match_data else 0,
             "fazit": match_data.get("gesamt_fazit", {}).get("kurzbegruendung", "") if match_data else ""
-        }
+        },
+        "ausgabesprache": language
     }
 
+    # Select language name for the prompt
+    lang_map = {
+        "de": "Deutsch",
+        "en": "Englisch",
+        "fr": "Französisch"
+    }
+    lang_name = lang_map.get(language, "Deutsch")
+
     system_prompt = (
-        "Du bist ein Experte für die Erstellung von professionellen IT-Dienstleistungsangeboten. "
-        "Erstelle die qualitativen Abschnitte eines Angebots basierend auf dem bereitgestellten Kontext.\n\n"
+        f"Du bist ein Experte für die Erstellung von professionellen IT-Dienstleistungsangeboten in **{lang_name}**. "
+        f"Erstelle die qualitativen Abschnitte eines Angebots basierend auf dem bereitgestellten Kontext in **{lang_name}**.\n\n"
         "WICHTIGE REGELN:\n"
-        "1. TONALITÄT: Professionell, empathisch, überzeugend. Schweizer Rechtschreibung (ss statt ß).\n"
-        "2. WIR-FORM: Verwende konsequent die 'Wir-Form' (Wir als Orange Business), niemals die 'Ich-Form'.\n"
-        "3. STRIKT POSITIV: Alle Kriterien gelten als erfüllt. Weise NIEMALS auf Lücken, fehlende Erfahrung oder Defizite hin (NICHT: 'Trotz fehlender...', 'Obwohl XY nicht...'). Formuliere ausschliesslich Stärken und Übereinstimmungen.\n"
-        "4. STRUKTUR: Gib ein JSON-Objekt mit exakt diesen Feldern zurück. Beachte dabei unbedingt die HINWEISE (Hints) für jedes Feld:\n"
+        f"1. SPRACHE: Generiere alle Texte (Werte im JSON) konsequent in **{lang_name}**.\n"
+        "2. TONALITÄT: Professionell, empathisch, überzeugend. Falls die Ausgabe in Deutsch erfolgt: Nutze Schweizer Rechtschreibung (ss statt ß).\n"
+        "3. WIR-FORM: Verwende konsequent die 'Wir-Form' (Wir als Orange Business), niemals die 'Ich-Form'.\n"
+        "4. STRIKT POSITIV: Alle Kriterien gelten als erfüllt. Weise NIEMALS auf Lücken, fehlende Erfahrung oder Defizite hin (NICHT: 'Trotz fehlender...', 'Obwohl XY nicht...'). Formuliere ausschliesslich Stärken und Übereinstimmungen.\n"
+        "5. STRUKTUR: Gib ein JSON-Objekt mit exakt diesen Feldern zurück. Beachte dabei unbedingt die HINWEISE (Hints) für jedes Feld:\n"
     )
 
     # Inject hints into system prompt
@@ -210,16 +247,19 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         return []
 
     # 4. Final Assembly
+    check_marker = translations.get("system", {}).get("missing_data_marker", {}).get(language, "! bitte prüfen !")
+    acc_manager_label = translations.get("offer", {}).get("account_manager", {}).get(language, "Account Manager")
+    
     angebot_json = {
         "angebots_metadata": {
-            "angebots_id": stellenprofil_data.get("metadata", {}).get("document_id", "! bitte prüfen !"),
+            "angebots_id": stellenprofil_data.get("metadata", {}).get("document_id", check_marker),
             "anbieter": "Orange Business",
             "kunde": llm_context["stelle"]["kunde"],
             "datum": datetime.now().strftime("%d.%m.%Y"),
             "ansprechpartner": {
-                "name": "! bitte prüfen !",
-                "rolle": "Account Manager",
-                "kontakt": "! bitte prüfen !"
+                "name": check_marker,
+                "rolle": acc_manager_label,
+                "kontakt": check_marker
             }
         },
         "stellenbezug": {
@@ -234,13 +274,19 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         },
         "profil_und_kompetenzen": {
             "methoden_und_technologien": ensure_list(llm_response.get("methoden_technologien", [])),
-            "operative_und_fuehrungserfahrung": ensure_list(llm_response.get("erfahrung_ops_führung", []))
+            "operative_und_fuehrungserfahrung": ensure_list(llm_response.get("erfahrung_ops_führung", [])),
+            "sprachen": [
+                {
+                    "sprache": s.get("Sprache", ""),
+                    "level": get_text(translations, 'levels', f"level_{s.get('Level', 0)}", language) if s.get("Level") else ""
+                } for s in cv_data.get("Sprachen", [])
+            ]
         },
         "einsatzkonditionen": {
             "pensum": stellenprofil_data.get("einsatzrahmen", {}).get("pensum", "100%"),
-            "verfuegbarkeit": stellenprofil_data.get("einsatzrahmen", {}).get("zeitraum", {}).get("start", "ab sofort"),
+            "verfuegbarkeit": stellenprofil_data.get("einsatzrahmen", {}).get("zeitraum", {}).get("start", translations.get("offer", {}).get("asap", {}).get(language, "ab sofort")),
             "stundensatz": "165.00 CHF (exkl. MWST)",
-            "subunternehmen": "Nein"
+            "subunternehmen": translations.get("offer", {}).get("no", {}).get(language, "Nein")
         },
         "kriterien_abgleich": abgleich,
         "gesamtbeurteilung": {
@@ -249,8 +295,8 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
             "empfehlung": llm_response.get("empfehlung", "")
         },
         "abschluss": {
-            "verfuegbarkeit_gespraech": llm_response.get("verfuegbarkeit_gespraech", "Nach Absprache kurzfristig möglich."),
-            "kontakt_hinweis": llm_response.get("kontakt_hinweis", "Wir freuen uns auf Ihre Rückmeldung.")
+            "verfuegbarkeit_gespraech": llm_response.get("verfuegbarkeit_gespraech", translations.get("offer", {}).get("appointment_ready", {}).get(language, "Nach Absprache kurzfristig möglich.")),
+            "kontakt_hinweis": llm_response.get("kontakt_hinweis", translations.get("offer", {}).get("feedback_welcome", {}).get(language, "Wir freuen uns auf Ihre Rückmeldung."))
         }
     }
 

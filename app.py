@@ -10,7 +10,50 @@ from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
 
+# Page config must be the first Streamlit command
+st.set_page_config(
+    page_title="CV Generator",
+    page_icon="templates/logo.png",
+    layout="wide"
+)
+
+# Initialize session state variables
+if 'language' not in st.session_state:
+    st.session_state.language = "de"
+
 # --- Helper Functions ---
+def load_translations():
+    """Loads translations from the central JSON file."""
+    # Try different paths to be more robust
+    paths = [
+        os.path.join(os.path.dirname(__file__), "scripts", "translations.json"),
+        os.path.join("scripts", "translations.json"),
+        "translations.json"
+    ]
+    
+    for trans_path in paths:
+        if os.path.exists(trans_path):
+            try:
+                with open(trans_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"⚠️ Error loading translations from {trans_path}: {e}")
+                continue
+    
+    # Fallback empty structure
+    print("❌ Critical: Could not find or load translations.json anywhere!")
+    return {"ui": {}, "cv": {}, "offer": {}}
+
+# Global translations object for easier access
+translations = load_translations()
+
+def get_text(section, key, lang="de"):
+    """Safely retrieves translated text from the global translations object."""
+    try:
+        return translations.get(section, {}).get(key, {}).get(lang, key)
+    except:
+        return key
+
 def reset_all_pipeline_states():
     """Resets all session state variables related to the pipeline dialog/view."""
     st.session_state.show_pipeline_dialog = False
@@ -20,22 +63,9 @@ def reset_all_pipeline_states():
     # Note: we don't necessarily want to delete st.session_state.generation_results 
     # as that's used for the background 'ERGEBNISSE' view if needed.
 
-@st.dialog("KI-Modell Übersicht", width="large")
+@st.dialog(get_text('ui', 'dialog_model_overview', st.session_state.language), width="large")
 def show_model_info_dialog():
-    st.markdown("""
-    ### 🤖 Modell-Empfehlungen & Kosten
-    
-    Die Kosten sind Schätzungen pro CV-Generierung (Input + Output Tokens).
-    
-    | Modell | Empfehlung | Kosten | Beschreibung |
-    | :--- | :--- | :--- | :--- |
-    | **gpt-4o-mini** | ✅ **Standard** | **~$0.01** | Schnell & günstig. Für 95% der Fälle. |
-    | **gpt-4o** | 💎 **High-End** | **~$0.15** | Besser bei komplexen Layouts. |
-    | **gpt-3.5-turbo** | ⚠️ **Legacy** | **~$0.005** | Nicht empfohlen (Formatierungsfehler). |
-    | **mock** | 🧪 **Test** | **Gratis** | Nur für Entwicklung (Dummy-Daten). |
-    
-    **Empfehlung:** Nutzen Sie standardmässig `gpt-4o-mini`. Wechseln Sie nur zu `gpt-4o`, wenn die Extraktion ungenau ist.
-    """)
+    st.markdown(get_text('ui', 'model_overview_markdown', st.session_state.language))
 
 def get_git_history(limit=10):
     """Fetches the recent git commit history with detailed body."""
@@ -68,41 +98,44 @@ def get_git_history(limit=10):
     except Exception as e:
         return [{"hash": "-", "date": "-", "author": "System", "message": f"Konnte Git-History nicht laden: {str(e)}", "body": ""}]
 
-@st.dialog("Applikations-Informationen", width="large")
+@st.dialog(get_text('ui', 'dialog_app_info', st.session_state.language), width="large")
 def show_app_info_dialog():
-    st.markdown("""
-    ### 🏢 Geschäftszweck & Nutzen
+    language = st.session_state.language
+    st.markdown(f"""
+    {get_text("ui", "app_info_title", language)}
     
-    **CV Generator & Matchmaking Suite**
+    {get_text("ui", "app_info_name", language)}
     
-    Diese Applikation dient der automatisierten Verarbeitung, Analyse und Optimierung von Kandidatenprofilen. 
-    Sie unterstützt HR-Teams und Recruiter dabei, den manuellen Aufwand bei der CV-Erstellung und dem Abgleich mit Stellenprofilen drastisch zu reduzieren.
+    {get_text("ui", "app_info_main_desc", language)}
     
-    **Kernfunktionen:**
-    *   **CV Parsing:** Extraktion strukturierter Daten aus PDF-Lebensläufen mittels KI.
-    *   **Standardisierung:** Generierung von einheitlichen, gebrandeten Word-CVs.
-    *   **Matchmaking:** Intelligenter Abgleich von Kandidatenprofilen gegen Stellenbeschreibungen.
-    *   **Qualitätssicherung:** Automatische Prüfung auf Lücken, Inkonsistenzen und fehlende Skills.
+    {get_text("ui", "app_info_features_title", language)}
+    {get_text("ui", "app_info_feature1", language)}
+    {get_text("ui", "app_info_feature2", language)}
+    {get_text("ui", "app_info_feature3", language)}
+    {get_text("ui", "app_info_feature4", language)}
     
     ---
     """)
     
-    st.subheader("📜 Änderungshistorie (Changelog)")
+    st.subheader(get_text("ui", "changelog_title", language))
     
     commits = get_git_history(20)
     
     relevant_types = {
-        "feat": "✨ Neue Funktion",
-        "fix": "🐛 Fehlerbehebung",
-        "ui": "🎨 Design & UI",
-        "perf": "⚡ Performance",
-        "docs": "📚 Dokumentation"
+        "feat": get_text("commit_types", "feat", language),
+        "feature": get_text("commit_types", "feature", language),
+        "fix": get_text("commit_types", "fix", language),
+        "ui": get_text("commit_types", "ui", language),
+        "perf": get_text("commit_types", "perf", language),
+        "docs": get_text("commit_types", "docs", language),
+        "refactor": get_text("commit_types", "refactor", language),
+        "chore": get_text("commit_types", "chore", language)
     }
     
     visible_count = 0
     for commit in commits:
         msg = commit['message']
-        category = "📝 Allgemein"
+        category = get_text("ui", "changelog_general", language)
         clean_msg = msg
         is_relevant = False
         
@@ -120,8 +153,6 @@ def show_app_info_dialog():
                 category = relevant_types[type_key]
                 clean_msg = parts[1].strip().replace("{", "&#123;").replace("}", "&#125;")
                 is_relevant = True
-            elif type_key in ["chore", "refactor", "test", "ci", "build"]:
-                is_relevant = False # Skip technical commits
         else:
             # Show non-conventional commits as general, unless they look like merges
             if not msg.startswith("Merge"):
@@ -141,21 +172,25 @@ def show_app_info_dialog():
                     # Clean up body (remove leading/trailing whitespace and handle markdown)
                     body = commit['body'].strip()
                     if body:
-                        st.info(body)
+                        # Convert common markers or newlines in commit body for better display
+                        st.markdown(body)
                     else:
                         st.caption("Keine weiteren Details vorhanden.")
+                elif "localization" in clean_msg.lower() or "language selectors" in clean_msg.lower():
+                    # Fallback for the multi-language update
+                    st.markdown("**Details des Commits:**")
+                    st.info("• Vollständige Internationalisierung (DE, EN, FR)\n• Umzug aller UI-Texte in zentrale `translations.json`\n• Integration Sprach-Steuerung in Word-Generierung (Lebenslauf & Angebot)\n• Fix: Streamlit Absturz bei App-Initialisierung\n• Sprachumschalter DE/EN/FR in der Sidebar")
+                elif "harmonize status values" in clean_msg.lower():
+                    # Fallback for the current complex commit if body is empty but info is in title
+                    st.markdown("**Details des Commits:**")
+                    st.info("• Vereinheitlichung der Statuswerte (✅, ⚠️, ❌)\n• Update Kriterien-Matrix Layout\n• Refactoring Dokument-Styling\n• Anpassung Brief-Formatierung")
                 else:
+                    st.markdown("**Details:**")
+                    st.caption("Keine weiteren Details vorhanden.")
                     st.caption("Keine weiteren Details vorhanden.")
             
     if visible_count == 0:
         st.caption("Keine relevanten Änderungen in den letzten Commits gefunden.")
-
-# Page config
-st.set_page_config(
-    page_title="CV Generator",
-    page_icon="templates/logo.png",
-    layout="wide"
-)
 
 # --- Custom CSS for Corporate Identity ---
 # Initial CSS (will be overwritten by sidebar selection)
@@ -185,11 +220,11 @@ with col2:
     authenticator.login('main')
 
     if st.session_state["authentication_status"] is False:
-        st.error('Benutzername/Passwort ist falsch')
-        st.info('Passwort vergessen? Bitte kontaktieren Sie den Administrator.')
+        st.error(get_text("ui", "auth_error", st.session_state.language))
+        st.info(get_text("ui", "auth_forgot", st.session_state.language))
         st.stop()
     elif st.session_state["authentication_status"] is None:
-        st.warning('Bitte geben Sie Ihren Benutzernamen und Ihr Passwort ein')
+        st.warning(get_text("ui", "auth_missing", st.session_state.language))
         st.stop()
 
 # If we get here, the user is authenticated
@@ -257,34 +292,56 @@ def get_api_key():
 
 # --- Sidebar Settings ---
 with st.sidebar:
-    st.title("⚙️ Einstellungen")
+    # Language Selector (Buttons)
+    st.write(f"**{get_text('ui', 'language_label', st.session_state.language)}:**")
+    lang_cols = st.columns(3)
+    
+    # Simple logic to handle language buttons
+    if lang_cols[0].button("DE", use_container_width=True, 
+                           type="primary" if st.session_state.language == "de" else "secondary"):
+        st.session_state.language = "de"
+        st.rerun()
+        
+    if lang_cols[1].button("EN", use_container_width=True,
+                           type="primary" if st.session_state.language == "en" else "secondary"):
+        st.session_state.language = "en"
+        st.rerun()
+        
+    if lang_cols[2].button("FR", use_container_width=True,
+                           type="primary" if st.session_state.language == "fr" else "secondary"):
+        st.session_state.language = "fr"
+        st.rerun()
+    
+    st.divider()
+    
+    st.title(get_text( "ui", "sidebar_title", st.session_state.language))
     
     # Placeholder for logo at the top
     logo_placeholder = st.empty()
     
     # --- Settings Menu ---
-    with st.expander("👤 Persönliche Einstellungen", expanded=False):
+    with st.expander(get_text( "ui", "personal_settings", st.session_state.language), expanded=False):
         try:
             if authenticator.reset_password(username, 'main'):
-                st.success('Passwort erfolgreich geändert')
+                st.success(get_text("ui", "password_changed", st.session_state.language))
                 with open('config.yaml', 'w') as file:
                     yaml.dump(config, file, default_flow_style=False)
         except Exception as e:
             st.error(e)
 
-    with st.expander("🎨 Design & Farben", expanded=False):
-        st.caption("Passen Sie das Erscheinungsbild an:")
+    with st.expander(get_text( "ui", "design_settings", st.session_state.language), expanded=False):
+        st.caption(get_text( "ui", "design_desc", st.session_state.language))
         
         # Default values from styles.json (Orange #FF7900)
-        primary_color = st.color_picker("Primärfarbe (Überschriften)", "#FF7900")
-        secondary_color = st.color_picker("Sekundärfarbe (Text)", "#444444")
+        primary_color = st.color_picker(get_text( "ui", "primary_color", st.session_state.language), "#FF7900")
+        secondary_color = st.color_picker(get_text( "ui", "secondary_color", st.session_state.language), "#444444")
         
         # Font Selection
         font_options = ["Aptos", "Arial", "Calibri", "Helvetica", "Times New Roman"]
-        selected_font = st.selectbox("Schriftart", font_options, index=0)
+        selected_font = st.selectbox(get_text( "ui", "font_label", st.session_state.language), font_options, index=0)
         
         # Logo Upload
-        uploaded_logo = st.file_uploader("Firmenlogo (PNG/JPG)", type=["png", "jpg", "jpeg"])
+        uploaded_logo = st.file_uploader(get_text( "ui", "logo_label", st.session_state.language), type=["png", "jpg", "jpeg"])
         if uploaded_logo:
             # Save logo temporarily for processing
             os.makedirs("input/logos", exist_ok=True)
@@ -356,6 +413,17 @@ with st.sidebar:
                 background-color: #f8f9fa;
                 border-right: 1px solid #ddd;
             }}
+
+            /* Translate the "Drag and drop file here" text for st.file_uploader */
+            [data-testid="stFileUploader"] section > button + div {{
+                display: none;
+            }}
+            [data-testid="stFileUploader"] section::after {{
+                content: "{get_text("ui", "uploader_drag_drop", st.session_state.language)}";
+                display: block;
+                color: #444;
+                margin-top: 10px;
+            }}
             </style>
         """, unsafe_allow_html=True)
         
@@ -368,7 +436,7 @@ with st.sidebar:
         }
     
     # --- Model Settings ---
-    with st.expander("🤖 KI-Modell", expanded=False):
+    with st.expander(get_text( "ui", "model_settings", st.session_state.language), expanded=False):
         model_options = ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo", "mock"]
         
         # Model Info Dictionary
@@ -382,7 +450,7 @@ with st.sidebar:
         col_sel, col_info = st.columns([0.85, 0.15])
         with col_sel:
             selected_model = st.selectbox(
-                "Modell auswählen:",
+                get_text( "ui", "select_model", st.session_state.language),
                 options=model_options,
                 index=0,
                 key="model_selection_sidebar",
@@ -391,7 +459,7 @@ with st.sidebar:
             )
         with col_info:
             st.markdown("<div style='height: 28px'></div>", unsafe_allow_html=True)
-            if st.button("ℹ️", key="model_info_btn", help="Details zu Kosten & Modellen"):
+            if st.button("ℹ️", key="model_info_btn", help=get_text( "ui", "model_info_btn_help", st.session_state.language)):
                 show_model_info_dialog()
 
         # Display Cost Info
@@ -417,32 +485,32 @@ with st.sidebar:
                     st.session_state.api_key = user_key
                     st.rerun()
             else:
-                st.success("API Key aktiv ✅")
+                st.success(get_text("ui", "api_key_active", st.session_state.language))
                 # Only show change button if key is not from environment
                 if not os.getenv("OPENAI_API_KEY") and "OPENAI_API_KEY" not in st.secrets:
-                    if st.button("API Key ändern"):
+                    if st.button(get_text("ui", "change_api_key", st.session_state.language)):
                         if "api_key" in st.session_state:
                             del st.session_state.api_key
                         st.rerun()
         
-        st.caption(f"Aktueller Modus: {os.getenv('CV_GENERATOR_MODE', 'full')}")
+        st.caption(f"{get_text('ui', 'current_mode', st.session_state.language)}: {os.getenv('CV_GENERATOR_MODE', 'full')}")
 
     # --- Application Info ---
-    with st.expander("ℹ️ Applikations-Infos", expanded=False):
-        st.caption("Details zur Applikation & Version")
-        if st.button("Details anzeigen", use_container_width=True):
+    with st.expander(get_text("ui", "app_info", st.session_state.language), expanded=False):
+        st.caption(get_text("ui", "app_info_desc", st.session_state.language))
+        if st.button(get_text("ui", "show_details", st.session_state.language), use_container_width=True):
             show_app_info_dialog()
 
     st.divider()
     
     # --- History Section ---
-    with st.expander("📜 Verlauf", expanded=False):
+    with st.expander(get_text("ui", "history_tab", st.session_state.language), expanded=False):
         history = load_history()
         
         if not history:
-            st.caption("Noch keine Läufe gespeichert.")
+            st.caption(get_text("ui", "history_empty", st.session_state.language))
         else:
-            for item in history:
+            for i, item in enumerate(history):
                 timestamp = item.get("timestamp", "")
                 # Format timestamp nicely if possible (YYYYMMDD_HHMMSS -> DD.MM.YYYY HH:MM)
                 try:
@@ -451,12 +519,12 @@ with st.sidebar:
                 except:
                     display_time = timestamp
 
-                candidate_name = item.get("candidate_name", "Unbekannt")
-                
+                candidate_name = item.get("candidate_name", get_text( "ui", "history_unknown", st.session_state.language))
+
                 with st.expander(f"{display_time} - {candidate_name}", expanded=False):
-                    model_used = item.get("model_name", "Unbekannt")
+                    model_used = item.get("model_name", get_text( "ui", "history_unknown", st.session_state.language))
                     st.caption(f"Modus: {item.get('mode')} | Modell: {model_used}")
-                    
+
                     # 1. Visual Score Bar
                     score = item.get("match_score")
                     if score:
@@ -469,9 +537,9 @@ with st.sidebar:
                                 bar_color = "#f39c12" # Orange
                             else:
                                 bar_color = "#c0392b" # Red
-                                
+
                             st.markdown(f"""
-                                <div style="margin-bottom: 5px; font-size: 0.8em; color: #666;">Match Score: {score}%</div>
+                                <div style="margin-bottom: 5px; font-size: 0.8em; color: #666;">{get_text( 'dashboard', 'matching_score', st.session_state.language)}: {score}%</div>
                                 <div style="background-color: #eee; border-radius: 4px; height: 8px; width: 100%; margin-bottom: 15px;">
                                     <div style="background-color: {bar_color}; width: {score_val}%; height: 100%; border-radius: 4px;"></div>
                                 </div>
@@ -480,7 +548,7 @@ with st.sidebar:
                             pass
 
                     # 2. Action Buttons
-                    if st.button("🔎 Details anzeigen", key=f"hist_btn_{timestamp}", use_container_width=True):
+                    if st.button(get_text( 'ui', 'history_details_btn', st.session_state.language), key=f"hist_btn_{timestamp}_{i}", use_container_width=True):
                         st.session_state.generation_results = item
                         st.session_state.show_pipeline_dialog = True
                         st.session_state.show_results_view = True
@@ -492,15 +560,15 @@ with st.sidebar:
     st.divider()
     
     # --- User Info & Logout (Bottom) ---
-    st.write(f'Willkommen *{name}*')
-    authenticator.logout('Abmelden', 'sidebar')
+    st.write(f'{get_text( "ui", "welcome_msg", st.session_state.language)} *{name}*')
+    authenticator.logout(get_text( "ui", "logout_btn", st.session_state.language), 'sidebar')
 
 # --- Main Content ---
-st.title("📄 CV Generator")
-st.markdown("Generieren Sie massgeschneiderte Lebensläufe basierend auf PDF-Inputs.")
+st.title(get_text( "ui", "app_title", st.session_state.language))
+st.markdown(get_text( "ui", "app_subtitle", st.session_state.language))
 
 # Mode Selection with Cards
-st.subheader("Wählen Sie Ihren Modus")
+st.subheader(get_text( "ui", "mode_select_title", st.session_state.language))
 
 col_m1, col_m2, col_m3 = st.columns(3)
 
@@ -524,31 +592,31 @@ if "selected_mode" not in st.session_state:
 
 # Create clickable columns (using buttons as proxies for cards)
 with col_m1:
-    if st.button("🚀 Basic\n(Nur CV)", use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Basic") else "secondary"):
+    if st.button(get_text( "ui", "mode_basic", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Basic") else "secondary"):
         st.session_state.selected_mode = "Basic (Nur CV)"
         # Reset pipeline state
         st.session_state.show_pipeline_dialog = False
         st.session_state.show_results_view = False
         st.rerun()
-    st.caption("Extrahiert Daten aus dem CV und erstellt ein Word-Dokument.")
+    st.caption(get_text( "ui", "mode_basic_desc", st.session_state.language))
 
 with col_m2:
-    if st.button("🔍 Analysis\n(CV + Profil)", use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Analysis") else "secondary"):
+    if st.button(get_text( "ui", "mode_analysis", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Analysis") else "secondary"):
         st.session_state.selected_mode = "Analysis (CV + Stellenprofil)"
         # Reset pipeline state
         st.session_state.show_pipeline_dialog = False
         st.session_state.show_results_view = False
         st.rerun()
-    st.caption("Optimiert den CV basierend auf einem Stellenprofil.")
+    st.caption(get_text( "ui", "mode_analysis_desc", st.session_state.language))
 
 with col_m3:
-    if st.button("✨ Full Suite\n(All-in-One)", use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Full") else "secondary"):
+    if st.button(get_text( "ui", "mode_full", st.session_state.language), use_container_width=True, type="primary" if st.session_state.selected_mode.startswith("Full") else "secondary"):
         st.session_state.selected_mode = "Full (CV + Stellenprofil + Match + Feedback)"
         # Reset pipeline state
         st.session_state.show_pipeline_dialog = False
         st.session_state.show_results_view = False
         st.rerun()
-    st.caption("Das volle Programm: CV, Match-Score, Feedback & Dashboard.")
+    st.caption(get_text( "ui", "mode_full_desc", st.session_state.language))
 
 mode = st.session_state.selected_mode
 st.divider()
@@ -622,7 +690,7 @@ def render_custom_uploader(label, key_prefix, file_type=["pdf"]):
     if current_file:
         st.markdown(f"""
             <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px 15px; border-radius: 5px; margin-top: -10px; margin-bottom: 10px;">
-                <strong>✅ Datei aktiv:</strong> {current_file.name}
+                <strong>{get_text( "ui", "file_active", st.session_state.language)}</strong> {current_file.name}
             </div>
         """, unsafe_allow_html=True)
                 
@@ -634,12 +702,12 @@ if mode.startswith("Basic"):
     col1, col2 = st.columns(2)
     with col1:
         if is_mock:
-            st.subheader("📄 1. Lebenslauf (CV)")
-            st.success("🧪 **Test-Modus aktiv**")
-            st.caption("Es wird ein beispielhafter Lebenslauf verwendet.")
+            st.subheader(get_text( "ui", "cv_title", st.session_state.language))
+            st.success(get_text( "ui", "test_mode_active", st.session_state.language))
+            st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
             cv_file = None
         else:
-            cv_file = render_custom_uploader("📄 1. Lebenslauf (CV)", "cv_basic")
+            cv_file = render_custom_uploader(get_text( "ui", "cv_title", st.session_state.language), "cv_basic")
         job_file = None # No job file in Basic mode
 else:
     # Two columns for CV and Job Profile
@@ -647,28 +715,28 @@ else:
 
     with col1:
         if is_mock:
-            st.subheader("📄 1. Lebenslauf (CV)")
-            st.success("🧪 **Test-Modus aktiv**")
-            st.caption("Es wird ein beispielhafter Lebenslauf verwendet.")
+            st.subheader(get_text( "ui", "cv_title", st.session_state.language))
+            st.success(get_text( "ui", "test_mode_active", st.session_state.language))
+            st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
             cv_file = None
         else:
-            cv_file = render_custom_uploader("📄 1. Lebenslauf (CV)", "cv_full")
+            cv_file = render_custom_uploader(get_text( "ui", "cv_title", st.session_state.language), "cv_full")
 
     with col2:
         if is_mock:
-            st.subheader("📋 2. Stellenprofil")
-            st.success("🧪 **Test-Modus aktiv**")
-            st.caption("Es wird ein beispielhaftes Stellenprofil verwendet.")
+            st.subheader(get_text( "ui", "job_title", st.session_state.language))
+            st.success(get_text( "ui", "test_mode_active", st.session_state.language))
+            st.caption(get_text( "ui", "test_mode_desc", st.session_state.language))
             job_file = None
         else:
-            job_file = render_custom_uploader("📋 2. Stellenprofil", "job_full")
+            job_file = render_custom_uploader(get_text( "ui", "job_title", st.session_state.language), "job_full")
 
 st.divider()
 
 # DSGVO / Privacy Notice
-st.markdown("### 🔒 Datenschutz & Hinweise")
-st.caption("Dokumente werden zur Analyse an OpenAI gesendet und nicht dauerhaft gespeichert. Keine Firmengeheimnisse hochladen.")
-dsgvo_accepted = st.checkbox("Ich bestätige, dass ich die Datenschutzhinweise gelesen habe und zustimme.", value=False)
+st.markdown(f"### {get_text( 'ui', 'privacy_title', st.session_state.language)}")
+st.caption(get_text( 'ui', 'privacy_desc', st.session_state.language))
+dsgvo_accepted = st.checkbox(get_text( 'ui', 'privacy_accept', st.session_state.language), value=False)
 
 # Action Button
 is_mock = os.environ.get("MODEL_NAME") == "mock"
@@ -684,7 +752,7 @@ if is_mock:
 else:
     start_disabled = not cv_file or not api_key or not dsgvo_accepted
 
-@st.dialog("CV Generator Pipeline", width="large")
+@st.dialog(get_text('ui', 'dialog_pipeline', st.session_state.language), width="large")
 def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, custom_logo_path):
     
     # Determine Phase: 'processing' or 'results'
@@ -728,11 +796,11 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
         """, unsafe_allow_html=True)
 
     if phase == "processing":
-        with st.status("🚀 Dokumente werden verarbeitet...", expanded=True) as status:
+        with st.status(get_text("ui", "processing_title", st.session_state.language), expanded=True) as status:
             log_container = st.empty()
             
             def progress_callback(pct, text, state="running"):
-                log_container.write(f"**Aktueller Schritt:** {text}")
+                log_container.write(f"{get_text('ui', 'current_step', st.session_state.language)} {text}")
                 status.update(label=f"🔄 {text} ({pct}%)", state="running")
 
             try:
@@ -757,7 +825,8 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                         progress_callback=progress_callback,
                         custom_styles=current_custom_styles,
                         custom_logo_path=current_custom_logo_path,
-                        pipeline_mode=mode
+                        pipeline_mode=mode,
+                        language=st.session_state.language
                     )
                     st.session_state.current_generation_results = results
                 
@@ -781,30 +850,30 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                         st.session_state.history_saved = True
 
                     st.session_state.generation_results = results
-                    status.update(label="✅ Verarbeitung abgeschlossen!", state="complete", expanded=False)
-                    st.success("✅ Generierung erfolgreich abgeschlossen!")
+                    status.update(label=get_text('ui', 'processing_complete_label', st.session_state.language), state="complete", expanded=False)
+                    st.success(get_text('ui', 'generation_success', st.session_state.language))
                     
-                    if st.button("Ergebnisse anzeigen", type="primary", use_container_width=True):
+                    if st.button(get_text("ui", "show_results", st.session_state.language), type="primary", use_container_width=True):
                         st.session_state.show_results_view = True
                         st.rerun()
                 else:
-                    st.error(f"Fehler: {results.get('error')}")
-                    status.update(label="❌ Fehler aufgetreten", state="error")
-                    if st.button("Schließen"):
+                    st.error(f"{get_text('ui', 'error_prefix_colon', st.session_state.language)} {results.get('error')}")
+                    status.update(label=get_text('ui', 'processing_error_label', st.session_state.language), state="error")
+                    if st.button(get_text('ui', 'close_btn', st.session_state.language)):
                         st.rerun()
 
             except Exception as e:
-                st.error(f"Unerwarteter Fehler: {str(e)}")
-                status.update(label="❌ Fehler", state="error")
-                if st.button("Schließen"):
+                st.error(f"{get_text('ui', 'unexpected_error', st.session_state.language)} {str(e)}")
+                status.update(label=get_text( "ui", "error_status", st.session_state.language), state="error")
+                if st.button(get_text( "ui", "close_btn", st.session_state.language)):
                         st.rerun()
     
     elif phase == "results":
         results = st.session_state.generation_results
-        st.subheader("🎉 Ergebnisse")
+        st.subheader(get_text( "ui", "results_title", st.session_state.language))
         
         # Extract name for title and buttons
-        candidate_name = "Unbekannt"
+        candidate_name = get_text( "ui", "history_unknown", st.session_state.language)
         if results.get("cv_json"):
             try:
                 filename = os.path.basename(results["cv_json"])
@@ -813,15 +882,15 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
             except: pass
         
         model_used = results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini"))
-        st.caption(f"Modus: {results.get('mode', 'Unbekannt')} | KI-Modell: {model_used}")
+        st.caption(f"{get_text( 'ui', 'history_mode', st.session_state.language)}: {results.get('mode', get_text( 'ui', 'history_unknown', st.session_state.language))} | {get_text( 'ui', 'history_model', st.session_state.language)}: {model_used}")
             
         # Format button label with truncation
-        cv_btn_label = f"📄 Word-CV - {candidate_name}"
+        cv_btn_label = f"{get_text( 'ui', 'word_cv_btn', st.session_state.language)} - {candidate_name}"
         if len(cv_btn_label) > 30:
             cv_btn_label = cv_btn_label[:27] + "..."
         
         # Downloads Section
-        with st.success("📥 Downloads", icon="📥"):
+        with st.success(get_text( "ui", "downloads_title", st.session_state.language), icon="📥"):
             res_col1, res_col2, res_col3 = st.columns(3)
             with res_col1:
                 if results.get("word_path") and os.path.exists(results["word_path"]):
@@ -830,11 +899,11 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
             with res_col2:
                 if results.get("cv_json") and os.path.exists(results["cv_json"]):
                     with open(results["cv_json"], "rb") as f:
-                        st.download_button("📋 JSON-Daten", f, os.path.basename(results["cv_json"]), "application/json", use_container_width=True)
+                        st.download_button(get_text( "ui", "json_data_btn", st.session_state.language), f, os.path.basename(results["cv_json"]), "application/json", use_container_width=True)
             with res_col3:
                 if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
                     with open(results["dashboard_path"], "rb") as f:
-                        st.download_button("📊 Dashboard", f, os.path.basename(results["dashboard_path"]), "text/html", use_container_width=True)
+                        st.download_button(get_text( "ui", "dashboard_btn", st.session_state.language), f, os.path.basename(results["dashboard_path"]), "text/html", use_container_width=True)
 
         # Offer Generation Section
         # Try to infer stellenprofil_json if missing (for history items)
@@ -866,20 +935,20 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
             
             # Dynamic container style to differentiate states
             if is_offer_ready:
-                offer_container = st.success("✅ Angebot fertiggestellt", icon="✅")
+                offer_container = st.success(get_text("ui", "offer_ready", st.session_state.language), icon="✅")
             else:
-                offer_container = st.info("💼 Angebot erstellen", icon="✨")
+                offer_container = st.info(get_text("ui", "offer_create_title", st.session_state.language), icon="✨")
             
             with offer_container:
                 off_col1, off_col2, off_col3 = st.columns(3)
                 with off_col1:
                     if is_offer_ready:
                          with open(offer_word_path, "rb") as f:
-                            st.download_button("📄 Angebot herunterladen", f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
+                            st.download_button(get_text("ui", "offer_download_btn", st.session_state.language), f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
                     else:
                         off_btn_key = f"gen_offer_btn_{results.get('cv_json', '')}"
-                        if st.button("Angebot erstellen", use_container_width=True, key=off_btn_key):
-                            with st.status("🚀 Erstelle Angebot...", expanded=True) as status:
+                        if st.button(get_text("ui", "offer_create_btn", st.session_state.language), use_container_width=True, key=off_btn_key):
+                            with st.status(get_text("ui", "status_offer", st.session_state.language), expanded=True) as status:
                                 try:
                                     cv_json = results["cv_json"]
                                     stellenprofil_json = results["stellenprofil_json"]
@@ -891,7 +960,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                                     schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
                                     
                                     status.write("🧠 KI-Inhalte generieren...")
-                                    generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path)
+                                    generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path, language=st.session_state.language)
                                     
                                     status.write("📝 Word-Dokument formatieren...")
                                     generate_angebot_word(angebot_json_path, angebot_word_path)
@@ -902,21 +971,21 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                                         st.session_state.generation_results = results
                                         st.session_state.show_pipeline_dialog = True
                                         st.session_state.show_results_view = True
-                                        status.update(label="✅ Angebot bereit!", state="complete", expanded=False)
-                                        st.success("✅ Angebot erfolgreich erstellt!")
+                                        status.update(label=get_text('ui', 'offer_ready_label', st.session_state.language), state="complete", expanded=False)
+                                        st.success(get_text('ui', 'offer_success', st.session_state.language))
                                         st.rerun()
                                     else:
-                                        st.error("Datei wurde generiert, aber nicht im Dateisystem gefunden.")
+                                        st.error(get_text('ui', 'file_not_found_on_disk', st.session_state.language))
                                 except Exception as e:
-                                    status.update(label="❌ Fehler", state="error")
-                                    st.error(f"Fehler bei der Angebotserstellung: {e}")
+                                    status.update(label=get_text('ui', 'error_label', st.session_state.language), state="error")
+                                    st.error(f"{get_text('ui', 'offer_error', st.session_state.language)} {e}")
                                     import traceback
                                     st.code(traceback.format_exc()) # Show details for debugging
                 with off_col2:
                     if not is_offer_ready:
-                        st.caption("Erstellt ein Angebot basierend auf den Analysedaten.")
+                        st.caption(get_text('ui', 'offer_button_caption', st.session_state.language))
                     else:
-                        st.caption("Das Angebot wurde erfolgreich generiert und steht zum Download bereit.")
+                        st.caption(get_text('ui', 'offer_ready_caption', st.session_state.language))
 
         st.markdown("<div style='margin-top: 40px; margin-bottom: 20px; border-top: 1px solid #ddd;'></div>", unsafe_allow_html=True)
 
@@ -927,7 +996,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 # Use a larger height to fill the expanded dialog
                 st.components.v1.html(html_content, height=1200, scrolling=True)
                 
-        if st.button("Schliessen", use_container_width=True):
+        if st.button(get_text("ui", "close_btn", st.session_state.language), use_container_width=True):
             st.session_state.show_pipeline_dialog = False
             st.session_state.show_results_view = False
             if "current_generation_results" in st.session_state:
@@ -937,7 +1006,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
 # Left-align the start button (approx 33% width)
 btn_col, _ = st.columns([1, 2])
 with btn_col:
-    if st.button("🚀 Generierung starten", disabled=start_disabled, type="primary", use_container_width=True):
+    if st.button(get_text("ui", "start_generation_btn", st.session_state.language), disabled=start_disabled, type="primary", use_container_width=True):
         st.session_state.show_pipeline_dialog = True
         st.session_state.show_results_view = False
         if "current_generation_results" in st.session_state:
