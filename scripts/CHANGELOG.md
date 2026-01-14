@@ -23,3 +23,7 @@
 2026-01-14 09:55:26 | REFACTOR | per-candidate dashboards now identical to Mode 2/3, remove shortlist button
 2026-01-14 10:09:54 | REFACTOR | unified file naming convention across all modes (2, 3, 4)
 2026-01-14 10:13:39 | FEATURE | batch runs now visible in history with batch folder details
+2026-01-14 10:33:14 | REFACTOR | implement nested batch folder structure with dynamic naming
+2026-01-14 10:33:57 | DOCS | add Phase 8 implementation documentation
+2026-01-14 10:34:46 | DOCS | add comprehensive Mode 4 completion summary
+2026-01-14 10:36:17 | DOCS | add completion summary for Mode 4 implementation
