@@ -21,3 +21,4 @@
 2026-01-14 09:22:42 | BUGFIX | reset job_file pointer before reading in batch comparison
 2026-01-14 09:33:24 | BUGFIX | implement correct batch mode architecture - process stellenprofil PDF first
 2026-01-14 09:55:26 | REFACTOR | per-candidate dashboards now identical to Mode 2/3, remove shortlist button
+2026-01-14 10:09:54 | REFACTOR | unified file naming convention across all modes (2, 3, 4)

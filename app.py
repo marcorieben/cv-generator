@@ -530,7 +530,14 @@ with st.sidebar:
 
                 with st.expander(f"{display_time} - {candidate_name}", expanded=False):
                     model_used = item.get("model_name", get_text( "ui", "history_unknown", st.session_state.language))
+                    is_batch = item.get("is_batch", False)
+                    batch_folder = item.get("batch_folder", "")
+                    
                     st.caption(f"Modus: {item.get('mode')} | Modell: {model_used}")
+                    
+                    # Show batch folder if applicable
+                    if is_batch and batch_folder:
+                        st.caption(f"📂 Batch Folder: `{batch_folder}`")
 
                     # 1. Visual Score Bar
                     score = item.get("match_score")
@@ -957,7 +964,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     if is_batch:
                         # Batch Mode: Process multiple CVs
                         log_container.write(f"🔄 Processing {len(cv_file)} CVs...")
-                        batch_results = run_batch_comparison(
+                        batch_response = run_batch_comparison(
                             cv_files=cv_file,
                             job_file=job_file,
                             api_key=api_key,
@@ -968,6 +975,12 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                             progress_callback=progress_callback
                         )
                         
+                        # Extract batch results and metadata
+                        batch_results = batch_response.get("results", [])
+                        batch_folder = batch_response.get("batch_folder", "")
+                        job_profile_name = batch_response.get("job_profile_name", "jobprofile")
+                        batch_timestamp = batch_response.get("timestamp", "")
+                        
                         # Log batch results for debugging
                         print(f"\n📊 Batch Results Summary:", file=sys.stderr)
                         for idx, res in enumerate(batch_results):
@@ -977,6 +990,9 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                         results = {
                             "success": all(r.get("success", False) for r in batch_results),
                             "batch_results": batch_results,
+                            "batch_folder": batch_folder,
+                            "job_profile_name": job_profile_name,
+                            "batch_timestamp": batch_timestamp,
                             "mode": mode,
                             "error": None if all(r.get("success", False) for r in batch_results) else "Some CVs failed processing"
                         }
@@ -1000,6 +1016,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     if "history_saved" not in st.session_state:
                         if mode.startswith("Batch"):
                             # For batch mode, create entries for each successful CV
+                            batch_folder = results.get("batch_folder", "")
                             for batch_result in results.get("batch_results", []):
                                 if batch_result.get("success"):
                                     history_entry = {
@@ -1013,7 +1030,9 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                                         "model_name": batch_result.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
                                         "stellenprofil_json": batch_result.get("stellenprofil_json"),
                                         "match_json": batch_result.get("match_json"),
-                                        "offer_word_path": batch_result.get("offer_word_path")
+                                        "offer_word_path": batch_result.get("offer_word_path"),
+                                        "batch_folder": batch_folder,
+                                        "is_batch": True
                                     }
                                     save_to_history(history_entry)
                         else:
@@ -1029,7 +1048,8 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                                 "model_name": results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
                                 "stellenprofil_json": results.get("stellenprofil_json"),
                                 "match_json": results.get("match_json"),
-                                "offer_word_path": results.get("offer_word_path")
+                                "offer_word_path": results.get("offer_word_path"),
+                                "is_batch": False
                             }
                             save_to_history(history_entry)
                         st.session_state.history_saved = True

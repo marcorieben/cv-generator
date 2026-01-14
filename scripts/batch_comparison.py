@@ -29,7 +29,7 @@ def run_batch_comparison(
     pipeline_mode: str = "Batch Comparison",
     language: str = "de",
     progress_callback: Optional[callable] = None
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """
     Process multiple CVs against a single job profile for batch comparison.
     
@@ -44,21 +44,33 @@ def run_batch_comparison(
         progress_callback: Optional callback function(progress, status, state) for UI updates
     
     Returns:
-        List of result dicts, each containing:
+        Dict containing:
+        {
+            "results": List of result dicts for each CV processed,
+            "batch_folder": str (path to batch output folder),
+            "job_profile_name": str (extracted job profile name),
+            "timestamp": str (batch timestamp YYYYMMDD_HHMMSS)
+        }
+        
+        Each result dict contains:
         {
             "success": bool,
             "candidate_name": str,
             "cv_file": UploadedFile,
             "job_profile": dict (stellenprofil_json),
             "cv_json": dict,
-            "word_file": str (path),
-            "json_file": str (path),
-            "match_result": dict,
+            "word_path": str (path),
+            "cv_json_path": str (path),
+            "match_json": str (path),
             "feedback_result": dict,
-            "dashboard_html": str (path),
+            "dashboard_path": str (path),
+            "stellenprofil_json": str (path),
+            "vorname": str,
+            "nachname": str,
+            "match_score": int,
             "error": str (if failed)
         }
-    """
+"""
     
     batch_results = []
     base_dir = os.getcwd()
@@ -182,4 +194,9 @@ def run_batch_comparison(
     if progress_callback:
         progress_callback(100, "Batch verarbeitet", "complete")
     
-    return batch_results
+    return {
+        "results": batch_results,
+        "batch_folder": batch_output_dir,
+        "job_profile_name": job_profile_name,
+        "timestamp": batch_timestamp
+    }
