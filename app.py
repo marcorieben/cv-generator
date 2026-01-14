@@ -897,9 +897,12 @@ else:
 @st.dialog(get_text('ui', 'dialog_pipeline', st.session_state.language), width="large")
 def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, custom_logo_path):
     
-    # Early return if loading from history/showing results
-    # This prevents the entire processing block from running
-    if "generation_results" in st.session_state and st.session_state.get("show_results_view"):
+    # ABSOLUTE FIRST THING: Check if we should show results instead of processing
+    # This ensures we never accidentally try to process when loading from history
+    should_show_results = st.session_state.get("show_results_view", False) and "generation_results" in st.session_state
+    
+    if should_show_results:
+        # Skip all processing logic and jump directly to results display
         phase = "results"
     else:
         phase = "processing"
@@ -1241,10 +1244,10 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                     
             if st.button(get_text("ui", "close_btn", st.session_state.language), use_container_width=True):
                 st.session_state.show_pipeline_dialog = False
-            st.session_state.show_results_view = False
-            if "current_generation_results" in st.session_state:
-                del st.session_state.current_generation_results
-            st.rerun()
+                st.session_state.show_results_view = False
+                if "current_generation_results" in st.session_state:
+                    del st.session_state.current_generation_results
+                st.rerun()
 
 # Left-align the start button (approx 33% width)
 btn_col, _ = st.columns([1, 2])
