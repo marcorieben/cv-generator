@@ -16,3 +16,4 @@
 2026-01-14 09:01:59 | BUGFIX | add missing batch_comparison.py module for batch processing orchestration
 2026-01-14 09:05:01 | IMPROVE | enhance batch processing error reporting and partial success handling
 2026-01-14 09:06:15 | DOCS | add batch error handling guide and update TODO documentation
+2026-01-14 09:12:39 | BUGFIX | correct batch processing pipeline output mapping and file pointer handling

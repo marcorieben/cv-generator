@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import json
 import yaml
+import sys
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 from datetime import datetime
@@ -963,8 +964,15 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                             custom_styles=current_custom_styles,
                             custom_logo_path=current_custom_logo_path,
                             pipeline_mode=mode,
-                            language=st.session_state.language
+                            language=st.session_state.language,
+                            progress_callback=progress_callback
                         )
+                        
+                        # Log batch results for debugging
+                        print(f"\n📊 Batch Results Summary:", file=sys.stderr)
+                        for idx, res in enumerate(batch_results):
+                            print(f"  CV {idx+1}: success={res.get('success')}, error={res.get('error')}", file=sys.stderr)
+                        
                         # For now, wrap batch results in a success structure
                         results = {
                             "success": all(r.get("success", False) for r in batch_results),

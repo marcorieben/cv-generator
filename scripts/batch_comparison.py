@@ -25,7 +25,8 @@ def run_batch_comparison(
     custom_styles: Optional[Dict] = None,
     custom_logo_path: Optional[str] = None,
     pipeline_mode: str = "Batch Comparison",
-    language: str = "de"
+    language: str = "de",
+    progress_callback: Optional[callable] = None
 ) -> List[Dict[str, Any]]:
     """
     Process multiple CVs against a single job profile for batch comparison.
@@ -38,6 +39,7 @@ def run_batch_comparison(
         custom_logo_path: Optional path to custom logo
         pipeline_mode: Pipeline mode identifier
         language: UI language (de, en, fr)
+        progress_callback: Optional callback function(progress, status, state) for UI updates
     
     Returns:
         List of result dicts, each containing:
@@ -73,7 +75,7 @@ def run_batch_comparison(
         }]
     
     # Process each CV file
-    for cv_file in cv_files:
+    for idx, cv_file in enumerate(cv_files):
         result = {
             "success": False,
             "candidate_name": cv_file.name.replace(".pdf", ""),
@@ -82,8 +84,12 @@ def run_batch_comparison(
             "error": None
         }
         
+        progress_pct = int((idx / len(cv_files)) * 100)
+        if progress_callback:
+            progress_callback(progress_pct, f"Verarbeite {cv_file.name}...", "running")
+        
         try:
-            print(f"\n📄 Processing CV: {cv_file.name}", file=sys.stderr)
+            print(f"\n📄 Processing CV {idx+1}/{len(cv_files)}: {cv_file.name}", file=sys.stderr)
             
             # Reset job file pointer for each CV
             job_file.seek(0)
@@ -92,6 +98,7 @@ def run_batch_comparison(
             generator = StreamlitCVGenerator(base_dir)
             
             # Run the standard pipeline (PDF extraction, analysis, Word generation)
+            # Don't pass progress_callback - it's for individual CV, not batch
             cv_result = generator.run(
                 cv_file=cv_file,
                 job_file=job_file,
@@ -101,6 +108,8 @@ def run_batch_comparison(
                 pipeline_mode=pipeline_mode,
                 language=language
             )
+            
+            print(f"Generator result: success={cv_result.get('success')}, error={cv_result.get('error')}", file=sys.stderr)
             
             # Extract relevant data from cv_result
             if cv_result.get("success"):
@@ -128,5 +137,8 @@ def run_batch_comparison(
             print(f"❌ Exception processing {cv_file.name}:\n{tb_str}", file=sys.stderr)
         
         batch_results.append(result)
+    
+    if progress_callback:
+        progress_callback(100, "Batch verarbeitet", "complete")
     
     return batch_results
