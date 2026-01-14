@@ -206,7 +206,7 @@ def run_batch_comparison(
                 result["cv_json_path"] = cv_result.get("cv_json")  # JSON file path
                 result["word_file"] = cv_result.get("word_path")   # Word doc path
                 result["match_result"] = cv_result.get("match_json")  # Match JSON path
-                result["dashboard_html"] = cv_result.get("dashboard_path")  # Dashboard HTML path
+                result["dashboard_path"] = cv_result.get("dashboard_path")  # Dashboard HTML path
                 result["stellenprofil_json"] = cv_result.get("stellenprofil_json")  # Job profile JSON path
                 result["vorname"] = cv_result.get("vorname")
                 result["nachname"] = cv_result.get("nachname")
