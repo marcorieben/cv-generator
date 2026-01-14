@@ -29,3 +29,4 @@
 2026-01-14 10:36:17 | DOCS | add completion summary for Mode 4 implementation
 2026-01-14 10:36:46 | DOCS | completion summary for Mode 4 implementation
 2026-01-14 10:44:44 | BUGFIX | correct dashboard path key in batch results
+2026-01-14 10:49:11 | REFACTOR | batch runs now display as single history entry with all candidate results

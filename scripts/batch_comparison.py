@@ -63,7 +63,7 @@ def run_batch_comparison(
         {
             "success": bool,
             "candidate_name": str,
-            "cv_file": UploadedFile,
+            "cv_filename": str (uploaded filename),
             "job_profile": dict (stellenprofil_json),
             "cv_json": dict,
             "word_path": str (path),
@@ -160,8 +160,7 @@ def run_batch_comparison(
         result = {
             "success": False,
             "candidate_name": candidate_name_fallback,
-            "cv_file": cv_file,
-            "job_profile": stellenprofil_data,
+            "cv_filename": cv_file.name,  # Store only the filename, not the UploadedFile object
             "error": None
         }
         
