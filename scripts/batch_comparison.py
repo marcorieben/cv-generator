@@ -61,8 +61,10 @@ def run_batch_comparison(
     
     # Read job profile once
     job_profile_data = None
+    job_profile_content = None
     try:
         job_content = job_file.read()
+        job_profile_content = job_content
         job_profile_data = json.loads(job_content)
     except Exception as e:
         return [{
@@ -83,6 +85,9 @@ def run_batch_comparison(
         try:
             print(f"\n📄 Processing CV: {cv_file.name}", file=sys.stderr)
             
+            # Reset job file pointer for each CV
+            job_file.seek(0)
+            
             # Initialize the generator for this CV
             generator = StreamlitCVGenerator(base_dir)
             
@@ -100,12 +105,14 @@ def run_batch_comparison(
             # Extract relevant data from cv_result
             if cv_result.get("success"):
                 result["success"] = True
-                result["cv_json"] = cv_result.get("cv_json")
-                result["word_file"] = cv_result.get("word_file")
-                result["json_file"] = cv_result.get("json_file")
-                result["match_result"] = cv_result.get("match_result")
-                result["feedback_result"] = cv_result.get("feedback_result")
-                result["dashboard_html"] = cv_result.get("dashboard_html")
+                result["cv_json_path"] = cv_result.get("cv_json")  # JSON file path
+                result["word_file"] = cv_result.get("word_path")   # Word doc path
+                result["match_result"] = cv_result.get("match_json")  # Match JSON path
+                result["dashboard_html"] = cv_result.get("dashboard_path")  # Dashboard HTML path
+                result["stellenprofil_json"] = cv_result.get("stellenprofil_json")  # Job profile JSON path
+                result["vorname"] = cv_result.get("vorname")
+                result["nachname"] = cv_result.get("nachname")
+                result["match_score"] = cv_result.get("match_score")
                 print(f"✅ Successfully processed: {cv_file.name}", file=sys.stderr)
             else:
                 result["success"] = False

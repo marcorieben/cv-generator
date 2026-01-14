@@ -14,3 +14,5 @@
 2026-01-14 08:54:55 | FEATURE | add shortlist functionality, test mode, and UI improvements for batch
 2026-01-14 08:56:05 | FEATURE | complete Mode 4 (Batch Comparison) implementation
 2026-01-14 09:01:59 | BUGFIX | add missing batch_comparison.py module for batch processing orchestration
+2026-01-14 09:05:01 | IMPROVE | enhance batch processing error reporting and partial success handling
+2026-01-14 09:06:15 | DOCS | add batch error handling guide and update TODO documentation
