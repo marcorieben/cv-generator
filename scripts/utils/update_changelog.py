@@ -3,14 +3,34 @@ import datetime
 import os
 import re
 
+def is_merge_commit():
+    """Check if the current commit is a merge commit (has 2+ parents)."""
+    cmd = ["git", "rev-list", "--parents", "-n", "1", "HEAD"]
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
+    if result.returncode != 0:
+        return False
+    # Merge commits have 2+ parents (space-separated after first line)
+    parents = result.stdout.strip().split()
+    return len(parents) > 2  # First element is commit hash, rest are parents
+
 def get_latest_commit():
+    # Skip merge commits
+    if is_merge_commit():
+        return None
+    
     # Get the full commit message and date
     # %s = subject, %cd = commit date, %h = short hash
     cmd = ["git", "log", "-1", "--format=%cd|%s", "--date=format:%Y-%m-%d %H:%M:%S"]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
     if result.returncode != 0:
         return None
-    return result.stdout.strip()
+    
+    # Also skip if message starts with "Merge" (as fallback)
+    message = result.stdout.strip()
+    if message.startswith("Merge "):
+        return None
+    
+    return message
 
 def parse_commit_message(message):
     # Common prefixes mapping
