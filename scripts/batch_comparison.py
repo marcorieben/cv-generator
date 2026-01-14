@@ -13,6 +13,7 @@ import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import traceback
+import sys
 
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 
@@ -80,6 +81,8 @@ def run_batch_comparison(
         }
         
         try:
+            print(f"\n📄 Processing CV: {cv_file.name}", file=sys.stderr)
+            
             # Initialize the generator for this CV
             generator = StreamlitCVGenerator(base_dir)
             
@@ -103,13 +106,19 @@ def run_batch_comparison(
                 result["match_result"] = cv_result.get("match_result")
                 result["feedback_result"] = cv_result.get("feedback_result")
                 result["dashboard_html"] = cv_result.get("dashboard_html")
+                print(f"✅ Successfully processed: {cv_file.name}", file=sys.stderr)
             else:
                 result["success"] = False
-                result["error"] = cv_result.get("error", "Unknown error during processing")
+                error_msg = cv_result.get("error", "Unknown error during processing")
+                result["error"] = f"Pipeline error: {error_msg}"
+                print(f"❌ Processing failed: {cv_file.name} - {error_msg}", file=sys.stderr)
         
         except Exception as e:
+            error_details = f"{str(e)}"
+            tb_str = traceback.format_exc()
             result["success"] = False
-            result["error"] = f"Batch processing error: {str(e)}\n{traceback.format_exc()}"
+            result["error"] = error_details
+            print(f"❌ Exception processing {cv_file.name}:\n{tb_str}", file=sys.stderr)
         
         batch_results.append(result)
     

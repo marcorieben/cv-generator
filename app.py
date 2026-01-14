@@ -1034,10 +1034,33 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                         st.session_state.show_results_view = True
                         st.rerun()
                 else:
-                    st.error(f"{get_text('ui', 'error_prefix_colon', st.session_state.language)} {results.get('error')}")
-                    status.update(label=get_text('ui', 'processing_error_label', st.session_state.language), state="error")
-                    if st.button(get_text('ui', 'close_btn', st.session_state.language)):
-                        st.rerun()
+                    # Check if batch mode with partial failures
+                    if is_batch and results.get("batch_results"):
+                        batch_results = results.get("batch_results", [])
+                        successful = [r for r in batch_results if r.get("success")]
+                        failed = [r for r in batch_results if not r.get("success")]
+                        
+                        if successful:
+                            # Partial success - show results with warnings
+                            status.update(label=f"⚠️  {len(successful)}/{len(batch_results)} erfolgreich", state="running", expanded=False)
+                            st.warning(f"⚠️ {len(failed)} von {len(batch_results)} CVs konnten nicht verarbeitet werden")
+                            st.session_state.generation_results = results
+                            
+                            if st.button(get_text("ui", "show_results", st.session_state.language), type="primary", use_container_width=True):
+                                st.session_state.show_results_view = True
+                                st.rerun()
+                        else:
+                            # All failed
+                            st.error(f"{get_text('ui', 'error_prefix_colon', st.session_state.language)} Alle CVs konnten nicht verarbeitet werden")
+                            status.update(label=get_text('ui', 'processing_error_label', st.session_state.language), state="error")
+                            if st.button(get_text('ui', 'close_btn', st.session_state.language)):
+                                st.rerun()
+                    else:
+                        # Non-batch error or no batch results
+                        st.error(f"{get_text('ui', 'error_prefix_colon', st.session_state.language)} {results.get('error')}")
+                        status.update(label=get_text('ui', 'processing_error_label', st.session_state.language), state="error")
+                        if st.button(get_text('ui', 'close_btn', st.session_state.language)):
+                            st.rerun()
 
             except Exception as e:
                 st.error(f"{get_text('ui', 'unexpected_error', st.session_state.language)} {str(e)}")
