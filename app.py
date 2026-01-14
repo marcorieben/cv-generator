@@ -897,11 +897,9 @@ else:
 @st.dialog(get_text('ui', 'dialog_pipeline', st.session_state.language), width="large")
 def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, custom_logo_path):
     
-    # Determine Phase: 'processing' or 'results'
-    # If loading from history (generation_results + show_results_view), go directly to results
-    is_history_load = "generation_results" in st.session_state and st.session_state.get("show_results_view")
-    
-    if is_history_load:
+    # Early return if loading from history/showing results
+    # This prevents the entire processing block from running
+    if "generation_results" in st.session_state and st.session_state.get("show_results_view"):
         phase = "results"
     else:
         phase = "processing"
@@ -941,6 +939,11 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
         """, unsafe_allow_html=True)
 
     if phase == "processing":
+        # Double-check we're not in results view mode
+        if st.session_state.get("show_results_view"):
+            # Redirect to results view
+            st.rerun()
+        
         with st.status(get_text("ui", "processing_title", st.session_state.language), expanded=True) as status:
             log_container = st.empty()
             

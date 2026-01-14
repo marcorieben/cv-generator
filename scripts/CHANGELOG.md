@@ -32,3 +32,4 @@
 2026-01-14 10:49:11 | REFACTOR | batch runs now display as single history entry with all candidate results
 2026-01-14 10:57:46 | BUGFIX | remove UploadedFile object from batch results to prevent JSON serialization error
 2026-01-14 11:11:21 | FEATURE | implement dynamic naming for Mode 3 folder structure
+2026-01-14 12:18:02 | BUGFIX | skip pipeline rerun when loading Mode 3 results from history
