@@ -324,7 +324,7 @@ def display_batch_comparison_dashboard(results: List[Dict[str, Any]], job_profil
 
 def display_candidate_expander(result: Dict[str, Any], batch_dir: str, language: str = "de"):
     """
-    Display per-candidate expander with full dashboard and downloads.
+    Display per-candidate expander with Mode 2/3 dashboard (identical HTML).
     """
     if not result.get("success"):
         st.error(f"❌ {result.get('cv_file', 'Unknown')} - {result.get('error', 'Processing failed')}")
@@ -337,27 +337,21 @@ def display_candidate_expander(result: Dict[str, Any], batch_dir: str, language:
     score_color = "#4CAF50" if match_score >= 70 else "#FF9800" if match_score >= 50 else "#F44336"
     badge_text = f"📊 {candidate_name} - {match_score}%"
     
-    # Initialize shortlist in session state if not present
-    if "batch_shortlist" not in st.session_state:
-        st.session_state.batch_shortlist = set()
-    
     with st.expander(badge_text, expanded=False):
-        col_score, col_offer = st.columns([3, 1])
-        
-        with col_score:
-            st.markdown(f"**Übereinstimmung:** {match_score}%")
-            st.markdown(f"<div style='background-color: {score_color}; height: 10px; border-radius: 5px; margin: 5px 0;'></div>", unsafe_allow_html=True)
-        
-        with col_offer:
-            # Offer badge - orange if ready
-            if result.get("offer_word_path") and os.path.exists(result.get("offer_word_path", "")):
-                st.markdown("🟠 **Angebot bereit**" if language == "de" else "🟠 **Offer ready**")
+        # Embedded Mode 2/3 Dashboard (identical HTML)
+        dashboard_html_path = result.get("dashboard_path")
+        if dashboard_html_path and os.path.exists(dashboard_html_path):
+            with open(dashboard_html_path, "r", encoding="utf-8") as f:
+                dashboard_html = f.read()
+                st.components.v1.html(dashboard_html, height=1200, scrolling=True)
+        else:
+            st.warning("Dashboard not available")
         
         st.divider()
         
         # Downloads
         st.markdown("### 📥 Downloads")
-        download_cols = st.columns(4)
+        download_cols = st.columns(3)
         
         with download_cols[0]:
             if result.get("word_path") and os.path.exists(result["word_path"]):
@@ -382,17 +376,6 @@ def display_candidate_expander(result: Dict[str, Any], batch_dir: str, language:
                     )
         
         with download_cols[2]:
-            if result.get("dashboard_path") and os.path.exists(result["dashboard_path"]):
-                with open(result["dashboard_path"], "rb") as f:
-                    st.download_button(
-                        "📊 Dashboard",
-                        f,
-                        file_name=os.path.basename(result["dashboard_path"]),
-                        mime="text/html",
-                        key=f"dashboard_download_{candidate_name}"
-                    )
-        
-        with download_cols[3]:
             if result.get("offer_word_path") and os.path.exists(result.get("offer_word_path", "")):
                 with open(result["offer_word_path"], "rb") as f:
                     st.download_button(
@@ -406,32 +389,17 @@ def display_candidate_expander(result: Dict[str, Any], batch_dir: str, language:
         
         st.divider()
         
-        # Action buttons in columns
-        action_col1, action_col2, action_col3 = st.columns(3)
+        # Offer creation button (if not already created)
+        col_offer, col_reprocess = st.columns(2)
         
-        # Shortlist button
-        with action_col1:
-            in_shortlist = candidate_name in st.session_state.batch_shortlist
-            button_label = "✅ In shortlist" if in_shortlist else "🎯 Add to shortlist"
-            button_type = "primary" if in_shortlist else "secondary"
-            
-            if st.button(button_label, key=f"shortlist_{candidate_name}", use_container_width=True, type=button_type):
-                if in_shortlist:
-                    st.session_state.batch_shortlist.discard(candidate_name)
-                else:
-                    st.session_state.batch_shortlist.add(candidate_name)
-                st.rerun()
-        
-        # Offer generation button (if not already created)
-        with action_col2:
+        with col_offer:
             if not (result.get("offer_word_path") and os.path.exists(result.get("offer_word_path", ""))):
                 if st.button(f"✨ Create Offer", key=f"offer_{candidate_name}", use_container_width=True):
-                    st.info("📌 Offer generation would be integrated here with your generate_angebot_word module")
+                    st.info("📌 Offer generation would be integrated here with generate_angebot_word module")
             else:
                 st.success("✅ Offer created")
         
-        # Re-process button
-        with action_col3:
+        with col_reprocess:
             if st.button("🔄 Re-process", key=f"reprocess_{candidate_name}", use_container_width=True):
                 st.info("📌 Re-processing would be integrated with batch runner")
 

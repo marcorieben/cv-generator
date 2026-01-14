@@ -49,18 +49,15 @@ Implement Mode 4 (Batch Comparison): Upload one job profile and multiple CVs, pr
   - ✅ `create_criteria_table()` displays clustered Muss/Soll criteria
 
 ## Per-Candidate Results
-- [x] Implement per-candidate expanders with full dashboards
-  - ✅ `display_candidate_expander()` creates expandable sections per candidate
-  - ✅ Each expander shows match score and Muss/Soll coverage
+- [x] Implement per-candidate expanders with Mode 2/3 dashboards
+  - ✅ Reuse identical dashboard HTML from Mode 2/3 generation
+  - ✅ Each expander displays full candidate dashboard (match score, criteria, quality)
 - [x] Add download CV and offer creation per candidate
   - ✅ Download buttons for CV, JSON, Dashboard per candidate
-  - ✅ Offer generation UI placeholder with "Create Offer" button
+  - ✅ Offer generation UI with "Create Offer" button
 - [x] Implement orange badge for offer-ready state
   - ✅ Orange badge displays when candidate meets match threshold
   - ✅ Badge integrated into candidate header
-- [x] Add shortlist button and persistent shortlist state
-  - ✅ Shortlist button in each candidate expander
-  - ✅ Persistent state using `st.session_state.batch_shortlist` (set type)
 
 ## File Persistence & Dependencies
 - [x] Implement dynamic file dependency resolution (no hardcoded paths)
@@ -95,9 +92,16 @@ Implement Mode 4 (Batch Comparison): Upload one job profile and multiple CVs, pr
   - ⏳ Mock data available via Test Mode button
   - ⏳ Real API testing with production PDFs can proceed
 
+## Architecture Corrections
+- [x] Fix batch mode to process Stellenprofil PDF first
+  - ✅ Batch mode now extracts Stellenprofil from PDF (like Mode 2/3)
+  - ✅ Extracted Stellenprofil drives job-aware CV extraction
+  - ✅ Per-candidate dashboards use identical Mode 2/3 generation
+  - ✅ Committed: cd44ff4 with all 45 tests passing
+
 ## Finalization
 - [x] Commit Mode 4 implementation to feature branch
-  - ✅ Committed to `feature/batch-comparison-mode` (4b3db1d)
+  - ✅ Committed to `feature/batch-comparison-mode` (cd44ff4)
   - ✅ All files staged and pre-commit hooks passed
   - ✅ CHANGELOG automatically updated
 
