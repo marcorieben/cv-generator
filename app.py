@@ -898,7 +898,10 @@ else:
 def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, custom_logo_path):
     
     # Determine Phase: 'processing' or 'results'
-    if "generation_results" in st.session_state and st.session_state.get("show_results_view"):
+    # If loading from history (generation_results + show_results_view), go directly to results
+    is_history_load = "generation_results" in st.session_state and st.session_state.get("show_results_view")
+    
+    if is_history_load:
         phase = "results"
     else:
         phase = "processing"

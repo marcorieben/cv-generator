@@ -31,3 +31,4 @@
 2026-01-14 10:44:44 | BUGFIX | correct dashboard path key in batch results
 2026-01-14 10:49:11 | REFACTOR | batch runs now display as single history entry with all candidate results
 2026-01-14 10:57:46 | BUGFIX | remove UploadedFile object from batch results to prevent JSON serialization error
+2026-01-14 11:11:21 | FEATURE | implement dynamic naming for Mode 3 folder structure
