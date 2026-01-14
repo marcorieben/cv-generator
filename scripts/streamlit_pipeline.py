@@ -13,6 +13,17 @@ from scripts.generate_cv_feedback import generate_cv_feedback_json
 from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
 from scripts.visualize_results import generate_dashboard
+from scripts.naming_conventions import (
+    extract_job_profile_name,
+    get_output_folder_path,
+    get_cv_json_filename,
+    get_match_json_filename,
+    get_feedback_json_filename,
+    get_dashboard_html_filename,
+    get_angebot_json_filename,
+    get_angebot_word_filename,
+    get_stellenprofil_json_filename
+)
 
 class StreamlitCVGenerator:
     def __init__(self, base_dir: str):
@@ -134,22 +145,31 @@ class StreamlitCVGenerator:
             if progress_callback: progress_callback(30, get_text('ui', 'status_extract_cv', language), "running")
             cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data, target_language=language)
             
-            # Save JSONs
+            # Extract job profile name for unified naming convention
+            job_profile_name = extract_job_profile_name(stellenprofil_data)
+            
+            # Save JSONs with unified naming convention
             vorname = cv_data.get("Vorname", get_text('ui', 'history_unknown', language))
             nachname = cv_data.get("Nachname", "")
-            output_dir = os.path.join(self.base_dir, "output", f"{vorname}_{nachname}_{self.timestamp}")
-            os.makedirs(output_dir, exist_ok=True)
             
-            cv_json_path = os.path.join(output_dir, f"cv_{vorname}_{nachname}_{self.timestamp}.json")
+            # Create output folder: jobprofileName_cv_timestamp
+            base_output = os.path.join(self.base_dir, "output")
+            output_dir = get_output_folder_path(base_output, job_profile_name, "cv", self.timestamp)
+            
+            # Save CV JSON with unified naming
+            cv_json_filename = get_cv_json_filename(job_profile_name, vorname, nachname, self.timestamp)
+            cv_json_path = os.path.join(output_dir, cv_json_filename)
             with open(cv_json_path, 'w', encoding='utf-8') as f:
                 json.dump(cv_data, f, ensure_ascii=False, indent=2)
             results["cv_json"] = cv_json_path
             results["vorname"] = vorname
             results["nachname"] = nachname
                 
+            # Save Stellenprofil JSON with unified naming
             stellenprofil_json_path = None
             if stellenprofil_data:
-                stellenprofil_json_path = os.path.join(output_dir, f"stellenprofil_{self.timestamp}.json")
+                stellenprofil_filename = get_stellenprofil_json_filename(job_profile_name, self.timestamp)
+                stellenprofil_json_path = os.path.join(output_dir, stellenprofil_filename)
                 with open(stellenprofil_json_path, 'w', encoding='utf-8') as f:
                     json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
                 results["stellenprofil_json"] = stellenprofil_json_path
@@ -175,7 +195,8 @@ class StreamlitCVGenerator:
                 # Match
                 future_match = None
                 if stellenprofil_json_path:
-                    matchmaking_json_path = os.path.join(output_dir, f"Match_{vorname}_{nachname}_{self.timestamp}.json")
+                    match_filename = get_match_json_filename(job_profile_name, vorname, nachname, self.timestamp)
+                    matchmaking_json_path = os.path.join(output_dir, match_filename)
                     schema_path = os.path.join(self.base_dir, "scripts", "matchmaking_json_schema.json")
                     future_match = executor.submit(
                         generate_matchmaking_json,
@@ -187,7 +208,8 @@ class StreamlitCVGenerator:
                     )
                 
                 # Feedback
-                feedback_json_path = os.path.join(output_dir, f"CV_Feedback_{vorname}_{nachname}_{self.timestamp}.json")
+                feedback_filename = get_feedback_json_filename(job_profile_name, vorname, nachname, self.timestamp)
+                feedback_json_path = os.path.join(output_dir, feedback_filename)
                 feedback_schema_path = os.path.join(self.base_dir, "scripts", "cv_feedback_json_schema.json")
                 future_feedback = executor.submit(
                     generate_cv_feedback_json,
@@ -207,12 +229,14 @@ class StreamlitCVGenerator:
             if pipeline_mode == "Full" and stellenprofil_json_path and matchmaking_json_path:
                 if progress_callback: progress_callback(85, get_text('ui', 'status_offer', language), "running")
                 try:
-                    angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
+                    angebot_json_filename = get_angebot_json_filename(job_profile_name, vorname, nachname, self.timestamp)
+                    angebot_json_path = os.path.join(output_dir, angebot_json_filename)
                     # Generate JSON
                     generate_angebot_json(cv_json_path, stellenprofil_json_path, matchmaking_json_path, angebot_json_path, language=language)
                     
                     # Generate Word
-                    angebot_word_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.docx")
+                    angebot_word_filename = get_angebot_word_filename(job_profile_name, vorname, nachname, self.timestamp)
+                    angebot_word_path = os.path.join(output_dir, angebot_word_filename)
                     generate_angebot_word(angebot_json_path, angebot_word_path, language=language)
                     
                     results["offer_word_path"] = angebot_word_path

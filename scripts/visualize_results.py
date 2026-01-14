@@ -2,6 +2,8 @@ import os
 import json
 from datetime import datetime
 
+from scripts.naming_conventions import get_dashboard_html_filename
+
 def load_translations():
     """Lädt die Übersetzungen aus der translations.json Datei."""
     try:
@@ -952,8 +954,19 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     """
 
     # Save File
-    filename = f"Dashboard_{vorname}_{nachname}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-    output_path = os.path.join(output_dir, filename)
+    # Extract job profile name from cv_json_path to use in dashboard filename
+    job_profile_name = "jobprofile"  # Default
+    try:
+        # Try to extract from parent folder name (format: jobprofileName_cv_timestamp)
+        parent_folder = os.path.basename(output_dir)
+        if "_cv_" in parent_folder:
+            job_profile_name = parent_folder.split("_cv_")[0]
+    except:
+        pass
+    
+    # Use unified naming convention
+    dashboard_filename = get_dashboard_html_filename(job_profile_name, vorname, nachname, datetime.now().strftime('%Y%m%d_%H%M%S'))
+    output_path = os.path.join(output_dir, dashboard_filename)
     
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_content)

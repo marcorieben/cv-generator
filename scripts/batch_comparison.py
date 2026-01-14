@@ -17,6 +17,7 @@ import sys
 
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.pdf_to_json import pdf_to_json
+from scripts.naming_conventions import extract_job_profile_name, get_output_folder_path
 
 
 def run_batch_comparison(
@@ -102,6 +103,15 @@ def run_batch_comparison(
             "success": False,
             "error": f"Stellenprofil extraction failed: {error_details}"
         }]
+    
+    # Create batch output folder with unified naming convention
+    # Format: jobprofileName_batch-comparison_timestamp
+    job_profile_name = extract_job_profile_name(stellenprofil_data)
+    batch_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_output = os.path.join(base_dir, "output")
+    batch_output_dir = get_output_folder_path(base_output, job_profile_name, "batch-comparison", batch_timestamp)
+    
+    print(f"📂 Batch folder created: {batch_output_dir}", file=sys.stderr)
     
     if progress_callback:
         progress_callback(10, "Stellenprofil verarbeitet, beginne mit CVs...", "running")
