@@ -10,3 +10,4 @@
 2026-01-07 17:59:26 | UI | add detailed info to changelog for multi-language update
 2026-01-14 07:16:49 | BUGFIX | skip merge commits in changelog updates to keep branches synchronized
 2026-01-14 08:44:52 | FEATURE | add Mode 4 (Batch Comparison) UI with multi-file CV uploader
+2026-01-14 08:49:38 | FEATURE | add batch results display module with dashboard and expanders

@@ -636,6 +636,23 @@ with col_m4:
 mode = st.session_state.selected_mode
 st.divider()
 
+# Test Mode Button (specifically for Batch)
+if mode.startswith("Batch"):
+    test_mode_col, _ = st.columns([1, 4])
+    with test_mode_col:
+        if st.button("🧪 Test Mode (Batch)", use_container_width=True):
+            # Set mock mode and populate test data
+            os.environ["MODEL_NAME"] = "mock"
+            # Pre-select mock files
+            if "batch_cv_files" not in st.session_state or not st.session_state.batch_cv_files:
+                st.session_state.batch_cv_files = ["mock_cv_1.pdf", "mock_cv_2.pdf", "mock_cv_3.pdf"]
+            if "shared_job_file" not in st.session_state or not st.session_state.shared_job_file:
+                st.session_state.shared_job_file = "mock_job_profile.pdf"
+            st.success("✅ Test Mode activated with mock batch data")
+            st.info("📌 Mock data: 3 CVs, 1 job profile - ready to process")
+            st.rerun()
+    st.divider()
+
 # Check for Mock Mode
 is_mock = os.environ.get("MODEL_NAME") == "mock"
 
