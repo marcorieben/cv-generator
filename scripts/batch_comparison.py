@@ -17,7 +17,14 @@ import sys
 
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.pdf_to_json import pdf_to_json
-from scripts.naming_conventions import extract_job_profile_name, get_output_folder_path
+from scripts.naming_conventions import (
+    extract_job_profile_name_from_file,
+    extract_job_profile_name,
+    extract_candidate_name,
+    get_output_folder_path,
+    get_candidate_subfolder_path,
+    get_stellenprofil_json_filename
+)
 
 
 def run_batch_comparison(
@@ -118,21 +125,41 @@ def run_batch_comparison(
     
     # Create batch output folder with unified naming convention
     # Format: jobprofileName_batch-comparison_timestamp
+    # Try to extract job profile name from uploaded filename first
+    job_profile_name_from_file = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else "")
+    # Then verify/enrich with extracted data
     job_profile_name = extract_job_profile_name(stellenprofil_data)
+    if job_profile_name == "jobprofile" and job_profile_name_from_file != "jobprofile":
+        job_profile_name = job_profile_name_from_file
+    
     batch_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_output = os.path.join(base_dir, "output")
     batch_output_dir = get_output_folder_path(base_output, job_profile_name, "batch-comparison", batch_timestamp)
     
     print(f"📂 Batch folder created: {batch_output_dir}", file=sys.stderr)
     
+    # Save Stellenprofil JSON at batch folder root
+    try:
+        stellenprofil_filename = get_stellenprofil_json_filename(job_profile_name, batch_timestamp)
+        stellenprofil_path = os.path.join(batch_output_dir, stellenprofil_filename)
+        with open(stellenprofil_path, 'w', encoding='utf-8') as f:
+            json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
+        print(f"💾 Saved Stellenprofil: {stellenprofil_path}", file=sys.stderr)
+    except Exception as e:
+        print(f"⚠️  Warning: Could not save Stellenprofil JSON: {str(e)}", file=sys.stderr)
+    
     if progress_callback:
         progress_callback(10, "Stellenprofil verarbeitet, beginne mit CVs...", "running")
     
     # PHASE 2: Process each CV with Stellenprofil context
     for idx, cv_file in enumerate(cv_files):
+        # Extract candidate name from CV file
+        candidate_name = extract_candidate_name(None)  # Will be updated after CV extraction
+        candidate_name_fallback = cv_file.name.replace(".pdf", "").replace(".PDF", "")
+        
         result = {
             "success": False,
-            "candidate_name": cv_file.name.replace(".pdf", ""),
+            "candidate_name": candidate_name_fallback,
             "cv_file": cv_file,
             "job_profile": stellenprofil_data,
             "error": None
@@ -145,10 +172,18 @@ def run_batch_comparison(
         try:
             print(f"\n📄 Processing CV {idx+1}/{len(cv_files)}: {cv_file.name}", file=sys.stderr)
             
+            # Create candidate subfolder within batch folder
+            candidate_subfolder = get_candidate_subfolder_path(
+                batch_output_dir,
+                candidate_name_fallback,
+                batch_timestamp
+            )
+            print(f"📂 Candidate folder: {candidate_subfolder}", file=sys.stderr)
+            
             # Initialize the generator for this CV
             generator = StreamlitCVGenerator(base_dir)
             
-            # Run the standard pipeline with Stellenprofil context
+            # Run the standard pipeline with Stellenprofil context and custom output directory
             # The CV extraction will be job-profile-aware
             # Note: We don't pass job_file here - Stellenprofil is already extracted
             cv_result = generator.run(
@@ -159,7 +194,8 @@ def run_batch_comparison(
                 custom_logo_path=custom_logo_path,
                 pipeline_mode=pipeline_mode,
                 language=language,
-                job_profile_context=stellenprofil_data  # Pass extracted Stellenprofil as context
+                job_profile_context=stellenprofil_data,  # Pass extracted Stellenprofil as context
+                output_dir=candidate_subfolder  # Override output directory for batch mode
             )
             
             print(f"Generator result: success={cv_result.get('success')}, error={cv_result.get('error')}", file=sys.stderr)
@@ -175,6 +211,15 @@ def run_batch_comparison(
                 result["vorname"] = cv_result.get("vorname")
                 result["nachname"] = cv_result.get("nachname")
                 result["match_score"] = cv_result.get("match_score")
+                
+                # Update candidate name with actual extracted values
+                if cv_result.get("vorname") and cv_result.get("nachname"):
+                    candidate_name = extract_candidate_name({
+                        "Vorname": cv_result.get("vorname"),
+                        "Nachname": cv_result.get("nachname")
+                    })
+                    result["candidate_name"] = candidate_name
+                
                 print(f"✅ Successfully processed: {cv_file.name}", file=sys.stderr)
             else:
                 result["success"] = False

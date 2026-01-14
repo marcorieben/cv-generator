@@ -11,12 +11,38 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 
 
+def extract_job_profile_name_from_file(job_file_path: str) -> str:
+    """
+    Extract job profile name from uploaded file name.
+    
+    Takes filename (e.g., "Senior_Sales_Manager.pdf") and converts to
+    (e.g., "senior_sales_manager")
+    
+    Args:
+        job_file_path: File path or filename
+        
+    Returns:
+        Sanitized job profile name
+    """
+    if not job_file_path:
+        return "jobprofile"
+    
+    # Extract filename without extension
+    filename = os.path.basename(job_file_path)
+    name_without_ext = os.path.splitext(filename)[0]
+    
+    # Sanitize: remove special chars, lowercase
+    sanitized = sanitize_filename(name_without_ext, max_length=50)
+    
+    return sanitized if sanitized else "jobprofile"
+
+
 def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
     """
     Extract job profile name from Stellenprofil JSON data.
     
     Priority:
-    1. Stellenprofil.Positition (job title)
+    1. Stellenprofil.Stelle.Position (job title)
     2. "jobprofile" (fallback)
     
     Args:
@@ -37,11 +63,44 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
     
     if position_name:
         # Sanitize: remove special chars, limit length
-        sanitized = "".join(c for c in position_name if c.isalnum() or c in "-_").lower()
+        sanitized = sanitize_filename(position_name, max_length=50)
         if sanitized:
-            return sanitized[:30]  # Max 30 chars
+            return sanitized
     
     return "jobprofile"
+
+
+def extract_candidate_name(cv_data: Optional[Dict[str, Any]]) -> str:
+    """
+    Extract candidate name from CV JSON data.
+    
+    Priority:
+    1. Vorname + Nachname
+    2. "candidate" (fallback)
+    
+    Args:
+        cv_data: Parsed CV JSON dict
+        
+    Returns:
+        Sanitized candidate name (lastname_firstname or firstname_lastname)
+    """
+    if not cv_data:
+        return "candidate"
+    
+    vorname = cv_data.get("Vorname", "").strip()
+    nachname = cv_data.get("Nachname", "").strip()
+    
+    if vorname and nachname:
+        candidate_name = f"{nachname}_{vorname}"
+    elif vorname:
+        candidate_name = vorname
+    elif nachname:
+        candidate_name = nachname
+    else:
+        candidate_name = "candidate"
+    
+    sanitized = sanitize_filename(candidate_name, max_length=50)
+    return sanitized if sanitized else "candidate"
 
 
 def sanitize_filename(name: str, max_length: int = 50) -> str:
@@ -56,7 +115,7 @@ def sanitize_filename(name: str, max_length: int = 50) -> str:
         Sanitized name safe for filenames
     """
     # Replace spaces and special chars with underscores
-    sanitized = "".join(c if c.isalnum() else "_" for c in name)
+    sanitized = "".join(c if c.isalnum() else "_" for c in name.lower())
     # Remove multiple underscores
     while "__" in sanitized:
         sanitized = sanitized.replace("__", "_")
@@ -92,6 +151,30 @@ def get_output_folder_path(
     return folder_path
 
 
+def get_candidate_subfolder_path(
+    batch_folder: str,
+    candidate_name: str,
+    timestamp: str
+) -> str:
+    """
+    Generate candidate subfolder path within batch folder.
+    
+    Convention: candidateName_timestamp
+    
+    Args:
+        batch_folder: Path to parent batch folder
+        candidate_name: Extracted candidate name
+        timestamp: Timestamp string (YYYYMMDD_HHMMSS)
+        
+    Returns:
+        Full path to candidate subfolder
+    """
+    subfolder_name = f"{candidate_name}_{timestamp}"
+    subfolder_path = os.path.join(batch_folder, subfolder_name)
+    os.makedirs(subfolder_path, exist_ok=True)
+    return subfolder_path
+
+
 def get_cv_json_filename(
     job_profile_name: str,
     vorname: str,
@@ -112,7 +195,10 @@ def get_cv_json_filename(
     Returns:
         Filename (without path)
     """
-    candidate_name = sanitize_filename(f"{vorname}_{nachname}")
+    candidate_name = extract_candidate_name({
+        "Vorname": vorname,
+        "Nachname": nachname
+    })
     return f"{job_profile_name}_{candidate_name}_cv_{timestamp}.json"
 
 
@@ -127,7 +213,10 @@ def get_match_json_filename(
     
     Convention: jobprofileName_candidateName_match_timestamp.json
     """
-    candidate_name = sanitize_filename(f"{vorname}_{nachname}")
+    candidate_name = extract_candidate_name({
+        "Vorname": vorname,
+        "Nachname": nachname
+    })
     return f"{job_profile_name}_{candidate_name}_match_{timestamp}.json"
 
 
@@ -142,7 +231,10 @@ def get_feedback_json_filename(
     
     Convention: jobprofileName_candidateName_feedback_timestamp.json
     """
-    candidate_name = sanitize_filename(f"{vorname}_{nachname}")
+    candidate_name = extract_candidate_name({
+        "Vorname": vorname,
+        "Nachname": nachname
+    })
     return f"{job_profile_name}_{candidate_name}_feedback_{timestamp}.json"
 
 
@@ -157,7 +249,10 @@ def get_dashboard_html_filename(
     
     Convention: jobprofileName_candidateName_dashboard_timestamp.html
     """
-    candidate_name = sanitize_filename(f"{vorname}_{nachname}")
+    candidate_name = extract_candidate_name({
+        "Vorname": vorname,
+        "Nachname": nachname
+    })
     return f"{job_profile_name}_{candidate_name}_dashboard_{timestamp}.html"
 
 
@@ -172,7 +267,10 @@ def get_angebot_json_filename(
     
     Convention: jobprofileName_candidateName_angebot_timestamp.json
     """
-    candidate_name = sanitize_filename(f"{vorname}_{nachname}")
+    candidate_name = extract_candidate_name({
+        "Vorname": vorname,
+        "Nachname": nachname
+    })
     return f"{job_profile_name}_{candidate_name}_angebot_{timestamp}.json"
 
 
@@ -187,7 +285,10 @@ def get_angebot_word_filename(
     
     Convention: jobprofileName_candidateName_angebot_timestamp.docx
     """
-    candidate_name = sanitize_filename(f"{vorname}_{nachname}")
+    candidate_name = extract_candidate_name({
+        "Vorname": vorname,
+        "Nachname": nachname
+    })
     return f"{job_profile_name}_{candidate_name}_angebot_{timestamp}.docx"
 
 
