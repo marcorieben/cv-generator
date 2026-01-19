@@ -972,7 +972,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                         # Extract batch results and metadata (note: key is "batch_results" not "results")
                         batch_results = batch_response.get("batch_results", [])
                         batch_folder = batch_response.get("batch_folder", "")
-                        job_profile_name = batch_response.get("job_profile_name", "jobprofile")
+                        job_profile_name = batch_response.get("job_profile_name", "KEIN_PROFIL_ID")
                         batch_timestamp = batch_response.get("timestamp", "")
                         
                         # Log batch results for debugging

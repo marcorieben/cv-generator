@@ -30,6 +30,7 @@ from scripts.naming_conventions import (
     get_stellenprofil_json_filename,
     build_output_path
 )
+from scripts.log_formatter import batch_log
 
 
 def pdf_to_json_with_retry(pdf_file, output_path=None, schema_path=None, target_language="de", max_retries=3):
@@ -53,7 +54,7 @@ def pdf_to_json_with_retry(pdf_file, output_path=None, schema_path=None, target_
     
     for attempt in range(max_retries):
         try:
-            print(f"[RETRY] Extraction attempt {attempt + 1}/{max_retries}", file=sys.stderr)
+            print(batch_log("RETRY", f"Extraction attempt {attempt + 1}/{max_retries}"), file=sys.stderr)
             result = pdf_to_json(
                 pdf_file, 
                 output_path=output_path,
@@ -61,17 +62,17 @@ def pdf_to_json_with_retry(pdf_file, output_path=None, schema_path=None, target_
                 target_language=target_language
             )
             if result:
-                print(f"[OK] Extraction succeeded on attempt {attempt + 1}", file=sys.stderr)
+                print(batch_log("OK", f"Extraction succeeded on attempt {attempt + 1}"), file=sys.stderr)
                 return result
         except Exception as e:
             last_error = e
             if attempt < max_retries - 1:
                 wait_time = 2 ** attempt  # 2s, 4s, 8s
-                print(f"[WARN] Extraction failed (attempt {attempt + 1}): {str(e)}", file=sys.stderr)
-                print(f"[RETRY] Waiting {wait_time}s before retry...", file=sys.stderr)
+                print(batch_log("WARN", f"Extraction failed (attempt {attempt + 1}): {str(e)}"), file=sys.stderr)
+                print(batch_log("RETRY", f"Waiting {wait_time}s before retry..."), file=sys.stderr)
                 time.sleep(wait_time)
             else:
-                print(f"[ERROR] All {max_retries} extraction attempts failed", file=sys.stderr)
+                print(batch_log("ERROR", f"All {max_retries} extraction attempts failed"), file=sys.stderr)
     
     # All retries exhausted
     raise last_error if last_error else Exception("PDF extraction failed after all retries")
@@ -260,9 +261,9 @@ def run_batch_comparison(
     batch_results = []
     script_dir = os.path.dirname(os.path.abspath(__file__))  # /path/to/scripts/
     base_dir = os.path.dirname(script_dir)  # /path/to/cv_generator/ (parent of scripts)
-    print(f"[START] Starting batch_comparison with base_dir: {base_dir}", file=sys.stderr)
-    print(f"   Script dir: {script_dir}", file=sys.stderr)
-    print(f"   Number of CVs to process: {len(cv_files)}", file=sys.stderr)
+    print(batch_log("START", f"Starting batch_comparison with base_dir: {base_dir}"), file=sys.stderr)
+    print(batch_log("INFO", f"Script dir: {script_dir}"), file=sys.stderr)
+    print(batch_log("INFO", f"Number of CVs to process: {len(cv_files)}"), file=sys.stderr)
     
     # Ensure job file pointer is at start
     if hasattr(job_file, 'seek'):
@@ -275,7 +276,7 @@ def run_batch_comparison(
     # This is the semantic driver for all CV extractions
     stellenprofil_data = None
     try:
-        print(f"\n[PROFILE] Processing Stellenprofil PDF...", file=sys.stderr)
+        print(batch_log("PROFILE", "Processing Stellenprofil PDF..."), file=sys.stderr)
         
         # Use the same Stellenprofil schema as Mode 2/3
         job_schema_path = os.path.join(base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
@@ -290,29 +291,31 @@ def run_batch_comparison(
         )
         
         if not stellenprofil_data:
+            job_profile_name_fallback = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else "")
             return {
                 "batch_results": [{
                     "success": False,
                     "error": "Failed to extract Stellenprofil from PDF. Check file format and content."
                 }],
                 "batch_folder": "",
-                "job_profile_name": "jobprofile",
+                "job_profile_name": job_profile_name_fallback,
                 "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
             }
         
-        print(f"[OK] Stellenprofil extracted successfully", file=sys.stderr)
+        print(batch_log("OK", "Stellenprofil extracted successfully"), file=sys.stderr)
     
     except Exception as e:
         error_details = f"{str(e)}"
         tb_str = traceback.format_exc()
-        print(f"[ERROR] Failed to extract Stellenprofil:\n{tb_str}", file=sys.stderr)
+        print(batch_log("ERROR", f"Failed to extract Stellenprofil:\n{tb_str}"), file=sys.stderr)
+        job_profile_name_fallback = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else "")
         return {
             "batch_results": [{
                 "success": False,
                 "error": f"Stellenprofil extraction failed: {error_details}"
             }],
             "batch_folder": "",
-            "job_profile_name": "jobprofile",
+            "job_profile_name": job_profile_name_fallback,
             "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
         }
     
@@ -320,8 +323,11 @@ def run_batch_comparison(
     # Use build_output_path with is_batch=True
     job_profile_name_from_file = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else "")
     job_profile_name = extract_job_profile_name(stellenprofil_data)
-    if job_profile_name == "jobprofile" and job_profile_name_from_file != "jobprofile":
+    
+    # Fallback chain: If extraction from data failed (returns KEIN_PROFIL_ID), use filename
+    if job_profile_name == "KEIN_PROFIL_ID" and job_profile_name_from_file != "KEIN_PROFIL_ID":
         job_profile_name = job_profile_name_from_file
+        print(batch_log("INFO", f"Using job profile name from filename: {job_profile_name}"), file=sys.stderr)
     
     batch_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_output = os.path.join(base_dir, "output")
@@ -340,7 +346,7 @@ def run_batch_comparison(
     batch_output_dir = batch_naming['batch_folder_path']
     os.makedirs(batch_output_dir, exist_ok=True)
     
-    print(f"[FOLDER] Batch folder created: {batch_output_dir}", file=sys.stderr)
+    print(batch_log("FOLDER", f"Batch folder created: {batch_output_dir}"), file=sys.stderr)
     
     # Save Stellenprofil JSON at batch folder root
     try:
@@ -348,9 +354,9 @@ def run_batch_comparison(
         job_profile_path = os.path.join(batch_output_dir, job_profile_filename)
         with open(job_profile_path, 'w', encoding='utf-8') as f:
             json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
-        print(f"[SAVE] Saved Job Profile: {job_profile_path}", file=sys.stderr)
+        print(batch_log("SAVE", f"Saved Job Profile: {job_profile_path}"), file=sys.stderr)
     except Exception as e:
-        print(f"[WARN] Warning: Could not save Job Profile JSON: {str(e)}", file=sys.stderr)
+        print(batch_log("WARN", f"Could not save Job Profile JSON: {str(e)}"), file=sys.stderr)
     
     if progress_callback:
         progress_callback(10, "Stellenprofil verarbeitet, starte parallele CV-Verarbeitung...", "running")
@@ -358,8 +364,8 @@ def run_batch_comparison(
     # PHASE 2: Process CVs in parallel with Stellenprofil context
     # Calculate optimal number of workers: CPU count or 4, whichever is smaller (to avoid API rate limits)
     max_workers = min(max(1, multiprocessing.cpu_count() - 1), 4)
-    print(f"[PARALLEL] Starting parallel CV processing with {max_workers} workers", file=sys.stderr)
-    print(f"[PARALLEL] Total CVs to process: {len(cv_files)}", file=sys.stderr)
+    print(batch_log("PARALLEL", f"Starting parallel CV processing with {max_workers} workers"), file=sys.stderr)
+    print(batch_log("INFO", f"Total CVs to process: {len(cv_files)}"), file=sys.stderr)
     
     # Dictionary to collect results in order
     cv_results_dict: Dict[int, Dict] = {}

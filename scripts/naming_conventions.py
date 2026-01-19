@@ -19,8 +19,9 @@ def extract_job_profile_name_from_file(job_file_path: str) -> str:
     otherwise creates short abbreviation. Examples:
     - "gdjob_12881_senior_business_analyst.pdf" → "gdjob_12881" (ID preserved)
     - "Senior_Sales_Manager.pdf" → "senior_sales" (shortened)
+    - "job_profile.pdf" → "job_profile"
     
-    Fallback: "profile" (meaningful identifier instead of "job")
+    Fallback: "KEIN_PROFIL_ID" (used only when filename is completely empty)
     
     Args:
         job_file_path: File path or filename
@@ -29,7 +30,7 @@ def extract_job_profile_name_from_file(job_file_path: str) -> str:
         Sanitized job profile name (ID-based when possible, max 30 chars)
     """
     if not job_file_path:
-        return "profile"
+        return "KEIN_PROFIL_ID"
     
     # Extract filename without extension
     filename = os.path.basename(job_file_path)
@@ -42,13 +43,20 @@ def extract_job_profile_name_from_file(job_file_path: str) -> str:
         id_part = f"{parts[0]}_{parts[1]}"
         return sanitize_filename(id_part, max_length=30)
     
-    # Otherwise, use first 1-2 words, abbreviated
-    # "senior_business_analyst" → "senior_bus_analyst" → "sen_bus_ana" 
-    words = name_without_ext.split('_')[:2]  # Take first 2 words max
-    abbrev = '_'.join(w[:3] for w in words)  # Abbreviate each word to 3 chars
+    # Otherwise, use first 2-3 words if available
+    # "senior_business_analyst" → "senior_business_analyst" (if under 30 chars)
+    words = name_without_ext.split('_')[:3]  # Take first 3 words max
     
+    # Try full abbreviation first (more descriptive)
+    full_name = '_'.join(words)
+    sanitized_full = sanitize_filename(full_name, max_length=30)
+    if sanitized_full:
+        return sanitized_full
+    
+    # Fallback: abbreviate to 3 chars each
+    abbrev = '_'.join(w[:3] for w in words)
     sanitized = sanitize_filename(abbrev, max_length=20)
-    return sanitized if sanitized else "profile"
+    return sanitized if sanitized else "KEIN_PROFIL_ID"
 
 
 def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
@@ -59,7 +67,8 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
     1. Try to extract ID field (stellenprofilId, id, nummer, etc)
     2. Use position/title abbreviated (e.g., "sen_bus_ana")
     3. Use organization/company name abbreviated
-    4. Fallback: "profile"
+    4. Try any top-level key that looks like an identifier
+    5. Fallback: "KEIN_PROFIL_ID"
     
     Examples:
     - {"stellenprofilId": "gdjob_12881", ...} → "gdjob_12881"
@@ -73,14 +82,14 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
         Job profile identifier (max 20 chars, prefers ID)
     """
     if not job_profile_data:
-        return "profile"
+        return "KEIN_PROFIL_ID"
     
     # Priority 1: Extract ID if available
     # Common ID field names: stellenprofilId, id, nummer, job_id, profile_id
-    for id_field in ['stellenprofilId', 'id', 'nummer', 'job_id', 'profile_id', 'JobId']:
+    for id_field in ['stellenprofilId', 'id', 'nummer', 'job_id', 'profile_id', 'JobId', 'Nummer', 'ID']:
         if id_field in job_profile_data:
             id_value = str(job_profile_data[id_field]).strip()
-            if id_value:
+            if id_value and id_value.lower() not in ['', 'none', 'null', 'n/a']:
                 sanitized = sanitize_filename(id_value, max_length=30)
                 if sanitized:
                     return sanitized
@@ -88,7 +97,7 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
     # Priority 2: Extract position/title and abbreviate
     position = job_profile_data.get("Stelle", {})
     if isinstance(position, dict):
-        position_name = position.get("Position", "") or position.get("Titel", "")
+        position_name = position.get("Position", "") or position.get("Titel", "") or position.get("position", "")
     else:
         position_name = str(position) if position else ""
     
@@ -104,7 +113,7 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
     # Priority 3: Extract company/organization name
     company = job_profile_data.get("Unternehmen", {})
     if isinstance(company, dict):
-        company_name = company.get("Name", "") or company.get("name", "")
+        company_name = company.get("Name", "") or company.get("name", "") or company.get("Unternehmensname", "")
     else:
         company_name = str(company) if company else ""
     
@@ -113,8 +122,20 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
         if sanitized:
             return sanitized
     
-    # Fallback: "profile" (instead of "job")
-    return "profile"
+    # Priority 4: Look for any top-level string field that might be an identifier
+    # (but skip common structural keys)
+    skip_keys = {'Stelle', 'Unternehmen', 'description', 'Description', 'Beschreibung', 
+                 'Anforderungen', 'requirements', 'Requirements', 'created_at', 'updated_at'}
+    for key, value in job_profile_data.items():
+        if key not in skip_keys and isinstance(value, str):
+            cleaned = value.strip()
+            if len(cleaned) > 0 and len(cleaned) < 50:  # Reasonable length for an ID
+                sanitized = sanitize_filename(cleaned, max_length=30)
+                if sanitized and sanitized != "KEIN_PROFIL_ID":
+                    return sanitized
+    
+    # Fallback: "KEIN_PROFIL_ID" (indicates missing job profile data)
+    return "KEIN_PROFIL_ID"
 
 
 def extract_candidate_name_from_file(cv_file_path: str) -> str:

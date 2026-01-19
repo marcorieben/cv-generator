@@ -338,7 +338,137 @@ def display_candidate_expander(result: Dict[str, Any], batch_dir: str, language:
     badge_text = f"📊 {candidate_name} - {match_score}%"
     
     with st.expander(badge_text, expanded=False):
+        # SECTION 1: Downloads (first section)
+        st.markdown("### 📥 Downloads")
+        download_cols = st.columns(4)
+        
+        with download_cols[0]:
+            if result.get("word_file") and os.path.exists(result["word_file"]):
+                with open(result["word_file"], "rb") as f:
+                    st.download_button(
+                        f"📄 Word CV - {candidate_name}",
+                        f,
+                        file_name=os.path.basename(result["word_file"]),
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key=f"cv_download_{candidate_name}",
+                        use_container_width=True
+                    )
+        
+        with download_cols[1]:
+            if result.get("cv_json_path") and os.path.exists(result["cv_json_path"]):
+                with open(result["cv_json_path"], "rb") as f:
+                    st.download_button(
+                        "📊 JSON-Daten",
+                        f,
+                        file_name=os.path.basename(result["cv_json_path"]),
+                        mime="application/json",
+                        key=f"json_download_{candidate_name}",
+                        use_container_width=True
+                    )
+        
+        with download_cols[2]:
+            # Dashboard Button (view/download)
+            if result.get("dashboard_path") and os.path.exists(result["dashboard_path"]):
+                with open(result["dashboard_path"], "rb") as f:
+                    st.download_button(
+                        "📈 Dashboard",
+                        f,
+                        file_name=os.path.basename(result["dashboard_path"]),
+                        mime="text/html",
+                        key=f"dashboard_download_{candidate_name}",
+                        use_container_width=True
+                    )
+        
+        with download_cols[3]:
+            # Offer button (create or download)
+            if result.get("offer_word_path") and os.path.exists(result.get("offer_word_path", "")):
+                with open(result["offer_word_path"], "rb") as f:
+                    st.download_button(
+                        "💼 Angebot",
+                        f,
+                        file_name=os.path.basename(result["offer_word_path"]),
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key=f"offer_download_{candidate_name}",
+                        use_container_width=True
+                    )
+            else:
+                # Create offer button
+                if st.button("✨ Angebot erstellen", key=f"offer_{candidate_name}", use_container_width=True):
+                    with st.status("📝 Angebot wird erstellt...", expanded=True) as status:
+                        try:
+                            from scripts.generate_angebot import generate_angebot_json
+                            from scripts.generate_angebot_word import generate_angebot_word
+                            
+                            cv_json_path = result.get("cv_json_path")
+                            stellenprofil_path_or_data = result.get("stellenprofil_json")
+                            match_json_path = result.get("match_result")
+                            
+                            # Load JSON files
+                            cv_json = None
+                            job_profile_json = None
+                            match_json = None
+                            
+                            if cv_json_path and os.path.exists(cv_json_path):
+                                with open(cv_json_path, 'r', encoding='utf-8') as f:
+                                    cv_json = json.load(f)
+                            
+                            # Handle stellenprofil - could be path or dict
+                            if isinstance(stellenprofil_path_or_data, dict):
+                                job_profile_json = stellenprofil_path_or_data
+                            elif stellenprofil_path_or_data and os.path.exists(stellenprofil_path_or_data):
+                                with open(stellenprofil_path_or_data, 'r', encoding='utf-8') as f:
+                                    job_profile_json = json.load(f)
+                            
+                            if match_json_path and os.path.exists(match_json_path):
+                                with open(match_json_path, 'r', encoding='utf-8') as f:
+                                    match_json = json.load(f)
+                            
+                            if not all([cv_json, job_profile_json, match_json]):
+                                missing = []
+                                if not cv_json: missing.append("CV JSON")
+                                if not job_profile_json: missing.append("Job Profile")
+                                if not match_json: missing.append("Match Result")
+                                st.error(f"❌ Fehlende Dateien: {', '.join(missing)}")
+                                status.update(label="❌ Fehler", state="error")
+                            else:
+                                output_dir = os.path.dirname(cv_json_path)
+                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                
+                                # Generate offer JSON
+                                status.write("🧠 Generiere AI-Inhalte...")
+                                angebot_json_path = os.path.join(output_dir, f"Angebot_{candidate_name}_{timestamp}.json")
+                                schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
+                                
+                                generate_angebot_json(
+                                    cv_json,
+                                    job_profile_json,
+                                    match_json,
+                                    angebot_json_path,
+                                    schema_path,
+                                    language=language
+                                )
+                                
+                                # Generate Word document
+                                status.write("📝 Formatiere Word-Dokument...")
+                                angebot_word_path = os.path.join(output_dir, f"Angebot_{candidate_name}_{timestamp}.docx")
+                                generate_angebot_word(angebot_json_path, angebot_word_path, language=language)
+                                
+                                if os.path.exists(angebot_word_path):
+                                    result["offer_word_path"] = angebot_word_path
+                                    st.success("✅ Angebot erfolgreich erstellt!")
+                                    status.update(label="✅ Angebot erstellt", state="complete")
+                                    st.rerun()
+                                else:
+                                    st.error("❌ Word-Dokument konnte nicht generiert werden")
+                                    status.update(label="❌ Fehler", state="error")
+                        except Exception as e:
+                            st.error(f"❌ Fehler: {str(e)}")
+                            status.update(label="❌ Fehler", state="error")
+        
+        st.divider()
+        
         # Embedded Mode 2/3 Dashboard (identical HTML)
+        st.markdown("### 🎯 Kandidaten Dashboard")
         dashboard_html_path = result.get("dashboard_path")
         if dashboard_html_path and os.path.exists(dashboard_html_path):
             with open(dashboard_html_path, "r", encoding="utf-8") as f:
@@ -346,109 +476,6 @@ def display_candidate_expander(result: Dict[str, Any], batch_dir: str, language:
                 st.components.v1.html(dashboard_html, height=1200, scrolling=True)
         else:
             st.warning("Dashboard not available")
-        
-        st.divider()
-        
-        # Downloads
-        st.markdown("### 📥 Downloads")
-        download_cols = st.columns(3)
-        
-        with download_cols[0]:
-            if result.get("word_path") and os.path.exists(result["word_path"]):
-                with open(result["word_path"], "rb") as f:
-                    st.download_button(
-                        "📄 CV",
-                        f,
-                        file_name=os.path.basename(result["word_path"]),
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        key=f"cv_download_{candidate_name}"
-                    )
-        
-        with download_cols[1]:
-            if result.get("cv_json") and os.path.exists(result["cv_json"]):
-                with open(result["cv_json"], "rb") as f:
-                    st.download_button(
-                        "📋 JSON",
-                        f,
-                        file_name=os.path.basename(result["cv_json"]),
-                        mime="application/json",
-                        key=f"json_download_{candidate_name}"
-                    )
-        
-        with download_cols[2]:
-            if result.get("offer_word_path") and os.path.exists(result.get("offer_word_path", "")):
-                with open(result["offer_word_path"], "rb") as f:
-                    st.download_button(
-                        "💼 Offer",
-                        f,
-                        file_name=os.path.basename(result["offer_word_path"]),
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        type="primary",
-                        key=f"offer_download_{candidate_name}"
-                    )
-        
-        st.divider()
-        
-        # Offer creation button (if not already created)
-        col_offer, col_reprocess = st.columns(2)
-        
-        with col_offer:
-            if not (result.get("offer_word_path") and os.path.exists(result.get("offer_word_path", ""))):
-                if st.button(f"✨ Create Offer", key=f"offer_{candidate_name}", width='stretch'):
-                    with st.status("📝 Generating offer..." if language == "de" else "📝 Generating offer...", expanded=True) as status:
-                        try:
-                            from scripts.generate_angebot import generate_angebot_json
-                            from scripts.generate_angebot_word import generate_angebot_word
-                            from scripts.naming_conventions import get_angebot_json_filename, get_angebot_word_filename
-                            
-                            cv_json = result.get("cv_json")
-                            job_profile_json = result.get("stellenprofil_json")
-                            match_json = result.get("match_json")
-                            
-                            if not all([cv_json, job_profile_json, match_json]):
-                                st.error("❌ Missing required files for offer generation")
-                                status.update(label="❌ Fehler", state="error")
-                                return
-                            
-                            output_dir = os.path.dirname(cv_json)
-                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                            
-                            # Generate offer JSON
-                            status.write("🧠 Generating AI content...")
-                            angebot_json_path = os.path.join(output_dir, f"Angebot_{candidate_name}_{timestamp}.json")
-                            schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
-                            
-                            generate_angebot_json(
-                                cv_json,
-                                job_profile_json,
-                                match_json,
-                                angebot_json_path,
-                                schema_path,
-                                language=language
-                            )
-                            
-                            # Generate Word document
-                            status.write("📝 Formatting Word document...")
-                            angebot_word_path = os.path.join(output_dir, f"Angebot_{candidate_name}_{timestamp}.docx")
-                            generate_angebot_word(angebot_json_path, angebot_word_path, language=language)
-                            
-                            if os.path.exists(angebot_word_path):
-                                result["offer_word_path"] = angebot_word_path
-                                st.success("✅ Offer created successfully!")
-                                status.update(label="✅ Offer created", state="complete")
-                                st.rerun()
-                            else:
-                                st.error("❌ Word document generation failed")
-                                status.update(label="❌ Failed", state="error")
-                        except Exception as e:
-                            st.error(f"❌ Error: {str(e)}")
-                            status.update(label="❌ Error", state="error")
-            else:
-                st.success("✅ Offer created")
-        
-        with col_reprocess:
-            if st.button("🔄 Re-process", key=f"reprocess_{candidate_name}", width='stretch'):
-                st.info("📌 Re-processing would be integrated with batch runner")
 
 
 def display_batch_results(batch_results: List[Dict[str, Any]], job_profile_json: Optional[str], language: str = "de"):

@@ -161,7 +161,7 @@ class StreamlitCVGenerator:
             
             # Extract job profile name from both data and filename (filename takes priority if meaningful)
             # But if job_profile_name was provided as parameter (from batch mode), use that
-            if job_profile_name and job_profile_name != "jobprofile":
+            if job_profile_name and job_profile_name != "KEIN_PROFIL_ID":
                 # Use the provided job_profile_name (from batch mode)
                 pass  # job_profile_name is already set
             else:
@@ -170,14 +170,14 @@ class StreamlitCVGenerator:
                 job_profile_name_from_file = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else str(job_file)) if job_file else None
                 
                 # Use filename extraction if it's not generic, otherwise use data extraction
-                if job_profile_name_from_file and job_profile_name_from_file != "jobprofile":
+                if job_profile_name_from_file and job_profile_name_from_file != "KEIN_PROFIL_ID":
                     job_profile_name = job_profile_name_from_file
                 else:
                     job_profile_name = job_profile_name_from_data
             
-            # Ensure job_profile_name is set
+            # Ensure job_profile_name is set (fallback to KEIN_PROFIL_ID if still empty)
             if not job_profile_name or job_profile_name == "":
-                job_profile_name = "jobprofile"
+                job_profile_name = "KEIN_PROFIL_ID"
             
             # Extract candidate name from both data and filename (data takes priority for accuracy)
             vorname = cv_data.get("Vorname", get_text('ui', 'history_unknown', language))
