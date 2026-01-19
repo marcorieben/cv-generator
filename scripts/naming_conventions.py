@@ -333,7 +333,7 @@ def get_stellenprofil_json_filename(
 def build_output_path(
     mode: str,
     candidate_name: str = "",
-    stellenprofil: str = "",
+    job_profile_name: str = "",
     artifact_type: str = "cv",
     is_batch: bool = False,
     timestamp: Optional[str] = None,
@@ -415,7 +415,7 @@ def build_output_path(
     
     # Normalize names
     candidate_normalized = sanitize_filename(candidate_name, max_length=50) if candidate_name else ""
-    stellenprofil_normalized = sanitize_filename(stellenprofil, max_length=50) if stellenprofil else ""
+    job_profile_normalized = sanitize_filename(job_profile_name, max_length=50) if job_profile_name else ""
     
     # Validate mode
     if mode not in ['basic', 'professional_analysis']:
@@ -447,28 +447,28 @@ def build_output_path(
     
     # ========== MODE 2: PROFESSIONAL ANALYSIS ==========
     if mode == 'professional_analysis':
-        if not stellenprofil_normalized:
-            raise ValueError("stellenprofil is required for professional_analysis mode")
+        if not job_profile_normalized:
+            raise ValueError("job_profile_name is required for professional_analysis mode")
         
         if not candidate_normalized:
             candidate_normalized = 'candidate'
         
         # ===== CASE 1: BATCH MODE =====
         if is_batch:
-            # Batch folder: batch_comparison_stellenprofil_timestamp
-            batch_folder_name = f"batch_comparison_{stellenprofil_normalized}_{timestamp}"
+            # Batch folder: batch_comparison_job_profile_timestamp
+            batch_folder_name = f"batch_comparison_{job_profile_normalized}_{timestamp}"
             batch_folder_path = os.path.join(base_output_dir, batch_folder_name)
             
-            # Stellenprofil JSON at batch root: stellenprofil_timestamp.json
-            stellenprofil_file_name = f"{stellenprofil_normalized}_{timestamp}"
-            stellenprofil_file_path = os.path.join(batch_folder_path, f"{stellenprofil_file_name}.json")
+            # Job profile JSON at batch root: job_profile_timestamp.json
+            job_profile_file_name = f"{job_profile_normalized}_{timestamp}"
+            job_profile_file_path = os.path.join(batch_folder_path, f"{job_profile_file_name}.json")
             
-            # Candidate subfolder: stellenprofil_candidate_timestamp
-            candidate_subfolder_name = f"{stellenprofil_normalized}_{candidate_normalized}_{timestamp}"
+            # Candidate subfolder: job_profile_candidate_timestamp
+            candidate_subfolder_name = f"{job_profile_normalized}_{candidate_normalized}_{timestamp}"
             candidate_subfolder_path = os.path.join(batch_folder_path, candidate_subfolder_name)
             
-            # File in candidate subfolder: stellenprofil_candidate_artifact_timestamp
-            file_name = f"{stellenprofil_normalized}_{candidate_normalized}_{artifact_type}_{timestamp}"
+            # File in candidate subfolder: job_profile_candidate_artifact_timestamp
+            file_name = f"{job_profile_normalized}_{candidate_normalized}_{artifact_type}_{timestamp}"
             file_path = os.path.join(candidate_subfolder_path, f"{file_name}.ext")
             
             return {
@@ -476,8 +476,8 @@ def build_output_path(
                 'is_batch': True,
                 'batch_folder_name': batch_folder_name,
                 'batch_folder_path': batch_folder_path,
-                'stellenprofil_file_name': stellenprofil_file_name,
-                'stellenprofil_file_path': stellenprofil_file_path,
+                'job_profile_file_name': job_profile_file_name,
+                'job_profile_file_path': job_profile_file_path,
                 'candidate_subfolder_name': candidate_subfolder_name,
                 'candidate_subfolder_path': candidate_subfolder_path,
                 'folder_name': candidate_subfolder_name,  # Alias for compatibility
@@ -490,12 +490,12 @@ def build_output_path(
         
         # ===== CASE 2: SINGLE CV MODE =====
         else:
-            # Folder: stellenprofil_candidate_timestamp
-            folder_name = f"{stellenprofil_normalized}_{candidate_normalized}_{timestamp}"
+            # Folder: job_profile_candidate_timestamp
+            folder_name = f"{job_profile_normalized}_{candidate_normalized}_{timestamp}"
             folder_path = os.path.join(base_output_dir, folder_name)
             
-            # File: stellenprofil_candidate_artifact_timestamp
-            file_name = f"{stellenprofil_normalized}_{candidate_normalized}_{artifact_type}_{timestamp}"
+            # File: job_profile_candidate_artifact_timestamp
+            file_name = f"{job_profile_normalized}_{candidate_normalized}_{artifact_type}_{timestamp}"
             file_path = os.path.join(folder_path, f"{file_name}.ext")
             
             return {

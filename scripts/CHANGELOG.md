@@ -46,3 +46,4 @@
 2026-01-19 10:51:42 | BUGFIX | improve error handling in ThreadPoolExecutor for batch generation
 2026-01-19 11:37:24 | BUGFIX | increase import timeout for pdf_to_json test
 2026-01-19 11:44:14 | BUGFIX | remove last emoji from pdf_to_json.py and fix FileObj seek method in test
+2026-01-19 13:27:39 | BUGFIX | correct test file syntax and assertions

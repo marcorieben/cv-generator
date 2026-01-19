@@ -58,7 +58,7 @@ class TestBuildOutputPathProfessionalAnalysisSingle:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=False,
             timestamp='20260119_114357'
@@ -74,7 +74,7 @@ class TestBuildOutputPathProfessionalAnalysisSingle:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='match',
             is_batch=False,
             timestamp='20260119_114357'
@@ -88,7 +88,7 @@ class TestBuildOutputPathProfessionalAnalysisSingle:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='feedback',
             is_batch=False,
             timestamp='20260119_114357'
@@ -101,7 +101,7 @@ class TestBuildOutputPathProfessionalAnalysisSingle:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='dashboard',
             is_batch=False,
             timestamp='20260119_114357'
@@ -115,7 +115,7 @@ class TestBuildOutputPathProfessionalAnalysisSingle:
             build_output_path(
                 mode='professional_analysis',
                 candidate_name='fischer_arthur',
-                stellenprofil='',  # Missing!
+                job_profile_name='',  # Missing!
                 artifact_type='cv',
                 is_batch=False,
                 timestamp='20260119_114357'
@@ -126,7 +126,7 @@ class TestBuildOutputPathProfessionalAnalysisSingle:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='Müller-Hans',
-            stellenprofil='Senior-Business-Analyst',
+            job_profile_name='Senior-Business-Analyst',
             artifact_type='cv',
             is_batch=False,
             timestamp='20260119_114357'
@@ -145,7 +145,7 @@ class TestBuildOutputPathProfessionalAnalysisBatch:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=True,
             timestamp='20260119_114357'
@@ -160,22 +160,22 @@ class TestBuildOutputPathProfessionalAnalysisBatch:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=True,
             timestamp='20260119_114357'
         )
         
-        assert result['stellenprofil_file_name'] == 'senior_business_analyst_20260119_114357'
-        assert 'batch_comparison_senior_business_analyst_20260119_114357' in result['stellenprofil_file_path']
-        assert 'fischer_arthur' not in result['stellenprofil_file_path']  # Not in subfolder
+        assert result['job_profile_file_name'] == 'senior_business_analyst_20260119_114357'
+        assert 'batch_comparison_senior_business_analyst_20260119_114357' in result['job_profile_file_path']
+        assert 'fischer_arthur' not in result['job_profile_file_path']  # Not in subfolder
     
     def test_batch_mode_cv_artifact(self):
         """Test batch mode with CV artifact"""
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=True,
             timestamp='20260119_114357'
@@ -189,7 +189,7 @@ class TestBuildOutputPathProfessionalAnalysisBatch:
         result1 = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=True,
             timestamp='20260119_114357'
@@ -198,7 +198,7 @@ class TestBuildOutputPathProfessionalAnalysisBatch:
         result2 = build_output_path(
             mode='professional_analysis',
             candidate_name='mueller_hans',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=True,
             timestamp='20260119_114357'
@@ -220,7 +220,7 @@ class TestBuildOutputPathProfessionalAnalysisBatch:
             result = build_output_path(
                 mode='professional_analysis',
                 candidate_name='fischer_arthur',
-                stellenprofil='senior_business_analyst',
+                job_profile_name='senior_business_analyst',
                 artifact_type=artifact,
                 is_batch=True,
                 timestamp='20260119_114357'
@@ -298,7 +298,7 @@ class TestBuildOutputPathPathConsistency:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=False,
             timestamp='20260119_114357'
@@ -312,7 +312,7 @@ class TestBuildOutputPathPathConsistency:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=True,
             timestamp='20260119_114357'
@@ -343,7 +343,7 @@ class TestBuildOutputPathNoHardcodedStrings:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=False,
             timestamp='20260119_114357'
@@ -358,7 +358,7 @@ class TestBuildOutputPathNoHardcodedStrings:
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
-            stellenprofil='senior_business_analyst',
+            job_profile_name='senior_business_analyst',
             artifact_type='cv',
             is_batch=True,
             timestamp='20260119_114357'

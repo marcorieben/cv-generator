@@ -151,7 +151,7 @@ def run_batch_comparison(
     batch_naming = build_output_path(
         mode='professional_analysis',
         candidate_name='',  # Not used at batch root level
-        stellenprofil=job_profile_name,
+        job_profile_name=job_profile_name,
         artifact_type='batch',
         is_batch=True,
         timestamp=batch_timestamp,
@@ -165,13 +165,13 @@ def run_batch_comparison(
     
     # Save Stellenprofil JSON at batch folder root
     try:
-        stellenprofil_filename = batch_naming['stellenprofil_file_name'] + '.json'
-        stellenprofil_path = os.path.join(batch_output_dir, stellenprofil_filename)
-        with open(stellenprofil_path, 'w', encoding='utf-8') as f:
+        job_profile_filename = batch_naming['job_profile_file_name'] + '.json'
+        job_profile_path = os.path.join(batch_output_dir, job_profile_filename)
+        with open(job_profile_path, 'w', encoding='utf-8') as f:
             json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
-        print(f"[SAVE] Saved Stellenprofil: {stellenprofil_path}", file=sys.stderr)
+        print(f"[SAVE] Saved Job Profile: {job_profile_path}", file=sys.stderr)
     except Exception as e:
-        print(f"[WARN] Warning: Could not save Stellenprofil JSON: {str(e)}", file=sys.stderr)
+        print(f"[WARN] Warning: Could not save Job Profile JSON: {str(e)}", file=sys.stderr)
     
     if progress_callback:
         progress_callback(10, "Stellenprofil verarbeitet, beginne mit CVs...", "running")
@@ -204,7 +204,7 @@ def run_batch_comparison(
             candidate_naming = build_output_path(
                 mode='professional_analysis',
                 candidate_name=candidate_name_normalized,
-                stellenprofil=job_profile_name,
+                job_profile_name=job_profile_name,
                 artifact_type='cv',
                 is_batch=True,
                 timestamp=batch_timestamp,
