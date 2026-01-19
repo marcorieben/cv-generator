@@ -109,8 +109,8 @@ class TestBuildOutputPathProfessionalAnalysisSingle:
         
         assert 'dashboard' in result['file_name']
     
-    def test_single_cv_requires_stellenprofil(self):
-        """Test that professional analysis mode requires stellenprofil"""
+    def test_single_cv_requires_job_profile_name(self):
+        """Test that professional analysis mode requires job_profile_name"""
         with pytest.raises(ValueError):
             build_output_path(
                 mode='professional_analysis',
@@ -155,8 +155,8 @@ class TestBuildOutputPathProfessionalAnalysisBatch:
         assert result['batch_folder_name'] == 'batch_comparison_senior_business_analyst_20260119_114357'
         assert result['candidate_subfolder_name'] == 'senior_business_analyst_fischer_arthur_20260119_114357'
     
-    def test_batch_mode_stellenprofil_at_root(self):
-        """Test that stellenprofil JSON is created at batch folder root"""
+    def test_batch_mode_job_profile_at_root(self):
+        """Test that job profile JSON is created at batch folder root"""
         result = build_output_path(
             mode='professional_analysis',
             candidate_name='fischer_arthur',
