@@ -10,11 +10,13 @@ This module handles:
 
 import os
 import json
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import traceback
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import multiprocessing
 
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.pdf_to_json import pdf_to_json
@@ -73,6 +75,134 @@ def pdf_to_json_with_retry(pdf_file, output_path=None, schema_path=None, target_
     
     # All retries exhausted
     raise last_error if last_error else Exception("PDF extraction failed after all retries")
+
+
+def _process_single_cv(
+    cv_file,
+    idx: int,
+    total_cvs: int,
+    base_dir: str,
+    base_output: str,
+    batch_timestamp: str,
+    batch_output_dir: str,
+    stellenprofil_data: Dict,
+    job_profile_name: str,
+    api_key: str,
+    custom_styles: Optional[Dict],
+    custom_logo_path: Optional[str],
+    pipeline_mode: str,
+    language: str
+) -> Tuple[int, Dict[str, Any]]:
+    """
+    Process a single CV in the batch.
+    
+    This function is designed to run in parallel via ThreadPoolExecutor.
+    Returns: (index, result_dict) for ordered result collection
+    
+    Args:
+        cv_file: CV File object to process
+        idx: Index of this CV in the batch (0-based)
+        total_cvs: Total number of CVs in batch (for progress indication)
+        base_dir: Base directory of the project
+        base_output: Base output directory path
+        batch_timestamp: Timestamp of the batch (YYYYMMDD_HHMMSS)
+        batch_output_dir: Path to the batch output folder
+        stellenprofil_data: Pre-extracted Stellenprofil data
+        job_profile_name: Normalized job profile name
+        api_key: OpenAI API key
+        custom_styles: Custom styling dict
+        custom_logo_path: Custom logo path
+        pipeline_mode: Pipeline mode identifier
+        language: Language code (de, en, fr)
+        
+    Returns:
+        Tuple[index, result_dict] where result_dict contains success/error info
+    """
+    candidate_name = extract_candidate_name(None)
+    candidate_name_fallback = cv_file.name.replace(".pdf", "").replace(".PDF", "")
+    
+    result = {
+        "success": False,
+        "candidate_name": candidate_name_fallback,
+        "cv_filename": cv_file.name,
+        "error": None
+    }
+    
+    try:
+        print(f"\n[PARALLEL] Processing CV {idx+1}/{total_cvs}: {cv_file.name}", file=sys.stderr)
+        
+        # Create candidate subfolder
+        candidate_name_normalized = extract_candidate_name_from_file(cv_file.name)
+        
+        candidate_naming = build_output_path(
+            mode='professional_analysis',
+            candidate_name=candidate_name_normalized,
+            job_profile_name=job_profile_name,
+            artifact_type='cv',
+            is_batch=True,
+            timestamp=batch_timestamp,
+            base_output_dir=base_output
+        )
+        
+        candidate_subfolder = candidate_naming['candidate_subfolder_path']
+        os.makedirs(candidate_subfolder, exist_ok=True)
+        
+        print(f"[FOLDER] CV {idx+1} folder: {candidate_subfolder}", file=sys.stderr)
+        
+        # Initialize generator and run pipeline
+        generator = StreamlitCVGenerator(base_dir)
+        
+        cv_result = generator.run(
+            cv_file=cv_file,
+            job_file=None,
+            api_key=api_key,
+            custom_styles=custom_styles,
+            custom_logo_path=custom_logo_path,
+            pipeline_mode=pipeline_mode,
+            language=language,
+            job_profile_context=stellenprofil_data,
+            output_dir=candidate_subfolder,
+            job_profile_name=job_profile_name
+        )
+        
+        print(f"[PARALLEL] CV {idx+1} result: success={cv_result.get('success')}", file=sys.stderr)
+        
+        # Extract data from result
+        if cv_result.get("success"):
+            result["success"] = True
+            result["cv_json_path"] = cv_result.get("cv_json")
+            result["word_file"] = cv_result.get("word_path")
+            result["match_result"] = cv_result.get("match_json")
+            result["dashboard_path"] = cv_result.get("dashboard_path")
+            result["stellenprofil_json"] = cv_result.get("stellenprofil_json")
+            result["vorname"] = cv_result.get("vorname")
+            result["nachname"] = cv_result.get("nachname")
+            result["match_score"] = cv_result.get("match_score")
+            
+            # Update candidate name with actual data
+            if cv_result.get("vorname") and cv_result.get("nachname"):
+                candidate_name = extract_candidate_name({
+                    "Vorname": cv_result.get("vorname"),
+                    "Nachname": cv_result.get("nachname")
+                })
+                result["candidate_name"] = candidate_name
+            
+            print(f"[OK] CV {idx+1} succeeded: {cv_file.name}", file=sys.stderr)
+        else:
+            result["success"] = False
+            error_msg = cv_result.get("error", "Unknown error during processing")
+            result["error"] = f"Pipeline error: {error_msg}"
+            print(f"[ERROR] CV {idx+1} failed: {cv_file.name} - {error_msg}", file=sys.stderr)
+    
+    except Exception as e:
+        error_details = f"{str(e)}"
+        tb_str = traceback.format_exc()
+        result["success"] = False
+        result["error"] = error_details
+        print(f"[ERROR] CV {idx+1} exception: {cv_file.name}: {error_details}", file=sys.stderr)
+        print(f"Full traceback:\n{tb_str}", file=sys.stderr)
+    
+    return (idx, result)
 
 
 def run_batch_comparison(
@@ -221,107 +351,59 @@ def run_batch_comparison(
         print(f"[WARN] Warning: Could not save Job Profile JSON: {str(e)}", file=sys.stderr)
     
     if progress_callback:
-        progress_callback(10, "Stellenprofil verarbeitet, beginne mit CVs...", "running")
+        progress_callback(10, "Stellenprofil verarbeitet, starte parallele CV-Verarbeitung...", "running")
     
-    # PHASE 2: Process each CV with Stellenprofil context
-    for idx, cv_file in enumerate(cv_files):
-        # Extract candidate name from CV file
-        candidate_name = extract_candidate_name(None)  # Will be updated after CV extraction
-        candidate_name_fallback = cv_file.name.replace(".pdf", "").replace(".PDF", "")
-        
-        result = {
-            "success": False,
-            "candidate_name": candidate_name_fallback,
-            "cv_filename": cv_file.name,  # Store only the filename, not the UploadedFile object
-            "error": None
-        }
-        
-        progress_pct = int(10 + (idx / len(cv_files)) * 80)
-        if progress_callback:
-            progress_callback(progress_pct, f"Verarbeite {cv_file.name}...", "running")
-        
-        try:
-            print(f"\n[FILE] Processing CV {idx+1}/{len(cv_files)}: {cv_file.name}", file=sys.stderr)
-            
-            # Create candidate subfolder within batch folder using new build_output_path
-            # Note: candidate_name will be extracted from CV data after pdf_to_json runs
-            # For now, use filename as fallback
-            candidate_name_normalized = extract_candidate_name_from_file(cv_file.name)
-            
-            candidate_naming = build_output_path(
-                mode='professional_analysis',
-                candidate_name=candidate_name_normalized,
-                job_profile_name=job_profile_name,
-                artifact_type='cv',
-                is_batch=True,
-                timestamp=batch_timestamp,
-                base_output_dir=base_output
-            )
-            
-            candidate_subfolder = candidate_naming['candidate_subfolder_path']
-            os.makedirs(candidate_subfolder, exist_ok=True)
-            
-            print(f"[FOLDER] Candidate folder: {candidate_subfolder}", file=sys.stderr)
-            print(f"   Folder exists: {os.path.exists(candidate_subfolder)}", file=sys.stderr)
-            print(f"   Batch output dir: {batch_output_dir}", file=sys.stderr)
-            
-            # Initialize the generator for this CV
-            generator = StreamlitCVGenerator(base_dir)
-            
-            # Run the standard pipeline with Stellenprofil context and custom output directory
-            # The CV extraction will be job-profile-aware
-            # Note: We don't pass job_file here - Stellenprofil is already extracted
-            cv_result = generator.run(
+    # PHASE 2: Process CVs in parallel with Stellenprofil context
+    # Calculate optimal number of workers: CPU count or 4, whichever is smaller (to avoid API rate limits)
+    max_workers = min(max(1, multiprocessing.cpu_count() - 1), 4)
+    print(f"[PARALLEL] Starting parallel CV processing with {max_workers} workers", file=sys.stderr)
+    print(f"[PARALLEL] Total CVs to process: {len(cv_files)}", file=sys.stderr)
+    
+    # Dictionary to collect results in order
+    cv_results_dict: Dict[int, Dict] = {}
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all CV processing tasks
+        futures = {}
+        for idx, cv_file in enumerate(cv_files):
+            future = executor.submit(
+                _process_single_cv,
                 cv_file=cv_file,
-                job_file=None,  # Don't re-extract job profile for each CV
+                idx=idx,
+                total_cvs=len(cv_files),
+                base_dir=base_dir,
+                base_output=base_output,
+                batch_timestamp=batch_timestamp,
+                batch_output_dir=batch_output_dir,
+                stellenprofil_data=stellenprofil_data,
+                job_profile_name=job_profile_name,
                 api_key=api_key,
                 custom_styles=custom_styles,
                 custom_logo_path=custom_logo_path,
                 pipeline_mode=pipeline_mode,
-                language=language,
-                job_profile_context=stellenprofil_data,  # Pass extracted Stellenprofil as context
-                output_dir=candidate_subfolder,  # Override output directory for batch mode
-                job_profile_name=job_profile_name  # Pass the consistent job profile name for file naming
+                language=language
             )
-            
-            print(f"Generator result: success={cv_result.get('success')}, error={cv_result.get('error')}", file=sys.stderr)
-            
-            # Extract relevant data from cv_result
-            if cv_result.get("success"):
-                result["success"] = True
-                result["cv_json_path"] = cv_result.get("cv_json")  # JSON file path
-                result["word_file"] = cv_result.get("word_path")   # Word doc path
-                result["match_result"] = cv_result.get("match_json")  # Match JSON path
-                result["dashboard_path"] = cv_result.get("dashboard_path")  # Dashboard HTML path
-                result["stellenprofil_json"] = cv_result.get("stellenprofil_json")  # Job profile JSON path
-                result["vorname"] = cv_result.get("vorname")
-                result["nachname"] = cv_result.get("nachname")
-                result["match_score"] = cv_result.get("match_score")
-                
-                # Update candidate name with actual extracted values
-                if cv_result.get("vorname") and cv_result.get("nachname"):
-                    candidate_name = extract_candidate_name({
-                        "Vorname": cv_result.get("vorname"),
-                        "Nachname": cv_result.get("nachname")
-                    })
-                    result["candidate_name"] = candidate_name
-                
-                print(f"[OK] Successfully processed: {cv_file.name}", file=sys.stderr)
-            else:
-                result["success"] = False
-                error_msg = cv_result.get("error", "Unknown error during processing")
-                result["error"] = f"Pipeline error: {error_msg}"
-                print(f"[ERROR] Processing failed: {cv_file.name} - {error_msg}", file=sys.stderr)
+            futures[future] = idx
         
-        except Exception as e:
-            error_details = f"{str(e)}"
-            tb_str = traceback.format_exc()
-            result["success"] = False
-            result["error"] = error_details
-            print(f"[ERROR] Exception processing {cv_file.name}: {error_details}", file=sys.stderr)
-            print(f"Full traceback:\n{tb_str}", file=sys.stderr)
-        
-        batch_results.append(result)
+        # Collect results as they complete
+        completed = 0
+        for future in as_completed(futures):
+            try:
+                idx, result = future.result()
+                cv_results_dict[idx] = result
+                completed += 1
+                progress_pct = int(10 + (completed / len(cv_files)) * 80)
+                status_msg = f"CVs verarbeitet: {completed}/{len(cv_files)}"
+                if progress_callback:
+                    progress_callback(progress_pct, status_msg, "running")
+                print(f"[PARALLEL] Completed {completed}/{len(cv_files)} CVs", file=sys.stderr)
+            except Exception as e:
+                print(f"[ERROR] Task exception: {str(e)}", file=sys.stderr)
+    
+    # Rebuild results list in original order
+    batch_results = [cv_results_dict[i] for i in range(len(cv_files))]
+    
+    print(f"[PARALLEL] All CV processing complete. {len([r for r in batch_results if r.get('success')])} successful, {len([r for r in batch_results if not r.get('success')])} failed", file=sys.stderr)
     
     if progress_callback:
         progress_callback(100, "Batch verarbeitet", "complete")
