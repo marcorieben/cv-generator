@@ -20,14 +20,16 @@ def extract_job_profile_name_from_file(job_file_path: str) -> str:
     - "gdjob_12881_senior_business_analyst.pdf" → "gdjob_12881" (ID preserved)
     - "Senior_Sales_Manager.pdf" → "senior_sales" (shortened)
     
+    Fallback: "profile" (meaningful identifier instead of "job")
+    
     Args:
         job_file_path: File path or filename
         
     Returns:
-        Sanitized job profile name (ID-based when possible)
+        Sanitized job profile name (ID-based when possible, max 30 chars)
     """
     if not job_file_path:
-        return "job"
+        return "profile"
     
     # Extract filename without extension
     filename = os.path.basename(job_file_path)
@@ -38,7 +40,7 @@ def extract_job_profile_name_from_file(job_file_path: str) -> str:
     if len(parts) >= 2 and parts[1].isdigit():
         # Return ID-based name: "gdjob_12881"
         id_part = f"{parts[0]}_{parts[1]}"
-        return sanitize_filename(id_part, max_length=20)
+        return sanitize_filename(id_part, max_length=30)
     
     # Otherwise, use first 1-2 words, abbreviated
     # "senior_business_analyst" → "senior_bus_analyst" → "sen_bus_ana" 
@@ -46,31 +48,49 @@ def extract_job_profile_name_from_file(job_file_path: str) -> str:
     abbrev = '_'.join(w[:3] for w in words)  # Abbreviate each word to 3 chars
     
     sanitized = sanitize_filename(abbrev, max_length=20)
-    return sanitized if sanitized else "job"
+    return sanitized if sanitized else "profile"
 
 
 def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
     """
-    Extract job profile name from Stellenprofil JSON data.
+    Extract job profile identifier from Stellenprofil JSON data.
     
-    For batch mode, creates shortened profile identifier.
-    Examples: "Senior Business Analyst" → "sen_bus_ana"
+    Priority:
+    1. Try to extract ID field (stellenprofilId, id, nummer, etc)
+    2. Use position/title abbreviated (e.g., "sen_bus_ana")
+    3. Use organization/company name abbreviated
+    4. Fallback: "profile"
+    
+    Examples:
+    - {"stellenprofilId": "gdjob_12881", ...} → "gdjob_12881"
+    - {"Stelle": {"Position": "Senior Business Analyst"}} → "sen_bus_ana"
+    - {"Unternehmen": {"Name": "TechCorp"}} → "techcorp"
     
     Args:
         job_profile_data: Parsed Stellenprofil JSON dict
         
     Returns:
-        Shortened job profile identifier (max 20 chars)
+        Job profile identifier (max 20 chars, prefers ID)
     """
     if not job_profile_data:
-        return "job"
+        return "profile"
     
-    # Try to extract position/title
+    # Priority 1: Extract ID if available
+    # Common ID field names: stellenprofilId, id, nummer, job_id, profile_id
+    for id_field in ['stellenprofilId', 'id', 'nummer', 'job_id', 'profile_id', 'JobId']:
+        if id_field in job_profile_data:
+            id_value = str(job_profile_data[id_field]).strip()
+            if id_value:
+                sanitized = sanitize_filename(id_value, max_length=30)
+                if sanitized:
+                    return sanitized
+    
+    # Priority 2: Extract position/title and abbreviate
     position = job_profile_data.get("Stelle", {})
     if isinstance(position, dict):
         position_name = position.get("Position", "") or position.get("Titel", "")
     else:
-        position_name = str(position)
+        position_name = str(position) if position else ""
     
     if position_name:
         # Split into words and abbreviate to 3 chars each
@@ -81,7 +101,20 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
         if sanitized:
             return sanitized
     
-    return "job"
+    # Priority 3: Extract company/organization name
+    company = job_profile_data.get("Unternehmen", {})
+    if isinstance(company, dict):
+        company_name = company.get("Name", "") or company.get("name", "")
+    else:
+        company_name = str(company) if company else ""
+    
+    if company_name:
+        sanitized = sanitize_filename(company_name, max_length=20)
+        if sanitized:
+            return sanitized
+    
+    # Fallback: "profile" (instead of "job")
+    return "profile"
 
 
 def extract_candidate_name_from_file(cv_file_path: str) -> str:
