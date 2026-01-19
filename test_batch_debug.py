@@ -72,8 +72,13 @@ def test_batch_processing():
                 self.position += size
             return result
         
-        def seek(self, pos):
-            self.position = pos
+        def seek(self, pos, whence=0):
+            if whence == 0:  # SEEK_SET
+                self.position = pos
+            elif whence == 1:  # SEEK_CUR
+                self.position += pos
+            elif whence == 2:  # SEEK_END
+                self.position = len(self.data) + pos
         
         def tell(self):
             return self.position

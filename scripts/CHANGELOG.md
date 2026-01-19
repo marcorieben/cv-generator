@@ -44,3 +44,4 @@
 2026-01-19 10:49:36 | BUGFIX | improve error logging in batch comparison and pipeline
 2026-01-19 10:49:52 | BUGFIX | improve error logging in batch comparison and pipeline
 2026-01-19 10:51:42 | BUGFIX | improve error handling in ThreadPoolExecutor for batch generation
+2026-01-19 11:37:24 | BUGFIX | increase import timeout for pdf_to_json test

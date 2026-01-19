@@ -408,7 +408,7 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
     print("[SCHEMA] Loading schema...", file=sys.stderr)
     schema = load_schema(schema_path)
     
-    print("🤖 Sende Anfrage an OpenAI API...")
+    print("[API] Sending request to OpenAI API...", file=sys.stderr)
     client = OpenAI(api_key=api_key)
     
     # Load translations
