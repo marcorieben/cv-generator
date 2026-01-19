@@ -41,3 +41,4 @@
 2026-01-14 16:42:37 | REFACTOR | replace deprecated use_container_width with width parameter
 2026-01-14 16:48:13 | BUGFIX | handle single CV from list in Advanced mode
 2026-01-14 17:55:49 | CHORE | update changelog
+2026-01-19 10:49:36 | BUGFIX | improve error logging in batch comparison and pipeline
