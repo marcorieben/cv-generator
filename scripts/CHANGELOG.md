@@ -51,3 +51,4 @@
 2026-01-19 13:38:44 | TEST | update test method names from stellenprofil to job_profile_name
 2026-01-19 13:41:45 | TEST | add comprehensive integration tests for build_output_path() function
 2026-01-19 14:05:57 | BUGFIX | batch processing error handling with retry logic and batch_results key fix
+2026-01-19 14:09:57 | FEATURE | add parallel batch CV processing with ThreadPoolExecutor

@@ -258,8 +258,10 @@ def run_batch_comparison(
 """
     
     batch_results = []
-    base_dir = os.getcwd()
+    script_dir = os.path.dirname(os.path.abspath(__file__))  # /path/to/scripts/
+    base_dir = os.path.dirname(script_dir)  # /path/to/cv_generator/ (parent of scripts)
     print(f"[START] Starting batch_comparison with base_dir: {base_dir}", file=sys.stderr)
+    print(f"   Script dir: {script_dir}", file=sys.stderr)
     print(f"   Number of CVs to process: {len(cv_files)}", file=sys.stderr)
     
     # Ensure job file pointer is at start
@@ -388,9 +390,10 @@ def run_batch_comparison(
         # Collect results as they complete
         completed = 0
         for future in as_completed(futures):
+            idx = futures[future]  # Get the original index
             try:
-                idx, result = future.result()
-                cv_results_dict[idx] = result
+                result_idx, result = future.result()
+                cv_results_dict[result_idx] = result
                 completed += 1
                 progress_pct = int(10 + (completed / len(cv_files)) * 80)
                 status_msg = f"CVs verarbeitet: {completed}/{len(cv_files)}"
@@ -398,10 +401,32 @@ def run_batch_comparison(
                     progress_callback(progress_pct, status_msg, "running")
                 print(f"[PARALLEL] Completed {completed}/{len(cv_files)} CVs", file=sys.stderr)
             except Exception as e:
-                print(f"[ERROR] Task exception: {str(e)}", file=sys.stderr)
+                print(f"[ERROR] Task exception for CV {idx}: {str(e)}", file=sys.stderr)
+                # Important: Add error result for this index so we don't have missing indices
+                cv_results_dict[idx] = {
+                    "success": False,
+                    "candidate_name": f"CV_{idx}",
+                    "cv_filename": cv_files[idx].name if idx < len(cv_files) else "Unknown",
+                    "error": f"Task execution failed: {str(e)}"
+                }
+                completed += 1
+                progress_pct = int(10 + (completed / len(cv_files)) * 80)
+                if progress_callback:
+                    progress_callback(progress_pct, f"Fehler bei CV {idx+1}", "running")
     
-    # Rebuild results list in original order
-    batch_results = [cv_results_dict[i] for i in range(len(cv_files))]
+    # Rebuild results list in original order - now guaranteed to have all indices
+    batch_results = []
+    for i in range(len(cv_files)):
+        if i in cv_results_dict:
+            batch_results.append(cv_results_dict[i])
+        else:
+            # Fallback (should not happen now, but defensive programming)
+            batch_results.append({
+                "success": False,
+                "candidate_name": f"CV_{i}",
+                "cv_filename": cv_files[i].name if i < len(cv_files) else "Unknown",
+                "error": "No result received for this CV (possible thread crash)"
+            })
     
     print(f"[PARALLEL] All CV processing complete. {len([r for r in batch_results if r.get('success')])} successful, {len([r for r in batch_results if not r.get('success')])} failed", file=sys.stderr)
     
