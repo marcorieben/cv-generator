@@ -15,44 +15,55 @@ def extract_job_profile_name_from_file(job_file_path: str) -> str:
     """
     Extract job profile name from uploaded file name.
     
-    Takes filename (e.g., "Senior_Sales_Manager.pdf") and converts to
-    (e.g., "senior_sales_manager")
+    For batch mode, prefers to extract ID from filename if available,
+    otherwise creates short abbreviation. Examples:
+    - "gdjob_12881_senior_business_analyst.pdf" → "gdjob_12881" (ID preserved)
+    - "Senior_Sales_Manager.pdf" → "senior_sales" (shortened)
     
     Args:
         job_file_path: File path or filename
         
     Returns:
-        Sanitized job profile name
+        Sanitized job profile name (ID-based when possible)
     """
     if not job_file_path:
-        return "jobprofile"
+        return "job"
     
     # Extract filename without extension
     filename = os.path.basename(job_file_path)
     name_without_ext = os.path.splitext(filename)[0]
     
-    # Sanitize: remove special chars, lowercase
-    sanitized = sanitize_filename(name_without_ext, max_length=50)
+    # Try to extract ID pattern (e.g., "gdjob_12881")
+    parts = name_without_ext.split('_')
+    if len(parts) >= 2 and parts[1].isdigit():
+        # Return ID-based name: "gdjob_12881"
+        id_part = f"{parts[0]}_{parts[1]}"
+        return sanitize_filename(id_part, max_length=20)
     
-    return sanitized if sanitized else "jobprofile"
+    # Otherwise, use first 1-2 words, abbreviated
+    # "senior_business_analyst" → "senior_bus_analyst" → "sen_bus_ana" 
+    words = name_without_ext.split('_')[:2]  # Take first 2 words max
+    abbrev = '_'.join(w[:3] for w in words)  # Abbreviate each word to 3 chars
+    
+    sanitized = sanitize_filename(abbrev, max_length=20)
+    return sanitized if sanitized else "job"
 
 
 def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
     """
     Extract job profile name from Stellenprofil JSON data.
     
-    Priority:
-    1. Stellenprofil.Stelle.Position (job title)
-    2. "jobprofile" (fallback)
+    For batch mode, creates shortened profile identifier.
+    Examples: "Senior Business Analyst" → "sen_bus_ana"
     
     Args:
         job_profile_data: Parsed Stellenprofil JSON dict
         
     Returns:
-        Sanitized job profile name
+        Shortened job profile identifier (max 20 chars)
     """
     if not job_profile_data:
-        return "jobprofile"
+        return "job"
     
     # Try to extract position/title
     position = job_profile_data.get("Stelle", {})
@@ -62,36 +73,76 @@ def extract_job_profile_name(job_profile_data: Optional[Dict[str, Any]]) -> str:
         position_name = str(position)
     
     if position_name:
-        # Sanitize: remove special chars, limit length
-        sanitized = sanitize_filename(position_name, max_length=50)
+        # Split into words and abbreviate to 3 chars each
+        words = position_name.split()[:2]  # Take first 2 words max
+        abbrev = '_'.join(w[:3].lower() for w in words)  # Abbreviate each word to 3 chars
+        
+        sanitized = sanitize_filename(abbrev, max_length=20)
         if sanitized:
             return sanitized
     
-    return "jobprofile"
+    return "job"
 
 
 def extract_candidate_name_from_file(cv_file_path: str) -> str:
     """
     Extract candidate name from uploaded CV file name.
     
-    Takes filename (e.g., "Max_Mustermann.pdf" or "Max.pdf") and converts to
-    sanitized form (e.g., "max_mustermann" or "max")
+    Extracts only first and last name (ignores titles, roles, etc).
+    Examples:
+    - "Marco_A_Rieben_Projektleiter.pdf" → "marco_rieben"
+    - "Jonas_Stauffer_Dev.pdf" → "jonas_stauffer"
+    - "Max.pdf" → "max"
+    - "CV DE Marco A. Rieben - Projektleiter.pdf" → "marco_rieben"
     
     Args:
         cv_file_path: File path or filename
         
     Returns:
-        Sanitized candidate name
+        Sanitized candidate name (firstname_lastname max 25 chars)
     """
     if not cv_file_path:
         return "candidate"
     
-    # Extract filename without extension
+    # Extract filename without extension and remove punctuation
     filename = os.path.basename(cv_file_path)
     name_without_ext = os.path.splitext(filename)[0]
     
-    # Sanitize: remove special chars, lowercase
-    sanitized = sanitize_filename(name_without_ext, max_length=50)
+    # Remove common prefixes like "CV DE", "CV EN", "-", etc
+    # Split by multiple delimiters: underscore, dash, space
+    import re
+    # Replace dashes with spaces, remove "CV" prefix with language codes
+    cleaned = re.sub(r'^[Cc][Vv]\s+[A-Z]{2}\s+', '', name_without_ext)  # Remove "CV DE ", "CV EN " etc
+    cleaned = cleaned.replace('-', ' ').replace('_', ' ')
+    
+    # Now split by spaces
+    parts = cleaned.split()
+    
+    # Filter out:
+    # - Single letters/initials (like "A", "I")
+    # - Very short parts or common role/title words
+    filter_words = {'de', 'en', 'cv', 'lebenslauf', 'project', 'projektleiter', 'manager', 
+                   'engineer', 'dev', 'developer', 'consultant', 'analyst', 'pm',
+                   'lead', 'senior', 'junior', 'principal'}
+    
+    # Keep only substantial parts
+    name_parts = []
+    for part in parts:
+        part_lower = part.lower()
+        # Keep if: length > 2 AND not filtered AND not all digits
+        if len(part) > 2 and part_lower not in filter_words and not part.isdigit():
+            name_parts.append(part)
+    
+    # Use first 2 substantial parts (firstname, lastname)
+    if len(name_parts) >= 2:
+        clean_name = f"{name_parts[0]}_{name_parts[1]}"
+    elif name_parts:
+        clean_name = name_parts[0]
+    else:
+        # Fallback: use all parts that are > 2 chars
+        clean_name = '_'.join(p for p in parts if len(p) > 2)
+    
+    sanitized = sanitize_filename(clean_name, max_length=25)
     
     return sanitized if sanitized else "candidate"
 
@@ -413,9 +464,13 @@ def build_output_path(
     if timestamp is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # Normalize names
-    candidate_normalized = sanitize_filename(candidate_name, max_length=50) if candidate_name else ""
-    job_profile_normalized = sanitize_filename(job_profile_name, max_length=50) if job_profile_name else ""
+    # Normalize names - with shorter max_length for batch mode to prevent Windows path length issues
+    # Windows MAX_PATH is 260 chars, so we need to be conservative
+    max_candidate_length = 30 if is_batch else 50
+    max_job_length = 25 if is_batch else 50
+    
+    candidate_normalized = sanitize_filename(candidate_name, max_length=max_candidate_length) if candidate_name else ""
+    job_profile_normalized = sanitize_filename(job_profile_name, max_length=max_job_length) if job_profile_name else ""
     
     # Validate mode
     if mode not in ['basic', 'professional_analysis']:
@@ -466,6 +521,28 @@ def build_output_path(
             # Candidate subfolder: job_profile_candidate_timestamp
             candidate_subfolder_name = f"{job_profile_normalized}_{candidate_normalized}_{timestamp}"
             candidate_subfolder_path = os.path.join(batch_folder_path, candidate_subfolder_name)
+            
+            # Check Windows MAX_PATH limit (260 chars) and truncate if necessary
+            # Leave room for filename (~30 chars) + separator (1 char) + extension (4 chars)
+            max_path_limit = 260
+            reserved_length = 40  # For filename + extension + separator
+            
+            while len(candidate_subfolder_path) + reserved_length > max_path_limit:
+                # Shorten candidate name progressively
+                if len(candidate_normalized) > 15:
+                    candidate_normalized = candidate_normalized[:len(candidate_normalized)-1]
+                    candidate_subfolder_name = f"{job_profile_normalized}_{candidate_normalized}_{timestamp}"
+                    candidate_subfolder_path = os.path.join(batch_folder_path, candidate_subfolder_name)
+                else:
+                    # If still too long, shorten job profile name
+                    if len(job_profile_normalized) > 15:
+                        job_profile_normalized = job_profile_normalized[:len(job_profile_normalized)-1]
+                        batch_folder_name = f"batch_comparison_{job_profile_normalized}_{timestamp}"
+                        batch_folder_path = os.path.join(base_output_dir, batch_folder_name)
+                        candidate_subfolder_name = f"{job_profile_normalized}_{candidate_normalized}_{timestamp}"
+                        candidate_subfolder_path = os.path.join(batch_folder_path, candidate_subfolder_name)
+                    else:
+                        break  # Prevent infinite loop
             
             # File in candidate subfolder: job_profile_candidate_artifact_timestamp
             file_name = f"{job_profile_normalized}_{candidate_normalized}_{artifact_type}_{timestamp}"

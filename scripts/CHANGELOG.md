@@ -55,3 +55,4 @@
 2026-01-19 14:18:30 | BUGFIX | correct base directory resolution in batch processing
 2026-01-19 14:29:51 | BUGFIX | ensure all parent directories are created before writing files in batch processing
 2026-01-19 14:35:37 | BUGFIX | add robust directory creation and debug logging for batch processing file writes
+2026-01-19 16:26:19 | DOCS | update CHANGELOG with latest bugfixes
