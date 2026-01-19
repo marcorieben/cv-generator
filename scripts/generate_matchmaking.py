@@ -245,6 +245,8 @@ def generate_matchmaking_json(cv_json_path, stellenprofil_json_path, output_path
     if "match_metadata" in match_json:
         match_json["match_metadata"]["matching_datum"] = datetime.now().strftime("%Y-%m-%d")
         
+    # Ensure parent directories exist before writing
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     # Save result
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(match_json, f, ensure_ascii=False, indent=2)

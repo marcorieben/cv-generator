@@ -52,3 +52,4 @@
 2026-01-19 13:41:45 | TEST | add comprehensive integration tests for build_output_path() function
 2026-01-19 14:05:57 | BUGFIX | batch processing error handling with retry logic and batch_results key fix
 2026-01-19 14:09:57 | FEATURE | add parallel batch CV processing with ThreadPoolExecutor
+2026-01-19 14:18:30 | BUGFIX | correct base directory resolution in batch processing

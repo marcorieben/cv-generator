@@ -208,6 +208,8 @@ class StreamlitCVGenerator:
             # Save CV JSON with unified naming
             cv_json_filename = get_cv_json_filename(job_profile_name, vorname, nachname, self.timestamp)
             cv_json_path = os.path.join(final_output_dir, cv_json_filename)
+            # Ensure all parent directories exist before writing
+            os.makedirs(os.path.dirname(cv_json_path), exist_ok=True)
             with open(cv_json_path, 'w', encoding='utf-8') as f:
                 json.dump(cv_data, f, ensure_ascii=False, indent=2)
             results["cv_json"] = cv_json_path
@@ -219,6 +221,8 @@ class StreamlitCVGenerator:
             if stellenprofil_data:
                 stellenprofil_filename = get_stellenprofil_json_filename(job_profile_name, self.timestamp)
                 stellenprofil_json_path = os.path.join(final_output_dir, stellenprofil_filename)
+                # Ensure all parent directories exist before writing
+                os.makedirs(os.path.dirname(stellenprofil_json_path), exist_ok=True)
                 with open(stellenprofil_json_path, 'w', encoding='utf-8') as f:
                     json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
                 results["stellenprofil_json"] = stellenprofil_json_path

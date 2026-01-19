@@ -112,6 +112,8 @@ def generate_cv_feedback_json(cv_json_path, output_path, schema_path, stellenpro
     if "feedback_metadata" in feedback_json:
         feedback_json["feedback_metadata"]["feedback_datum"] = datetime.now().strftime("%Y-%m-%d")
         
+    # Ensure parent directories exist before writing
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     # Save result
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(feedback_json, f, ensure_ascii=False, indent=2)

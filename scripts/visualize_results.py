@@ -968,6 +968,8 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     dashboard_filename = get_dashboard_html_filename(job_profile_name, vorname, nachname, datetime.now().strftime('%Y%m%d_%H%M%S'))
     output_path = os.path.join(output_dir, dashboard_filename)
     
+    # Ensure parent directories exist before writing
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
         
