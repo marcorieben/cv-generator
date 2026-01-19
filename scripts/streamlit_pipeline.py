@@ -237,41 +237,61 @@ class StreamlitCVGenerator:
             matchmaking_json_path = None
             feedback_json_path = None
             
-            with ThreadPoolExecutor(max_workers=3) as executor:
-                # Word (interactive=False to suppress dialogs)
-                future_word = executor.submit(generate_cv, cv_json_path, final_output_dir, interactive=False, language=language)
-                
-                # Match
-                future_match = None
-                if stellenprofil_json_path:
-                    match_filename = get_match_json_filename(job_profile_name, vorname, nachname, self.timestamp)
-                    matchmaking_json_path = os.path.join(final_output_dir, match_filename)
-                    schema_path = os.path.join(self.base_dir, "scripts", "matchmaking_json_schema.json")
-                    future_match = executor.submit(
-                        generate_matchmaking_json,
+            try:
+                with ThreadPoolExecutor(max_workers=3) as executor:
+                    # Word (interactive=False to suppress dialogs)
+                    future_word = executor.submit(generate_cv, cv_json_path, final_output_dir, interactive=False, language=language)
+                    
+                    # Match
+                    future_match = None
+                    if stellenprofil_json_path:
+                        match_filename = get_match_json_filename(job_profile_name, vorname, nachname, self.timestamp)
+                        matchmaking_json_path = os.path.join(final_output_dir, match_filename)
+                        schema_path = os.path.join(self.base_dir, "scripts", "matchmaking_json_schema.json")
+                        future_match = executor.submit(
+                            generate_matchmaking_json,
+                            cv_json_path,
+                            stellenprofil_json_path,
+                            matchmaking_json_path,
+                            schema_path,
+                            language=language
+                        )
+                    
+                    # Feedback
+                    feedback_filename = get_feedback_json_filename(job_profile_name, vorname, nachname, self.timestamp)
+                    feedback_json_path = os.path.join(final_output_dir, feedback_filename)
+                    feedback_schema_path = os.path.join(self.base_dir, "scripts", "cv_feedback_json_schema.json")
+                    future_feedback = executor.submit(
+                        generate_cv_feedback_json,
                         cv_json_path,
+                        feedback_json_path,
+                        feedback_schema_path,
                         stellenprofil_json_path,
-                        matchmaking_json_path,
-                        schema_path,
                         language=language
                     )
-                
-                # Feedback
-                feedback_filename = get_feedback_json_filename(job_profile_name, vorname, nachname, self.timestamp)
-                feedback_json_path = os.path.join(final_output_dir, feedback_filename)
-                feedback_schema_path = os.path.join(self.base_dir, "scripts", "cv_feedback_json_schema.json")
-                future_feedback = executor.submit(
-                    generate_cv_feedback_json,
-                    cv_json_path,
-                    feedback_json_path,
-                    feedback_schema_path,
-                    stellenprofil_json_path,
-                    language=language
-                )
-                
-                word_path = future_word.result()
-                if future_match: future_match.result()
-                future_feedback.result()
+                    
+                    try:
+                        word_path = future_word.result()
+                        print(f"✅ Word generated: {word_path}", file=sys.stderr)
+                    except Exception as e:
+                        print(f"❌ Error generating Word: {str(e)}", file=sys.stderr)
+                        raise
+                    
+                    if future_match:
+                        try:
+                            future_match.result()
+                            print(f"✅ Matchmaking completed", file=sys.stderr)
+                        except Exception as e:
+                            print(f"⚠️  Warning: Matchmaking failed: {str(e)}", file=sys.stderr)
+                    
+                    try:
+                        future_feedback.result()
+                        print(f"✅ Feedback completed", file=sys.stderr)
+                    except Exception as e:
+                        print(f"⚠️  Warning: Feedback failed: {str(e)}", file=sys.stderr)
+            except Exception as e:
+                print(f"❌ ThreadPoolExecutor error: {str(e)}", file=sys.stderr)
+                raise
 
             # --- STEP 4.5: Offer (Background) ---
             angebot_json_path = None
