@@ -328,3 +328,184 @@ def get_stellenprofil_json_filename(
     Convention: jobprofileName_stellenprofil_timestamp.json
     """
     return f"{job_profile_name}_stellenprofil_{timestamp}.json"
+
+
+def build_output_path(
+    mode: str,
+    candidate_name: str = "",
+    stellenprofil: str = "",
+    artifact_type: str = "cv",
+    is_batch: bool = False,
+    timestamp: Optional[str] = None,
+    base_output_dir: str = "output"
+) -> Dict[str, str]:
+    """
+    Centralized function for all naming conventions across all modes.
+    
+    This function generates consistent paths and filenames based on:
+    - Mode (basic or professional_analysis)
+    - Batch flag (single CV vs multiple CVs)
+    - Artifact type (cv, match, feedback, dashboard)
+    
+    Args:
+        mode (str): 'basic' or 'professional_analysis'
+        candidate_name (str): Candidate name (will be normalized)
+        stellenprofil (str): Job profile name (will be normalized)
+        artifact_type (str): Type of artifact ('cv', 'match', 'feedback', 'dashboard')
+        is_batch (bool): True if batch processing, False for single
+        timestamp (str, optional): Custom timestamp (YYYYMMDD_HHMMSS), auto-generated if None
+        base_output_dir (str): Base output directory (default: 'output')
+    
+    Returns:
+        Dict with keys:
+        - 'mode': The mode used ('basic' or 'professional_analysis')
+        - 'is_batch': Whether batch processing
+        - 'folder_name': Name of the output folder (without path)
+        - 'file_name': Name of the output file (without extension, without path)
+        - 'file_with_ext': File name with extension
+        - 'folder_path': Full path to folder
+        - 'file_path': Full path to file
+        
+    Examples:
+        # BASIC Mode (CV only, single)
+        build_output_path(
+            mode='basic',
+            candidate_name='fischer_arthur',
+            artifact_type='cv'
+        )
+        → {
+            'folder_name': 'fischer_arthur_20260119_114357',
+            'file_name': 'fischer_arthur_cv_20260119_114357',
+            'file_with_ext': 'fischer_arthur_cv_20260119_114357.docx',
+            'folder_path': 'output/fischer_arthur_20260119_114357',
+            'file_path': 'output/fischer_arthur_20260119_114357/fischer_arthur_cv_20260119_114357.docx'
+        }
+        
+        # PROFESSIONAL ANALYSIS (Single CV)
+        build_output_path(
+            mode='professional_analysis',
+            candidate_name='fischer_arthur',
+            stellenprofil='senior_business_analyst',
+            artifact_type='cv',
+            is_batch=False
+        )
+        → {
+            'folder_name': 'senior_business_analyst_fischer_arthur_20260119_114357',
+            'file_name': 'senior_business_analyst_fischer_arthur_cv_20260119_114357',
+            'file_path': '.../senior_business_analyst_fischer_arthur_cv_20260119_114357.docx'
+        }
+        
+        # PROFESSIONAL ANALYSIS (Batch)
+        build_output_path(
+            mode='professional_analysis',
+            candidate_name='fischer_arthur',
+            stellenprofil='senior_business_analyst',
+            artifact_type='cv',
+            is_batch=True
+        )
+        → Batch subfolder structure:
+            batch_comparison_senior_business_analyst_20260119_114357/
+            └── senior_business_analyst_fischer_arthur_20260119_114357/
+                └── senior_business_analyst_fischer_arthur_cv_20260119_114357.docx
+    """
+    
+    # Generate timestamp if not provided
+    if timestamp is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Normalize names
+    candidate_normalized = sanitize_filename(candidate_name, max_length=50) if candidate_name else ""
+    stellenprofil_normalized = sanitize_filename(stellenprofil, max_length=50) if stellenprofil else ""
+    
+    # Validate mode
+    if mode not in ['basic', 'professional_analysis']:
+        raise ValueError(f"Invalid mode '{mode}'. Must be 'basic' or 'professional_analysis'")
+    
+    # ========== MODE 1: BASIC (CV only) ==========
+    if mode == 'basic':
+        if not candidate_normalized:
+            candidate_normalized = 'candidate'
+        
+        # Folder: candidate_timestamp
+        folder_name = f"{candidate_normalized}_{timestamp}"
+        # File: candidate_artifact_timestamp
+        file_name = f"{candidate_normalized}_{artifact_type}_{timestamp}"
+        
+        folder_path = os.path.join(base_output_dir, folder_name)
+        file_path = os.path.join(folder_path, f"{file_name}.ext")
+        
+        return {
+            'mode': mode,
+            'is_batch': False,
+            'folder_name': folder_name,
+            'file_name': file_name,
+            'file_with_ext': f"{file_name}.ext",
+            'folder_path': folder_path,
+            'file_path': file_path,
+            'timestamp': timestamp
+        }
+    
+    # ========== MODE 2: PROFESSIONAL ANALYSIS ==========
+    if mode == 'professional_analysis':
+        if not stellenprofil_normalized:
+            raise ValueError("stellenprofil is required for professional_analysis mode")
+        
+        if not candidate_normalized:
+            candidate_normalized = 'candidate'
+        
+        # ===== CASE 1: BATCH MODE =====
+        if is_batch:
+            # Batch folder: batch_comparison_stellenprofil_timestamp
+            batch_folder_name = f"batch_comparison_{stellenprofil_normalized}_{timestamp}"
+            batch_folder_path = os.path.join(base_output_dir, batch_folder_name)
+            
+            # Stellenprofil JSON at batch root: stellenprofil_timestamp.json
+            stellenprofil_file_name = f"{stellenprofil_normalized}_{timestamp}"
+            stellenprofil_file_path = os.path.join(batch_folder_path, f"{stellenprofil_file_name}.json")
+            
+            # Candidate subfolder: stellenprofil_candidate_timestamp
+            candidate_subfolder_name = f"{stellenprofil_normalized}_{candidate_normalized}_{timestamp}"
+            candidate_subfolder_path = os.path.join(batch_folder_path, candidate_subfolder_name)
+            
+            # File in candidate subfolder: stellenprofil_candidate_artifact_timestamp
+            file_name = f"{stellenprofil_normalized}_{candidate_normalized}_{artifact_type}_{timestamp}"
+            file_path = os.path.join(candidate_subfolder_path, f"{file_name}.ext")
+            
+            return {
+                'mode': mode,
+                'is_batch': True,
+                'batch_folder_name': batch_folder_name,
+                'batch_folder_path': batch_folder_path,
+                'stellenprofil_file_name': stellenprofil_file_name,
+                'stellenprofil_file_path': stellenprofil_file_path,
+                'candidate_subfolder_name': candidate_subfolder_name,
+                'candidate_subfolder_path': candidate_subfolder_path,
+                'folder_name': candidate_subfolder_name,  # Alias for compatibility
+                'file_name': file_name,
+                'file_with_ext': f"{file_name}.ext",
+                'folder_path': candidate_subfolder_path,  # Alias for compatibility
+                'file_path': file_path,
+                'timestamp': timestamp
+            }
+        
+        # ===== CASE 2: SINGLE CV MODE =====
+        else:
+            # Folder: stellenprofil_candidate_timestamp
+            folder_name = f"{stellenprofil_normalized}_{candidate_normalized}_{timestamp}"
+            folder_path = os.path.join(base_output_dir, folder_name)
+            
+            # File: stellenprofil_candidate_artifact_timestamp
+            file_name = f"{stellenprofil_normalized}_{candidate_normalized}_{artifact_type}_{timestamp}"
+            file_path = os.path.join(folder_path, f"{file_name}.ext")
+            
+            return {
+                'mode': mode,
+                'is_batch': False,
+                'folder_name': folder_name,
+                'file_name': file_name,
+                'file_with_ext': f"{file_name}.ext",
+                'folder_path': folder_path,
+                'file_path': file_path,
+                'timestamp': timestamp
+            }
+

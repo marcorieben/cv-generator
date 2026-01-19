@@ -21,9 +21,11 @@ from scripts.naming_conventions import (
     extract_job_profile_name_from_file,
     extract_job_profile_name,
     extract_candidate_name,
+    extract_candidate_name_from_file,
     get_output_folder_path,
     get_candidate_subfolder_path,
-    get_stellenprofil_json_filename
+    get_stellenprofil_json_filename,
+    build_output_path
 )
 
 
@@ -136,23 +138,34 @@ def run_batch_comparison(
         }
     
     # Create batch output folder with unified naming convention
-    # Format: jobprofileName_batch-comparison_timestamp
-    # Try to extract job profile name from uploaded filename first
+    # Use build_output_path with is_batch=True
     job_profile_name_from_file = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else "")
-    # Then verify/enrich with extracted data
     job_profile_name = extract_job_profile_name(stellenprofil_data)
     if job_profile_name == "jobprofile" and job_profile_name_from_file != "jobprofile":
         job_profile_name = job_profile_name_from_file
     
     batch_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_output = os.path.join(base_dir, "output")
-    batch_output_dir = get_output_folder_path(base_output, job_profile_name, "batch-comparison", batch_timestamp)
+    
+    # Generate batch folder structure using new build_output_path
+    batch_naming = build_output_path(
+        mode='professional_analysis',
+        candidate_name='',  # Not used at batch root level
+        stellenprofil=job_profile_name,
+        artifact_type='batch',
+        is_batch=True,
+        timestamp=batch_timestamp,
+        base_output_dir=base_output
+    )
+    
+    batch_output_dir = batch_naming['batch_folder_path']
+    os.makedirs(batch_output_dir, exist_ok=True)
     
     print(f"[FOLDER] Batch folder created: {batch_output_dir}", file=sys.stderr)
     
     # Save Stellenprofil JSON at batch folder root
     try:
-        stellenprofil_filename = get_stellenprofil_json_filename(job_profile_name, batch_timestamp)
+        stellenprofil_filename = batch_naming['stellenprofil_file_name'] + '.json'
         stellenprofil_path = os.path.join(batch_output_dir, stellenprofil_filename)
         with open(stellenprofil_path, 'w', encoding='utf-8') as f:
             json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
@@ -183,12 +196,24 @@ def run_batch_comparison(
         try:
             print(f"\n[FILE] Processing CV {idx+1}/{len(cv_files)}: {cv_file.name}", file=sys.stderr)
             
-            # Create candidate subfolder within batch folder
-            candidate_subfolder = get_candidate_subfolder_path(
-                batch_output_dir,
-                candidate_name_fallback,
-                batch_timestamp
+            # Create candidate subfolder within batch folder using new build_output_path
+            # Note: candidate_name will be extracted from CV data after pdf_to_json runs
+            # For now, use filename as fallback
+            candidate_name_normalized = extract_candidate_name_from_file(cv_file.name)
+            
+            candidate_naming = build_output_path(
+                mode='professional_analysis',
+                candidate_name=candidate_name_normalized,
+                stellenprofil=job_profile_name,
+                artifact_type='cv',
+                is_batch=True,
+                timestamp=batch_timestamp,
+                base_output_dir=base_output
             )
+            
+            candidate_subfolder = candidate_naming['candidate_subfolder_path']
+            os.makedirs(candidate_subfolder, exist_ok=True)
+            
             print(f"[FOLDER] Candidate folder: {candidate_subfolder}", file=sys.stderr)
             print(f"   Folder exists: {os.path.exists(candidate_subfolder)}", file=sys.stderr)
             print(f"   Batch output dir: {batch_output_dir}", file=sys.stderr)
