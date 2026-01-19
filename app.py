@@ -969,8 +969,8 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                             progress_callback=progress_callback
                         )
                         
-                        # Extract batch results and metadata
-                        batch_results = batch_response.get("results", [])
+                        # Extract batch results and metadata (note: key is "batch_results" not "results")
+                        batch_results = batch_response.get("batch_results", [])
                         batch_folder = batch_response.get("batch_folder", "")
                         job_profile_name = batch_response.get("job_profile_name", "jobprofile")
                         batch_timestamp = batch_response.get("timestamp", "")
@@ -1022,12 +1022,12 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                                 "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
                                 "candidate_name": f"Batch ({successful_count}/{len(batch_results)})",  # Show success rate
                                 "mode": mode,
-                                "model_name": results.get("batch_results", [{}])[0].get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
+                                "model_name": (batch_results[0].get("model_name") if batch_results else None) or os.environ.get("MODEL_NAME", "gpt-4o-mini"),
                                 "batch_folder": batch_folder,
                                 "is_batch": True,
                                 "batch_results": batch_results,  # Store all candidate results
                                 "job_profile_name": results.get("job_profile_name", ""),
-                                "stellenprofil_json": results.get("batch_results", [{}])[0].get("stellenprofil_json") if batch_results else None
+                                "stellenprofil_json": batch_results[0].get("stellenprofil_json") if batch_results else None
                             }
                             save_to_history(history_entry)
                         else:
