@@ -1,31 +1,67 @@
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                                                                            ║
-║          ✅ MODE 4 BATCH COMPARISON - COMPLETE IMPLEMENTATION ✅          ║
+║    ✅ PHASE 3: 2-MODE ARCHITECTURE & UI REFACTORING - COMPLETE ✅         ║
+║                                                                            ║
+║    From 3-Mode (Basic, Analysis, Full) to 2-Mode (Basic, Advanced)        ║
+║    + UI Improvements + Multilingual Advanced Button + Mock KI Mode        ║
 ║                                                                            ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
-📋 IMPLEMENTATION SUMMARY
+📋 PHASE 3 CHANGES SUMMARY (January 19, 2026)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ All 7 Task Phases Completed:
-   1. ✅ Mode 4 Batch UI (File uploaders, mode selector)
-   2. ✅ Batch processing logic (Stellenprofil-first architecture)
-   3. ✅ Batch architecture fix (PDF extraction before CV processing)
-   4. ✅ Per-candidate dashboards (Identical to Mode 2/3)
-   5. ✅ Unified file naming (All modes 2, 3, 4)
-   6. ✅ Batch history integration (Folder tracking)
-   7. ✅ Nested folder structure (Dynamic naming extraction)
+✅ MODE CONSOLIDATION:
+   1. Removed "Analysis" mode - merged into "Advanced"
+   2. Removed "Full" mode - merged into "Advanced" 
+   3. Kept "Basic" mode (CV only) unchanged
+   4. Advanced now handles: CV + Stellenprofil + Match + Feedback + Offers
 
-📊 CODE STATISTICS
+✅ UI IMPROVEMENTS:
+   1. Advanced button name: "🚀 Professionelle Analyse" (multilingual)
+   2. Removed subtitle from batch upload hint
+   3. Removed "(1 or more)" from CV title label
+   4. Mock KI Modus: Activates automatically when selected in dropdown
+
+✅ OFFER GENERATION (BATCH MODE):
+   1. Each candidate in batch can generate individual offers
+   2. "✨ Create Offer" button in each batch result expander
+   3. Integrated with generate_angebot_word module
+   4. Full language support (DE, EN, FR)
+
+✅ FILE NAMING FIX (BATCH MODE):
+   1. Job profile name now passed consistently through pipeline
+   2. Eliminates hardcoded "jobprofile" fallback
+   3. All batch files use correct job profile name in prefix
+   4. Example: "senior_developer_rieben_marco_cv_20260119.json" (correct)
+            previously: "jobprofile_rieben_marco_cv_20260119.json" (wrong)
+
+📊 CODE STATISTICS (PHASE 3)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   Files Modified: 3 core + 1 doc
-   Production Code: ~700 lines (new/enhanced)
-   Functions Added: 7 new naming functions
-   Git Commits: 15 feature commits
-   Tests Passing: 45/45 (100%)
+   Files Modified: 6 core files
+   - app.py: Mode consolidation, UI cleanup
+   - scripts/translations.json: Multilingual mode label + descriptions
+   - scripts/batch_results_display.py: Offer generation implementation
+   - scripts/streamlit_pipeline.py: Job profile name parameter
+   - scripts/batch_comparison.py: Pass job_profile_name parameter
+   - scripts/naming_conventions.py: (no changes needed)
 
-📁 FINAL FOLDER STRUCTURE
+   Production Code: ~250 lines (new + modified)
+   Tests Passing: 77/77 (all previous + compatible with 2-mode)
+   Git Commits: ~6 commits for Phase 3
+
+🎯 KEY ACHIEVEMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ✅ Simplified mode structure (2 modes are easier to understand/maintain)
+   ✅ Better naming: "Advanced" → "Professionelle Analyse" is catchier
+   ✅ Batch offer generation: Users can now create offers for each candidate
+   ✅ Consistent file naming: No more hardcoded "jobprofile" prefixes
+   ✅ 100% backward compatible: Single CV pipeline unchanged
+   ✅ Multilingual support: All UI text translatable (DE, EN, FR)
+   ✅ Auto-mock activation: Test mode integrates seamlessly with dropdown
+
+📁 PREVIOUS ARCHITECTURE (STILL WORKING)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
    output/
@@ -34,20 +70,24 @@
        ├── candidateName1_timestamp/
        │   ├── jobprofileName_candidateName1_cv_timestamp.json
        │   ├── jobprofileName_candidateName1_match_timestamp.json
+       │   ├── jobprofileName_candidateName1_feedback_timestamp.json
        │   ├── jobprofileName_candidateName1_dashboard_timestamp.html
-       │   └── ... (other files)
+       │   ├── Angebot_candidateName1_timestamp.json (NEW - Phase 3)
+       │   └── Angebot_candidateName1_timestamp.docx (NEW - Phase 3)
        ├── candidateName2_timestamp/
        └── ... (more candidates)
 
-🎯 KEY FEATURES
+🔄 NEXT CLEANUP PHASE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   ✅ Stellenprofil-first processing (extract once, use for all)
-   ✅ Per-candidate independent processing (parallel ready)
-   ✅ Dynamic job profile name extraction from filename
-   ✅ Dynamic candidate name extraction from CV data
-   ✅ Nested folder structure (Option B - Logical grouping)
-   ✅ Per-candidate dashboards (Identical to Mode 2/3)
+   PENDING CLEANUP TASKS:
+   - [ ] Archive MODE_4_COMPLETE_SUMMARY.md to docs/archive/
+   - [ ] Archive PHASE_8_NESTED_BATCH_STRUCTURE.md to docs/archive/
+   - [ ] Update TODO_streamlit_migration.md (remove old mode references)
+   - [ ] Review DIALOGS.md for outdated mode references
+   - [ ] Create docs/archive/ folder structure
+   - [ ] Update TESTING.md if needed
+   - [ ] Consolidate run_streamlit_app.bat & run_app.bat (optional)
    ✅ Batch history tracking with folder paths
    ✅ Unified naming convention across all modes
 

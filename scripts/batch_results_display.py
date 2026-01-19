@@ -395,7 +395,54 @@ def display_candidate_expander(result: Dict[str, Any], batch_dir: str, language:
         with col_offer:
             if not (result.get("offer_word_path") and os.path.exists(result.get("offer_word_path", ""))):
                 if st.button(f"✨ Create Offer", key=f"offer_{candidate_name}", width='stretch'):
-                    st.info("📌 Offer generation would be integrated here with generate_angebot_word module")
+                    with st.status("📝 Generating offer..." if language == "de" else "📝 Generating offer...", expanded=True) as status:
+                        try:
+                            from scripts.generate_angebot import generate_angebot_json
+                            from scripts.generate_angebot_word import generate_angebot_word
+                            from scripts.naming_conventions import get_angebot_json_filename, get_angebot_word_filename
+                            
+                            cv_json = result.get("cv_json")
+                            job_profile_json = result.get("stellenprofil_json")
+                            match_json = result.get("match_json")
+                            
+                            if not all([cv_json, job_profile_json, match_json]):
+                                st.error("❌ Missing required files for offer generation")
+                                status.update(label="❌ Fehler", state="error")
+                                return
+                            
+                            output_dir = os.path.dirname(cv_json)
+                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                            
+                            # Generate offer JSON
+                            status.write("🧠 Generating AI content...")
+                            angebot_json_path = os.path.join(output_dir, f"Angebot_{candidate_name}_{timestamp}.json")
+                            schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
+                            
+                            generate_angebot_json(
+                                cv_json,
+                                job_profile_json,
+                                match_json,
+                                angebot_json_path,
+                                schema_path,
+                                language=language
+                            )
+                            
+                            # Generate Word document
+                            status.write("📝 Formatting Word document...")
+                            angebot_word_path = os.path.join(output_dir, f"Angebot_{candidate_name}_{timestamp}.docx")
+                            generate_angebot_word(angebot_json_path, angebot_word_path, language=language)
+                            
+                            if os.path.exists(angebot_word_path):
+                                result["offer_word_path"] = angebot_word_path
+                                st.success("✅ Offer created successfully!")
+                                status.update(label="✅ Offer created", state="complete")
+                                st.rerun()
+                            else:
+                                st.error("❌ Word document generation failed")
+                                status.update(label="❌ Failed", state="error")
+                        except Exception as e:
+                            st.error(f"❌ Error: {str(e)}")
+                            status.update(label="❌ Error", state="error")
             else:
                 st.success("✅ Offer created")
         

@@ -616,13 +616,13 @@ with col_m1:
 
 # Analysis mode merged into Advanced
 with col_m2:
-    if st.button("Advanced", width='stretch', type="primary" if st.session_state.selected_mode.startswith("Advanced") else "secondary"):
+    if st.button(get_text("ui", "mode_advanced", st.session_state.language), width='stretch', type="primary" if st.session_state.selected_mode.startswith("Advanced") else "secondary"):
         st.session_state.selected_mode = "Advanced (CV + Stellenprofil + Match + Feedback)"
         # Reset pipeline state
         st.session_state.show_pipeline_dialog = False
         st.session_state.show_results_view = False
         st.rerun()
-    st.caption("1 or multiple CVs. Full analysis + matching + feedback for all.")
+    st.caption(get_text("ui", "mode_advanced_desc", st.session_state.language))
 
 # Empty placeholder for UI symmetry
 with col_m3:
@@ -634,25 +634,34 @@ with col_m4:
 mode = st.session_state.selected_mode
 st.divider()
 
-# Test Mode Button (works for both single and batch in Advanced mode)
-if mode.startswith("Advanced"):
-    test_mode_col, _ = st.columns([1, 4])
-    with test_mode_col:
-        if st.button("🧪 Test Mode (Advanced)", width='stretch'):
-            # Set mock mode and populate test data
-            os.environ["MODEL_NAME"] = "mock"
-            # Pre-select mock files - unified for both single and batch
-            if "cv_files_advanced" not in st.session_state or not st.session_state.cv_files_advanced:
-                st.session_state.cv_files_advanced = ["mock_cv_1.pdf", "mock_cv_2.pdf", "mock_cv_3.pdf"]
-            if "shared_job_file" not in st.session_state or not st.session_state.shared_job_file:
-                st.session_state.shared_job_file = "mock_job_profile.pdf"
-            st.success("✅ Test Mode activated with mock data")
-            st.info("📌 Mock data: 3 CVs, 1 job profile - works for single CV or batch")
-            st.rerun()
-    st.divider()
-
 # Check for Mock Mode
 is_mock = os.environ.get("MODEL_NAME") == "mock"
+
+# Mock File Object Class (mimics Streamlit's UploadedFile)
+class MockFile:
+    def __init__(self, name, content=None):
+        self.name = name
+        self.size = 1024  # Dummy size
+        self._content = content or b"Mock file content"
+    
+    def read(self):
+        return self._content
+    
+    def getbuffer(self):
+        return self._content
+
+# Auto-activate mock test data when mock mode is selected
+if is_mock and mode.startswith("Advanced"):
+    if "cv_files_advanced" not in st.session_state or not st.session_state.cv_files_advanced:
+        st.session_state.cv_files_advanced = [
+            MockFile("mock_cv_1.pdf"),
+            MockFile("mock_cv_2.pdf"),
+            MockFile("mock_cv_3.pdf")
+        ]
+    if "shared_job_file" not in st.session_state or not st.session_state.shared_job_file:
+        st.session_state.shared_job_file = MockFile("mock_job_profile.pdf")
+    st.success("✅ Mock KI Modus aktiviert (aus Dropdown) - Testdaten geladen")
+    st.info("📌 Testdaten: 3 CVs, 1 Stellenprofil - funktioniert für einzelne CVs oder Batch")
 
 # Helper function for custom upload UI
 def render_custom_uploader(label, key_prefix, file_type=["pdf"]):
@@ -736,7 +745,6 @@ def render_batch_cv_uploader(label, key_prefix):
     
     # Title is ALWAYS visible
     st.subheader(label)
-    st.caption(get_text("ui", "batch_upload_hint", st.session_state.language))
     
     # Native Streamlit uploader for multiple files
     widget_key = f"{key_prefix}_widget"
@@ -755,7 +763,13 @@ def render_batch_cv_uploader(label, key_prefix):
         for uploaded_file in uploaded_files:
             is_new = True
             for existing in st.session_state[file_state_key]:
-                if uploaded_file.name == existing.name and uploaded_file.size == existing.size:
+                # Handle both real and mock files
+                existing_name = existing.name if hasattr(existing, 'name') else str(existing)
+                uploaded_name = uploaded_file.name if hasattr(uploaded_file, 'name') else str(uploaded_file)
+                existing_size = existing.size if hasattr(existing, 'size') else 1024
+                uploaded_size = uploaded_file.size if hasattr(uploaded_file, 'size') else 1024
+                
+                if uploaded_name == existing_name and uploaded_size == existing_size:
                     is_new = False
                     break
             if is_new:
@@ -819,7 +833,7 @@ elif mode.startswith("Advanced"):
             st.caption("Mock: 1-3 CVs (auto-scales to batch if multiple)")
             cv_files = []
         else:
-            cv_files = render_batch_cv_uploader(get_text( "ui", "cv_title", st.session_state.language) + " (1 or more)", "cv_advanced")
+            cv_files = render_batch_cv_uploader(get_text( "ui", "cv_title", st.session_state.language), "cv_advanced")
 
     with col2:
         if is_mock:
@@ -932,13 +946,14 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                 current_custom_logo_path = st.session_state.get("custom_logo_path")
                 
                 # Check Cache
+                # Determine if batch mode or single CV based on file count
+                # In Advanced mode, cv_file contains a list of files
+                # If len > 1 or isinstance(list), it's batch; otherwise single
+                is_batch = isinstance(cv_file, list) and len(cv_file) > 1
+                
                 if "current_generation_results" in st.session_state:
                     results = st.session_state.current_generation_results
                 else:
-                    # Determine if batch mode or single CV based on file count
-                    # In Advanced mode, cv_file contains a list of files
-                    # If len > 1 or isinstance(list), it's batch; otherwise single
-                    is_batch = isinstance(cv_file, list) and len(cv_file) > 1
                     
                     if is_batch:
                         # Batch Mode: Process multiple CVs

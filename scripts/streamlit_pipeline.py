@@ -1,6 +1,8 @@
 import os
 import json
 import time
+import sys
+import traceback
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Dict, Any, Callable
@@ -86,7 +88,8 @@ class StreamlitCVGenerator:
             pipeline_mode: str = None,
             language: str = "de",
             job_profile_context: Dict[str, Any] = None,
-            output_dir: str = None) -> Dict[str, Any]:
+            output_dir: str = None,
+            job_profile_name: str = None) -> Dict[str, Any]:
         """
         Runs the CV generation pipeline.
         
@@ -101,6 +104,7 @@ class StreamlitCVGenerator:
             language: Target language (de, en, fr)
             job_profile_context: Pre-extracted Stellenprofil data (from batch mode)
             output_dir: Optional output directory path (when in batch mode, use candidate subfolder)
+            job_profile_name: Optional pre-extracted job profile name (from batch mode). If provided, this overrides auto-detection.
         """
         # Load translations
         trans_path = os.path.join(self.base_dir, "scripts", "translations.json")
@@ -139,6 +143,11 @@ class StreamlitCVGenerator:
 
         try:
             # --- PHASE 1: PDF Extraction ---
+            print(f"\n🔍 [streamlit_pipeline] Starting CV processing", file=sys.stderr)
+            print(f"   job_profile_name param: {job_profile_name}", file=sys.stderr)
+            print(f"   output_dir param: {output_dir}", file=sys.stderr)
+            print(f"   job_profile_context provided: {job_profile_context is not None}", file=sys.stderr)
+            
             stellenprofil_data = job_profile_context  # Use pre-extracted context if provided (batch mode)
             
             if job_file and not job_profile_context:
@@ -151,14 +160,24 @@ class StreamlitCVGenerator:
             cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data, target_language=language)
             
             # Extract job profile name from both data and filename (filename takes priority if meaningful)
-            job_profile_name_from_data = extract_job_profile_name(stellenprofil_data)
-            job_profile_name_from_file = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else str(job_file)) if job_file else None
-            
-            # Use filename extraction if it's not generic, otherwise use data extraction
-            if job_profile_name_from_file and job_profile_name_from_file != "jobprofile":
-                job_profile_name = job_profile_name_from_file
+            # But if job_profile_name was provided as parameter (from batch mode), use that
+            if job_profile_name and job_profile_name != "jobprofile":
+                # Use the provided job_profile_name (from batch mode)
+                pass  # job_profile_name is already set
             else:
-                job_profile_name = job_profile_name_from_data
+                # Auto-detect job profile name
+                job_profile_name_from_data = extract_job_profile_name(stellenprofil_data)
+                job_profile_name_from_file = extract_job_profile_name_from_file(job_file.name if hasattr(job_file, 'name') else str(job_file)) if job_file else None
+                
+                # Use filename extraction if it's not generic, otherwise use data extraction
+                if job_profile_name_from_file and job_profile_name_from_file != "jobprofile":
+                    job_profile_name = job_profile_name_from_file
+                else:
+                    job_profile_name = job_profile_name_from_data
+            
+            # Ensure job_profile_name is set
+            if not job_profile_name or job_profile_name == "":
+                job_profile_name = "jobprofile"
             
             # Extract candidate name from both data and filename (data takes priority for accuracy)
             vorname = cv_data.get("Vorname", get_text('ui', 'history_unknown', language))
@@ -168,6 +187,10 @@ class StreamlitCVGenerator:
             
             # Use data extraction if available (more accurate), otherwise use filename
             candidate_folder_name = candidate_name_from_data if candidate_name_from_data and candidate_name_from_data != "candidate" else candidate_name_from_file
+            
+            # Ensure candidate_folder_name is set
+            if not candidate_folder_name or candidate_folder_name == "":
+                candidate_folder_name = "candidate"
             
             # Use provided output_dir (batch mode) or create new folder (standard mode)
             if output_dir:
@@ -312,7 +335,11 @@ class StreamlitCVGenerator:
             results["success"] = True
             
         except Exception as e:
-            results["error"] = str(e)
-            if progress_callback: progress_callback(100, f"{get_text('ui', 'error_status', language)}: {str(e)}", "error")
+            error_msg = str(e)
+            tb_str = traceback.format_exc()
+            results["error"] = error_msg
+            print(f"❌ [streamlit_pipeline] Exception: {error_msg}", file=sys.stderr)
+            print(f"Full traceback:\n{tb_str}", file=sys.stderr)
+            if progress_callback: progress_callback(100, f"{get_text('ui', 'error_status', language)}: {error_msg}", "error")
             
         return results

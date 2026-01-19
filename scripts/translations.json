@@ -85,6 +85,16 @@
       "en": "Extracts data from the CV and creates a Word document.",
       "fr": "Extrait les données du CV et crée un document Word."
     },
+    "mode_advanced": {
+      "de": "🚀 Professionelle Analyse",
+      "en": "🚀 Professional Analysis",
+      "fr": "🚀 Analyse Professionnelle"
+    },
+    "mode_advanced_desc": {
+      "de": "1 oder mehrere CVs. Komplette Analyse + Matching + Feedback für alle.",
+      "en": "1 or multiple CVs. Full analysis + matching + feedback for all.",
+      "fr": "1 ou plusieurs CVs. Analyse complète + appariement + feedback pour tous."
+    },
     "mode_analysis": {
       "de": "🔍 Analysis\n(CV + Profil)",
       "en": "🔍 Analysis\n(CV + Profile)",
@@ -150,6 +160,11 @@
       "en": "📄 1. Curriculum Vitae (CV)",
       "fr": "📄 1. Curriculum Vitae (CV)"
     },
+    "cv_title_advanced": {
+      "de": "📄 1. Lebenslauf (CV)",
+      "en": "📄 1. Curriculum Vitae (CV)",
+      "fr": "📄 1. Curriculum Vitae (CV)"
+    },
     "job_title": {
       "de": "📝 2. Stellenprofil",
       "en": "📝 2. Job Profile",
@@ -166,9 +181,9 @@
       "fr": "📝 2. Profil de poste"
     },
     "batch_upload_hint": {
-      "de": "Wählen Sie mehrere PDF-Dateien aus",
-      "en": "Select multiple PDF files",
-      "fr": "Sélectionnez plusieurs fichiers PDF"
+      "de": "",
+      "en": "",
+      "fr": ""
     },
     "files_active": {
       "de": "✅ Dateien aktiv:",

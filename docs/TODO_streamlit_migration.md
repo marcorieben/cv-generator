@@ -12,9 +12,9 @@ Dies ermöglicht eine einfachere Bedienung, bessere Visualisierung und zukünfti
 - [✓] **Secrets Management:** Implementierung einer Logik, die `st.secrets` (Cloud) und `.env` (Lokal) unterstützt.
 
 ## 🎨 Phase 2: UI-Migration (Frontend)
-- [✓] **Mode Selection:** Radio-Buttons für "Basic", "Advanced" (ersetzt `ModeSelectionDialog`).
+- [✓] **Mode Selection:** Buttons für "Basic", "Advanced" (ersetzt `ModeSelectionDialog`).
   - **Basic**: CV only (single file)
-  - **Advanced**: Full analysis with CV + job profile + matching + feedback (1+ CVs)
+  - **Advanced**: Full analysis with CV + job profile + matching + feedback + offers (1+ CVs)
 - [✓] **File Upload:** `st.file_uploader` für CV (PDF) und Stellenprofil (PDF).
 - [✓] **Konfiguration:** Eingabefelder für OpenAI API Key (falls nicht in .env).
 - [✓] **Validierung:** Prüfen, ob Dateien hochgeladen wurden, bevor der "Start"-Button aktiv wird.
@@ -37,7 +37,10 @@ Dies ermöglicht eine einfachere Bedienung, bessere Visualisierung und zukünfti
 - [✓] **Dashboard-Integration:** Das HTML-Dashboard direkt in der App anzeigen (`st.components.v1.html`).
 
 ## 🚀 Phase 5: Testing & Cleanup
-- [ ] **Testen:** Durchlauf aller 3 Modi (Basic, Analysis, Full).
+- [✓] **Testen:** Durchlauf aller Modi (Basic, Advanced).
+- [✓] **Mode Consolidation:** Refaktorierung von 3 Modi (Basic, Analysis, Full) zu 2 Modi (Basic, Advanced).
+- [✓] **Batch Offers:** Offer generation für mehrere CVs im Advanced Mode.
+- [✓] **File Naming:** Job profile name konsistent durch batch pipeline.
 - [ ] **Cleanup:** Entfernen von `scripts/dialogs.py` und Tkinter-Referenzen (wenn komplett migriert).
 - [ ] **Dokumentation:** Update der `README.md` mit Start-Anweisungen (`streamlit run app.py`).
 

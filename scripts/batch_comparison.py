@@ -81,6 +81,8 @@ def run_batch_comparison(
     
     batch_results = []
     base_dir = os.getcwd()
+    print(f"🚀 Starting batch_comparison with base_dir: {base_dir}", file=sys.stderr)
+    print(f"   Number of CVs to process: {len(cv_files)}", file=sys.stderr)
     
     # Ensure job file pointer is at start
     if hasattr(job_file, 'seek'):
@@ -107,10 +109,15 @@ def run_batch_comparison(
         )
         
         if not stellenprofil_data:
-            return [{
-                "success": False,
-                "error": "Failed to extract Stellenprofil from PDF. Check file format and content."
-            }]
+            return {
+                "results": [{
+                    "success": False,
+                    "error": "Failed to extract Stellenprofil from PDF. Check file format and content."
+                }],
+                "batch_folder": "",
+                "job_profile_name": "jobprofile",
+                "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
+            }
         
         print(f"✅ Stellenprofil extracted successfully", file=sys.stderr)
     
@@ -118,10 +125,15 @@ def run_batch_comparison(
         error_details = f"{str(e)}"
         tb_str = traceback.format_exc()
         print(f"❌ Failed to extract Stellenprofil:\n{tb_str}", file=sys.stderr)
-        return [{
-            "success": False,
-            "error": f"Stellenprofil extraction failed: {error_details}"
-        }]
+        return {
+            "results": [{
+                "success": False,
+                "error": f"Stellenprofil extraction failed: {error_details}"
+            }],
+            "batch_folder": "",
+            "job_profile_name": "jobprofile",
+            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
+        }
     
     # Create batch output folder with unified naming convention
     # Format: jobprofileName_batch-comparison_timestamp
@@ -178,6 +190,8 @@ def run_batch_comparison(
                 batch_timestamp
             )
             print(f"📂 Candidate folder: {candidate_subfolder}", file=sys.stderr)
+            print(f"   Folder exists: {os.path.exists(candidate_subfolder)}", file=sys.stderr)
+            print(f"   Batch output dir: {batch_output_dir}", file=sys.stderr)
             
             # Initialize the generator for this CV
             generator = StreamlitCVGenerator(base_dir)
@@ -194,7 +208,8 @@ def run_batch_comparison(
                 pipeline_mode=pipeline_mode,
                 language=language,
                 job_profile_context=stellenprofil_data,  # Pass extracted Stellenprofil as context
-                output_dir=candidate_subfolder  # Override output directory for batch mode
+                output_dir=candidate_subfolder,  # Override output directory for batch mode
+                job_profile_name=job_profile_name  # Pass the consistent job profile name for file naming
             )
             
             print(f"Generator result: success={cv_result.get('success')}, error={cv_result.get('error')}", file=sys.stderr)
@@ -231,7 +246,8 @@ def run_batch_comparison(
             tb_str = traceback.format_exc()
             result["success"] = False
             result["error"] = error_details
-            print(f"❌ Exception processing {cv_file.name}:\n{tb_str}", file=sys.stderr)
+            print(f"❌ Exception processing {cv_file.name}: {error_details}", file=sys.stderr)
+            print(f"Full traceback:\n{tb_str}", file=sys.stderr)
         
         batch_results.append(result)
     
