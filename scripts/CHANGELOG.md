@@ -47,3 +47,6 @@
 2026-01-19 11:37:24 | BUGFIX | increase import timeout for pdf_to_json test
 2026-01-19 11:44:14 | BUGFIX | remove last emoji from pdf_to_json.py and fix FileObj seek method in test
 2026-01-19 13:27:39 | BUGFIX | correct test file syntax and assertions
+2026-01-19 13:37:58 | REFACTOR | standardize variable names to English (stellenprofil  job_profile_name)
+2026-01-19 13:38:44 | TEST | update test method names from stellenprofil to job_profile_name
+2026-01-19 13:41:45 | TEST | add comprehensive integration tests for build_output_path() function

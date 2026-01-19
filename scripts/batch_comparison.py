@@ -14,6 +14,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import traceback
 import sys
+import time
 
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.pdf_to_json import pdf_to_json
@@ -27,6 +28,51 @@ from scripts.naming_conventions import (
     get_stellenprofil_json_filename,
     build_output_path
 )
+
+
+def pdf_to_json_with_retry(pdf_file, output_path=None, schema_path=None, target_language="de", max_retries=3):
+    """
+    PDF to JSON extraction with exponential backoff retry logic.
+    
+    Handles transient API failures (timeouts, rate limits) with automatic retries.
+    Each retry waits: 2s, 4s, 8s (exponential backoff).
+    
+    Args:
+        pdf_file: File object to extract
+        output_path: Optional output path for JSON
+        schema_path: Schema file path
+        target_language: Target language (de, en, fr)
+        max_retries: Number of retry attempts (default 3)
+        
+    Returns:
+        Dict with extracted data or raises exception if all retries fail
+    """
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"[RETRY] Extraction attempt {attempt + 1}/{max_retries}", file=sys.stderr)
+            result = pdf_to_json(
+                pdf_file, 
+                output_path=output_path,
+                schema_path=schema_path,
+                target_language=target_language
+            )
+            if result:
+                print(f"[OK] Extraction succeeded on attempt {attempt + 1}", file=sys.stderr)
+                return result
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # 2s, 4s, 8s
+                print(f"[WARN] Extraction failed (attempt {attempt + 1}): {str(e)}", file=sys.stderr)
+                print(f"[RETRY] Waiting {wait_time}s before retry...", file=sys.stderr)
+                time.sleep(wait_time)
+            else:
+                print(f"[ERROR] All {max_retries} extraction attempts failed", file=sys.stderr)
+    
+    # All retries exhausted
+    raise last_error if last_error else Exception("PDF extraction failed after all retries")
 
 
 def run_batch_comparison(
@@ -102,17 +148,18 @@ def run_batch_comparison(
         # Use the same Stellenprofil schema as Mode 2/3
         job_schema_path = os.path.join(base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
         
-        # Extract Stellenprofil from PDF using LLM
-        stellenprofil_data = pdf_to_json(
+        # Extract Stellenprofil from PDF using LLM with retry logic
+        stellenprofil_data = pdf_to_json_with_retry(
             job_file, 
             output_path=None, 
             schema_path=job_schema_path,
-            target_language=language
+            target_language=language,
+            max_retries=3
         )
         
         if not stellenprofil_data:
             return {
-                "results": [{
+                "batch_results": [{
                     "success": False,
                     "error": "Failed to extract Stellenprofil from PDF. Check file format and content."
                 }],
@@ -128,7 +175,7 @@ def run_batch_comparison(
         tb_str = traceback.format_exc()
         print(f"[ERROR] Failed to extract Stellenprofil:\n{tb_str}", file=sys.stderr)
         return {
-            "results": [{
+            "batch_results": [{
                 "success": False,
                 "error": f"Stellenprofil extraction failed: {error_details}"
             }],
@@ -280,7 +327,7 @@ def run_batch_comparison(
         progress_callback(100, "Batch verarbeitet", "complete")
     
     return {
-        "results": batch_results,
+        "batch_results": batch_results,
         "batch_folder": batch_output_dir,
         "job_profile_name": job_profile_name,
         "timestamp": batch_timestamp
