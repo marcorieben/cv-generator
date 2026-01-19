@@ -152,7 +152,7 @@ class TestBuildOutputPathProfessionalAnalysisBatch:
         )
         
         assert result['is_batch'] == True
-        assert result['batch_folder_name'] == 'batch_comparison_senior_business_analyst_20260119_114357'
+        assert result['batch_folder_name'] == 'batch_run_senior_business_analyst_20260119_114357'
         assert result['candidate_subfolder_name'] == 'senior_business_analyst_fischer_arthur_20260119_114357'
     
     def test_batch_mode_job_profile_at_root(self):
@@ -167,7 +167,7 @@ class TestBuildOutputPathProfessionalAnalysisBatch:
         )
         
         assert result['job_profile_file_name'] == 'senior_business_analyst_20260119_114357'
-        assert 'batch_comparison_senior_business_analyst_20260119_114357' in result['job_profile_file_path']
+        assert 'batch_run_senior_business_analyst_20260119_114357' in result['job_profile_file_path']
         assert 'fischer_arthur' not in result['job_profile_file_path']  # Not in subfolder
     
     def test_batch_mode_cv_artifact(self):

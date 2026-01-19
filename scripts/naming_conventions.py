@@ -543,8 +543,8 @@ def build_output_path(
         
         # ===== CASE 1: BATCH MODE =====
         if is_batch:
-            # Batch folder: batch_comparison_job_profile_timestamp
-            batch_folder_name = f"batch_comparison_{job_profile_normalized}_{timestamp}"
+            # Batch folder: batch_run_job_profile_timestamp (shortened to save chars)
+            batch_folder_name = f"batch_run_{job_profile_normalized}_{timestamp}"
             batch_folder_path = os.path.join(base_output_dir, batch_folder_name)
             
             # Job profile JSON at batch root: job_profile_timestamp.json
@@ -570,7 +570,7 @@ def build_output_path(
                     # If still too long, shorten job profile name
                     if len(job_profile_normalized) > 15:
                         job_profile_normalized = job_profile_normalized[:len(job_profile_normalized)-1]
-                        batch_folder_name = f"batch_comparison_{job_profile_normalized}_{timestamp}"
+                        batch_folder_name = f"batch_run_{job_profile_normalized}_{timestamp}"
                         batch_folder_path = os.path.join(base_output_dir, batch_folder_name)
                         candidate_subfolder_name = f"{job_profile_normalized}_{candidate_normalized}_{timestamp}"
                         candidate_subfolder_path = os.path.join(batch_folder_path, candidate_subfolder_name)

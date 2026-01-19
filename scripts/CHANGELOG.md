@@ -58,3 +58,4 @@
 2026-01-19 16:26:19 | DOCS | update CHANGELOG with latest bugfixes
 2026-01-19 17:22:41 | BUGFIX | shorten batch folder naming to avoid Windows MAX_PATH limit
 2026-01-19 17:29:47 | BUGFIX | replace hardcoded 'job' with meaningful profile identifier from stellenprofil data
+2026-01-19 17:35:11 | BUGFIX | correct batch_results key and add defensive index checks in app.py
