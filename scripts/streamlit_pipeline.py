@@ -195,7 +195,10 @@ class StreamlitCVGenerator:
             # Use provided output_dir (batch mode) or create new folder (standard mode)
             if output_dir:
                 # Batch mode: use provided candidate subfolder
+                print(f"[BATCH] Using output_dir: {output_dir}", file=sys.stderr)
+                print(f"[BATCH] output_dir exists before makedirs: {os.path.exists(output_dir)}", file=sys.stderr)
                 os.makedirs(output_dir, exist_ok=True)
+                print(f"[BATCH] output_dir exists after makedirs: {os.path.exists(output_dir)}", file=sys.stderr)
                 final_output_dir = output_dir
             else:
                 # Standard mode: create new folder with jobprofileName_candidateName_timestamp
@@ -208,10 +211,17 @@ class StreamlitCVGenerator:
             # Save CV JSON with unified naming
             cv_json_filename = get_cv_json_filename(job_profile_name, vorname, nachname, self.timestamp)
             cv_json_path = os.path.join(final_output_dir, cv_json_filename)
-            # Ensure all parent directories exist before writing
-            os.makedirs(os.path.dirname(cv_json_path), exist_ok=True)
-            with open(cv_json_path, 'w', encoding='utf-8') as f:
-                json.dump(cv_data, f, ensure_ascii=False, indent=2)
+            
+            # CRITICAL: Ensure ALL parent directories exist before writing
+            # This is essential for nested batch processing folder structures
+            os.makedirs(final_output_dir, exist_ok=True)
+            
+            try:
+                with open(cv_json_path, 'w', encoding='utf-8') as f:
+                    json.dump(cv_data, f, ensure_ascii=False, indent=2)
+            except FileNotFoundError as e:
+                print(f"[ERROR] Cannot write CV JSON - directory doesn't exist: {final_output_dir}", file=sys.stderr)
+                raise
             results["cv_json"] = cv_json_path
             results["vorname"] = vorname
             results["nachname"] = nachname
@@ -221,10 +231,14 @@ class StreamlitCVGenerator:
             if stellenprofil_data:
                 stellenprofil_filename = get_stellenprofil_json_filename(job_profile_name, self.timestamp)
                 stellenprofil_json_path = os.path.join(final_output_dir, stellenprofil_filename)
-                # Ensure all parent directories exist before writing
-                os.makedirs(os.path.dirname(stellenprofil_json_path), exist_ok=True)
-                with open(stellenprofil_json_path, 'w', encoding='utf-8') as f:
-                    json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
+                # CRITICAL: Ensure directory exists before writing
+                os.makedirs(final_output_dir, exist_ok=True)
+                try:
+                    with open(stellenprofil_json_path, 'w', encoding='utf-8') as f:
+                        json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
+                except FileNotFoundError as e:
+                    print(f"[ERROR] Cannot write Stellenprofil JSON - directory doesn't exist: {final_output_dir}", file=sys.stderr)
+                    raise
                 results["stellenprofil_json"] = stellenprofil_json_path
 
             # --- STEP 3: Validation ---
