@@ -76,7 +76,7 @@ class StreamlitCVGenerator:
                 json.dump(styles, f, indent=2)
                 
         except Exception as e:
-            print(f"⚠️ Warning: Could not update styles: {e}")
+            print(f"[WARN] Warning: Could not update styles: {e}")
 
     def run(self, 
             cv_file, 
@@ -143,7 +143,7 @@ class StreamlitCVGenerator:
 
         try:
             # --- PHASE 1: PDF Extraction ---
-            print(f"\n🔍 [streamlit_pipeline] Starting CV processing", file=sys.stderr)
+            print(f"\n[PIPELINE] Starting CV processing", file=sys.stderr)
             print(f"   job_profile_name param: {job_profile_name}", file=sys.stderr)
             print(f"   output_dir param: {output_dir}", file=sys.stderr)
             print(f"   job_profile_context provided: {job_profile_context is not None}", file=sys.stderr)
@@ -272,25 +272,25 @@ class StreamlitCVGenerator:
                     
                     try:
                         word_path = future_word.result()
-                        print(f"✅ Word generated: {word_path}", file=sys.stderr)
+                        print(f"[OK] Word generated: {word_path}", file=sys.stderr)
                     except Exception as e:
-                        print(f"❌ Error generating Word: {str(e)}", file=sys.stderr)
+                        print(f"[ERROR] Error generating Word: {str(e)}", file=sys.stderr)
                         raise
                     
                     if future_match:
                         try:
                             future_match.result()
-                            print(f"✅ Matchmaking completed", file=sys.stderr)
+                            print(f"[OK] Matchmaking completed", file=sys.stderr)
                         except Exception as e:
-                            print(f"⚠️  Warning: Matchmaking failed: {str(e)}", file=sys.stderr)
+                            print(f"[WARN] Warning: Matchmaking failed: {str(e)}", file=sys.stderr)
                     
                     try:
                         future_feedback.result()
-                        print(f"✅ Feedback completed", file=sys.stderr)
+                        print(f"[OK] Feedback completed", file=sys.stderr)
                     except Exception as e:
-                        print(f"⚠️  Warning: Feedback failed: {str(e)}", file=sys.stderr)
+                        print(f"[WARN] Warning: Feedback failed: {str(e)}", file=sys.stderr)
             except Exception as e:
-                print(f"❌ ThreadPoolExecutor error: {str(e)}", file=sys.stderr)
+                print(f"[ERROR] ThreadPoolExecutor error: {str(e)}", file=sys.stderr)
                 raise
 
             # --- STEP 4.5: Offer (Background) ---
@@ -310,7 +310,7 @@ class StreamlitCVGenerator:
                     
                     results["offer_word_path"] = angebot_word_path
                 except Exception as e:
-                    print(f"⚠️ Fehler bei Angebotserstellung: {str(e)}")
+                    print(f"[WARN] Fehler bei Angebotserstellung: {str(e)}")
 
             results["word_path"] = word_path
             results["match_json"] = matchmaking_json_path
@@ -358,7 +358,7 @@ class StreamlitCVGenerator:
             error_msg = str(e)
             tb_str = traceback.format_exc()
             results["error"] = error_msg
-            print(f"❌ [streamlit_pipeline] Exception: {error_msg}", file=sys.stderr)
+            print(f"[ERROR] [streamlit_pipeline] Exception: {error_msg}", file=sys.stderr)
             print(f"Full traceback:\n{tb_str}", file=sys.stderr)
             if progress_callback: progress_callback(100, f"{get_text('ui', 'error_status', language)}: {error_msg}", "error")
             

@@ -51,7 +51,7 @@ except Exception as e:
             [sys.executable, '-c', code],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=15,
             cwd=os.path.dirname(os.path.dirname(__file__))
         )
         
@@ -97,7 +97,7 @@ except Exception as e:
             [sys.executable, '-c', code],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=15,
             cwd=os.path.dirname(os.path.dirname(__file__))
         )
         

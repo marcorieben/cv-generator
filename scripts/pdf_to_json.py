@@ -28,7 +28,7 @@ def load_translations():
         with open(trans_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        print(f"⚠️ Warning: Could not load translations: {e}")
+        print(f"WARNING: Could not load translations: {e}", file=sys.stderr)
         return {}
 
 
@@ -388,7 +388,7 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(mock_data, f, ensure_ascii=False, indent=2)
-            print(f"💾 Mock-JSON gespeichert: {output_path}")
+            print(f"[MOCK] JSON saved: {output_path}", file=sys.stderr)
             
         return mock_data
 
@@ -401,11 +401,11 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
         )
     
     filename = os.path.basename(pdf_path) if isinstance(pdf_path, str) else "Uploaded File"
-    print(f"📄 Lese PDF: {filename}")
+    print(f"[PDF] Reading: {filename}", file=sys.stderr)
     cv_text = extract_text_from_pdf(pdf_path)
-    print(f"   → {len(cv_text)} Zeichen extrahiert")
+    print(f"[PDF] Extracted {len(cv_text)} characters", file=sys.stderr)
     
-    print("📋 Lade Schema...")
+    print("[SCHEMA] Loading schema...", file=sys.stderr)
     schema = load_schema(schema_path)
     
     print("🤖 Sende Anfrage an OpenAI API...")
@@ -488,21 +488,21 @@ Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
         )
         
         json_data = json.loads(response.choices[0].message.content)
-        print(f"✅ JSON erfolgreich erstellt. Starte Normalisierung...")
+        print(f"[JSON] Successfully created. Starting normalization...", file=sys.stderr)
         
         # Post-Processing: Struktur korrigieren falls nötig
         json_data = normalize_json_structure(json_data, target_language)
-        print(f"✅ Normalisierung abgeschlossen")
+        print(f"[JSON] Normalization complete", file=sys.stderr)
         
         # Optional: In Datei speichern
         if output_path:
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(json_data, f, ensure_ascii=False, indent=2)
-            print(f"💾 JSON gespeichert: {output_path}")
+            print(f"[JSON] Saved to: {output_path}", file=sys.stderr)
         
         return json_data
     
     except Exception as e:
-        print(f"❌ Fehler: {str(e)}")
+        print(f"[ERROR] {str(e)}", file=sys.stderr)
         raise e  # Weitergeben statt sys.exit, damit Pipeline Fehler abfangen kann

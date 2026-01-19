@@ -81,7 +81,7 @@ def run_batch_comparison(
     
     batch_results = []
     base_dir = os.getcwd()
-    print(f"🚀 Starting batch_comparison with base_dir: {base_dir}", file=sys.stderr)
+    print(f"[START] Starting batch_comparison with base_dir: {base_dir}", file=sys.stderr)
     print(f"   Number of CVs to process: {len(cv_files)}", file=sys.stderr)
     
     # Ensure job file pointer is at start
@@ -95,7 +95,7 @@ def run_batch_comparison(
     # This is the semantic driver for all CV extractions
     stellenprofil_data = None
     try:
-        print(f"\n📋 Processing Stellenprofil PDF...", file=sys.stderr)
+        print(f"\n[PROFILE] Processing Stellenprofil PDF...", file=sys.stderr)
         
         # Use the same Stellenprofil schema as Mode 2/3
         job_schema_path = os.path.join(base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
@@ -119,12 +119,12 @@ def run_batch_comparison(
                 "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
             }
         
-        print(f"✅ Stellenprofil extracted successfully", file=sys.stderr)
+        print(f"[OK] Stellenprofil extracted successfully", file=sys.stderr)
     
     except Exception as e:
         error_details = f"{str(e)}"
         tb_str = traceback.format_exc()
-        print(f"❌ Failed to extract Stellenprofil:\n{tb_str}", file=sys.stderr)
+        print(f"[ERROR] Failed to extract Stellenprofil:\n{tb_str}", file=sys.stderr)
         return {
             "results": [{
                 "success": False,
@@ -148,7 +148,7 @@ def run_batch_comparison(
     base_output = os.path.join(base_dir, "output")
     batch_output_dir = get_output_folder_path(base_output, job_profile_name, "batch-comparison", batch_timestamp)
     
-    print(f"📂 Batch folder created: {batch_output_dir}", file=sys.stderr)
+    print(f"[FOLDER] Batch folder created: {batch_output_dir}", file=sys.stderr)
     
     # Save Stellenprofil JSON at batch folder root
     try:
@@ -156,9 +156,9 @@ def run_batch_comparison(
         stellenprofil_path = os.path.join(batch_output_dir, stellenprofil_filename)
         with open(stellenprofil_path, 'w', encoding='utf-8') as f:
             json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
-        print(f"💾 Saved Stellenprofil: {stellenprofil_path}", file=sys.stderr)
+        print(f"[SAVE] Saved Stellenprofil: {stellenprofil_path}", file=sys.stderr)
     except Exception as e:
-        print(f"⚠️  Warning: Could not save Stellenprofil JSON: {str(e)}", file=sys.stderr)
+        print(f"[WARN] Warning: Could not save Stellenprofil JSON: {str(e)}", file=sys.stderr)
     
     if progress_callback:
         progress_callback(10, "Stellenprofil verarbeitet, beginne mit CVs...", "running")
@@ -181,7 +181,7 @@ def run_batch_comparison(
             progress_callback(progress_pct, f"Verarbeite {cv_file.name}...", "running")
         
         try:
-            print(f"\n📄 Processing CV {idx+1}/{len(cv_files)}: {cv_file.name}", file=sys.stderr)
+            print(f"\n[FILE] Processing CV {idx+1}/{len(cv_files)}: {cv_file.name}", file=sys.stderr)
             
             # Create candidate subfolder within batch folder
             candidate_subfolder = get_candidate_subfolder_path(
@@ -189,7 +189,7 @@ def run_batch_comparison(
                 candidate_name_fallback,
                 batch_timestamp
             )
-            print(f"📂 Candidate folder: {candidate_subfolder}", file=sys.stderr)
+            print(f"[FOLDER] Candidate folder: {candidate_subfolder}", file=sys.stderr)
             print(f"   Folder exists: {os.path.exists(candidate_subfolder)}", file=sys.stderr)
             print(f"   Batch output dir: {batch_output_dir}", file=sys.stderr)
             
@@ -234,19 +234,19 @@ def run_batch_comparison(
                     })
                     result["candidate_name"] = candidate_name
                 
-                print(f"✅ Successfully processed: {cv_file.name}", file=sys.stderr)
+                print(f"[OK] Successfully processed: {cv_file.name}", file=sys.stderr)
             else:
                 result["success"] = False
                 error_msg = cv_result.get("error", "Unknown error during processing")
                 result["error"] = f"Pipeline error: {error_msg}"
-                print(f"❌ Processing failed: {cv_file.name} - {error_msg}", file=sys.stderr)
+                print(f"[ERROR] Processing failed: {cv_file.name} - {error_msg}", file=sys.stderr)
         
         except Exception as e:
             error_details = f"{str(e)}"
             tb_str = traceback.format_exc()
             result["success"] = False
             result["error"] = error_details
-            print(f"❌ Exception processing {cv_file.name}: {error_details}", file=sys.stderr)
+            print(f"[ERROR] Exception processing {cv_file.name}: {error_details}", file=sys.stderr)
             print(f"Full traceback:\n{tb_str}", file=sys.stderr)
         
         batch_results.append(result)
