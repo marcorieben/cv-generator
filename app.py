@@ -1,6 +1,5 @@
 import streamlit as st
 import os
-import json
 import yaml
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
@@ -9,6 +8,8 @@ from dotenv import load_dotenv
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
+from core.database.db import Database
+from core.database.translations import initialize_translations
 
 # Page config must be the first Streamlit command
 st.set_page_config(
@@ -22,36 +23,28 @@ if 'language' not in st.session_state:
     st.session_state.language = "de"
 
 # --- Helper Functions ---
-def load_translations():
-    """Loads translations from the central JSON file."""
-    # Try different paths to be more robust
-    paths = [
-        os.path.join(os.path.dirname(__file__), "scripts", "translations.json"),
-        os.path.join("scripts", "translations.json"),
-        "translations.json"
-    ]
-    
-    for trans_path in paths:
-        if os.path.exists(trans_path):
-            try:
-                with open(trans_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception as e:
-                print(f"⚠️ Error loading translations from {trans_path}: {e}")
-                continue
-    
-    # Fallback empty structure
-    print("❌ Critical: Could not find or load translations.json anywhere!")
-    return {"ui": {}, "cv": {}, "offer": {}}
+def get_translations_manager():
+    """Get or initialize translations manager from database"""
+    if "translations_manager" not in st.session_state:
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), "data", "cv_generator.db")
+            os.makedirs(os.path.dirname(db_path), exist_ok=True)
+            db = Database(db_path)
+            st.session_state.translations_manager = initialize_translations(db)
+        except Exception as e:
+            print(f"Error initializing translations: {e}")
+            st.session_state.translations_manager = initialize_translations(None)
+    return st.session_state.translations_manager
 
-# Global translations object for easier access
-translations = load_translations()
-
-def get_text(section, key, lang="de"):
-    """Safely retrieves translated text from the global translations object."""
+def get_text(section, key, lang=None):
+    """Safely retrieves translated text from database or fallback"""
+    if lang is None:
+        lang = st.session_state.get("language", "de")
     try:
-        return translations.get(section, {}).get(key, {}).get(lang, key)
-    except:
+        tm = get_translations_manager()
+        return tm.get(section, key, lang) or key
+    except Exception as e:
+        print(f"Translation error: {e}")
         return key
 
 def reset_all_pipeline_states():

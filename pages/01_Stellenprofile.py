@@ -5,7 +5,6 @@ Handles creation, editing, deletion, and archiving of job profiles
 
 import streamlit as st
 import os
-import json
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -19,6 +18,7 @@ if parent_dir not in sys.path:
 from core.database.db import Database
 from core.database.workflows import JobProfileWorkflow
 from core.database.models import JobProfileStatus, JobProfileWorkflowState
+from core.database.translations import initialize_translations, t as get_translation
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -28,33 +28,20 @@ st.set_page_config(
 )
 
 # --- Helper Functions ---
-def load_translations():
-    """Load translation file"""
-    paths = [
-        os.path.join(os.path.dirname(__file__), "..", "scripts", "translations.json"),
-        os.path.join("..", "scripts", "translations.json"),
-        "scripts/translations.json"
-    ]
-    
-    for trans_path in paths:
-        if os.path.exists(trans_path):
-            try:
-                with open(trans_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception as e:
-                print(f"⚠️ Error loading translations: {e}")
-                continue
-    
-    return {"ui": {}, "cv": {}, "offer": {}, "job_profile": {}}
-
-# Global translations
-translations = load_translations()
+def get_translations_manager():
+    """Get or initialize translations manager"""
+    if "translations_manager" not in st.session_state:
+        db = get_database()
+        st.session_state.translations_manager = initialize_translations(db)
+    return st.session_state.translations_manager
 
 def t(section, key, lang="de"):
-    """Get translated text"""
+    """Get translated text using database-backed translations"""
     try:
-        return translations.get(section, {}).get(key, {}).get(lang, key)
-    except:
+        tm = get_translations_manager()
+        return tm.get(section, key, lang) or key
+    except Exception as e:
+        print(f"⚠️ Translation error: {e}, falling back to key: {key}")
         return key
 
 def get_database():
