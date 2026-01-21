@@ -69,11 +69,11 @@ class TestCandidateModel:
     def test_create_candidate(self):
         """Test candidate creation"""
         candidate = Candidate(
-            vorname="Marco",
-            nachname="Müller",
+            first_name="Marco",
+            last_name="Müller",
             email="marco@example.com",
             phone="+41 76 123 4567",
-            hauptrolle_titel="Senior Developer"
+            primary_role_title="Senior Developer"
         )
         
         assert candidate.full_name() == "Marco Müller"
@@ -88,8 +88,8 @@ class TestCandidateModel:
         }
         
         candidate = Candidate(
-            vorname="Marco",
-            nachname="Müller",
+            first_name="Marco",
+            last_name="Müller",
             cv_json=cv_json
         )
         
@@ -129,8 +129,8 @@ class TestDatabaseOperations:
     def test_create_candidate(self, temp_db):
         """Test creating candidate"""
         candidate = Candidate(
-            vorname="Marco",
-            nachname="Müller",
+            first_name="Marco",
+            last_name="Müller",
             email="marco@example.com"
         )
         
@@ -150,8 +150,8 @@ class TestDatabaseOperations:
         
         # Create candidate
         candidate = Candidate(
-            vorname="Marco",
-            nachname="Müller",
+            first_name="Marco",
+            last_name="Müller",
             email="marco@example.com"
         )
         candidate_id = temp_db.create_candidate(candidate)
@@ -174,8 +174,8 @@ class TestDatabaseOperations:
         # Create and add candidates
         for i in range(3):
             candidate = Candidate(
-                vorname=f"Marco{i}",
-                nachname="Müller",
+                first_name=f"Marco{i}",
+                last_name="Müller",
                 email=f"marco{i}@example.com"
             )
             candidate_id = temp_db.create_candidate(candidate)
@@ -285,8 +285,8 @@ class TestCandidateWorkflow:
         workflow = CandidateWorkflow(temp_db)
         
         candidate = Candidate(
-            vorname="Marco",
-            nachname="Müller",
+            first_name="Marco",
+            last_name="Müller",
             email="marco@example.com"
         )
         
@@ -308,8 +308,8 @@ class TestCandidateWorkflow:
         # Create candidate
         candidate_workflow = CandidateWorkflow(temp_db)
         candidate = Candidate(
-            vorname="Marco",
-            nachname="Müller",
+            first_name="Marco",
+            last_name="Müller",
             email="marco@example.com"
         )
         success, candidate_id, message = candidate_workflow.add_candidate(candidate)
@@ -331,8 +331,8 @@ class TestCandidateWorkflow:
         
         candidate_workflow = CandidateWorkflow(temp_db)
         candidate = Candidate(
-            vorname="Marco",
-            nachname="Müller",
+            first_name="Marco",
+            last_name="Müller",
             email="marco@example.com"
         )
         success, candidate_id, _ = candidate_workflow.add_candidate(candidate)

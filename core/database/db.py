@@ -12,6 +12,7 @@ from contextlib import contextmanager
 
 from .models import (
     JobProfile, Candidate, JobProfileCandidate, Attachment, WorkflowHistory,
+    JobProfileComment,
     JobProfileStatus, CandidateStatus, JobProfileWorkflowState, CandidateWorkflowState
 )
 
@@ -33,7 +34,7 @@ class Database:
     All tables store metadata as JSON for cloud migration flexibility
     """
     
-    SCHEMA_VERSION = 1
+    SCHEMA_VERSION = 2  # Updated to support English standardization
     
     def __init__(self, db_path: str):
         # Accept both config object and string path
@@ -42,6 +43,7 @@ class Database:
         else:
             self.config = DatabaseConfig(db_path)
         self.init_db()
+        self.apply_migrations()
     
     @contextmanager
     def get_connection(self):
@@ -58,100 +60,81 @@ class Database:
             conn.close()
     
     def init_db(self):
-        """Initialize database schema"""
+        """Initialize database - setup migration infrastructure"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            # Create tables
-            cursor.executescript("""
-                -- Job Profiles
-                CREATE TABLE IF NOT EXISTS job_profiles (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name VARCHAR(255) NOT NULL,
-                    description TEXT,
-                    required_skills TEXT,
-                    level TEXT DEFAULT 'intermediate',
-                    status TEXT DEFAULT 'draft',
-                    current_workflow_state TEXT DEFAULT 'draft',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    created_by VARCHAR(255),
-                    metadata TEXT DEFAULT '{}'
-                );
-                
-                -- Candidates
-                CREATE TABLE IF NOT EXISTS candidates (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    vorname VARCHAR(100) NOT NULL,
-                    nachname VARCHAR(100) NOT NULL,
-                    email VARCHAR(255),
-                    phone VARCHAR(20),
-                    cv_json TEXT NOT NULL,
-                    hauptrolle_titel VARCHAR(255),
-                    kurzprofil TEXT,
-                    status TEXT DEFAULT 'applied',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    metadata TEXT DEFAULT '{}'
-                );
-                
-                -- Job Profile - Candidate Relationship
-                CREATE TABLE IF NOT EXISTS job_profile_candidates (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    job_profile_id INTEGER NOT NULL,
-                    candidate_id INTEGER NOT NULL,
-                    matched_at TIMESTAMP,
-                    match_score REAL,
-                    notes TEXT,
-                    status TEXT DEFAULT 'pending',
-                    workflow_state TEXT DEFAULT 'initial',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    metadata TEXT DEFAULT '{}',
-                    FOREIGN KEY (job_profile_id) REFERENCES job_profiles(id) ON DELETE CASCADE,
-                    FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
-                    UNIQUE(job_profile_id, candidate_id)
-                );
-                
-                -- Attachments
-                CREATE TABLE IF NOT EXISTS attachments (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    entity_type VARCHAR(50),
-                    entity_id INTEGER,
-                    file_name VARCHAR(255) NOT NULL,
-                    file_path VARCHAR(512),
-                    file_type VARCHAR(50),
-                    file_size INTEGER,
-                    storage_backend TEXT DEFAULT 'local',
-                    remote_path VARCHAR(512),
-                    cloud_url VARCHAR(512),
-                    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    metadata TEXT DEFAULT '{}'
-                );
-                
-                -- Workflow History
-                CREATE TABLE IF NOT EXISTS workflow_history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    entity_type VARCHAR(50),
-                    entity_id INTEGER,
-                    old_state VARCHAR(50),
-                    new_state VARCHAR(50),
-                    action VARCHAR(255),
-                    performed_by VARCHAR(255),
-                    performed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    notes TEXT,
-                    metadata TEXT DEFAULT '{}'
-                );
-                
-                -- Metadata table for versioning
+            # Only create schema_migrations table - all other tables created via migrations
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS schema_migrations (
+                    id INTEGER PRIMARY KEY,
+                    name VARCHAR(255) UNIQUE,
+                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS db_metadata (
                     key VARCHAR(100) PRIMARY KEY,
                     value TEXT
-                );
-                
-                -- Insert schema version if not exists
-                INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('schema_version', '1');
+                )
             """)
+            
+            # Insert schema version metadata if not exists
+            cursor.execute("""
+                INSERT OR IGNORE INTO db_metadata (key, value) 
+                VALUES ('schema_version', '2')
+            """)
+    
+    def apply_migrations(self):
+        """Apply pending database migrations"""
+        migrations_dir = Path(__file__).parent.parent.parent / "data" / "migrations"
+        if not migrations_dir.exists():
+            return
+        
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Create migrations table if not exists
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS schema_migrations (
+                    id INTEGER PRIMARY KEY,
+                    name VARCHAR(255) UNIQUE,
+                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.commit()
+            
+            # Get list of migration files
+            migration_files = sorted(migrations_dir.glob("*.sql"))
+            
+            for migration_file in migration_files:
+                migration_name = migration_file.name
+                
+                # Check if migration already applied
+                cursor.execute(
+                    "SELECT id FROM schema_migrations WHERE name = ?",
+                    (migration_name,)
+                )
+                if cursor.fetchone():
+                    continue  # Migration already applied
+                
+                # Read and execute migration
+                try:
+                    migration_sql = migration_file.read_text()
+                    # Execute the entire migration script as one (SQLite supports multiple statements)
+                    cursor.executescript(migration_sql)
+                    
+                    # Mark migration as applied
+                    cursor.execute(
+                        "INSERT INTO schema_migrations (name) VALUES (?)",
+                        (migration_name,)
+                    )
+                    conn.commit()
+                except Exception as e:
+                    print(f"Error applying migration {migration_name}: {e}")
+                    conn.rollback()
+                    raise
     
     # Job Profile operations
     
@@ -163,11 +146,11 @@ class Database:
             
             cursor.execute("""
                 INSERT INTO job_profiles 
-                (name, description, required_skills, level, status, current_workflow_state, 
+                (name, customer, description, required_skills, level, status, current_workflow_state, 
                  created_by, metadata)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                data['name'], data['description'], json.dumps(data['required_skills']),
+                data['name'], data.get('customer'), data['description'], json.dumps(data['required_skills']),
                 data['level'], data['status'], data['current_workflow_state'],
                 data['created_by'], json.dumps(data['metadata'])
             ))
@@ -221,11 +204,11 @@ class Database:
             
             cursor.execute("""
                 UPDATE job_profiles SET
-                name = ?, description = ?, required_skills = ?, level = ?,
+                name = ?, customer = ?, description = ?, required_skills = ?, level = ?,
                 status = ?, current_workflow_state = ?, metadata = ?, updated_at = ?
                 WHERE id = ?
             """, (
-                data['name'], data['description'], json.dumps(data['required_skills']),
+                data['name'], data.get('customer'), data['description'], json.dumps(data['required_skills']),
                 data['level'], data['status'], data['current_workflow_state'],
                 json.dumps(data['metadata']), data['updated_at'], profile.id
             ))
@@ -241,13 +224,13 @@ class Database:
             
             cursor.execute("""
                 INSERT INTO candidates
-                (vorname, nachname, email, phone, cv_json, hauptrolle_titel,
-                 kurzprofil, status, metadata)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (first_name, last_name, email, phone, cv_json, primary_role_title,
+                 summary, status, workflow_state, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                data['vorname'], data['nachname'], data['email'], data['phone'],
-                data['cv_json'], data['hauptrolle_titel'], data['kurzprofil'],
-                data['status'], data['metadata']
+                data['first_name'], data['last_name'], data['email'], data['phone'],
+                data['cv_json'], data['primary_role_title'], data['summary'],
+                data['status'], data['workflow_state'], data['metadata']
             ))
             return cursor.lastrowid
     
@@ -293,14 +276,15 @@ class Database:
             
             cursor.execute("""
                 UPDATE candidates SET
-                vorname = ?, nachname = ?, email = ?, phone = ?, cv_json = ?,
-                hauptrolle_titel = ?, kurzprofil = ?, status = ?,
+                first_name = ?, last_name = ?, email = ?, phone = ?, cv_json = ?,
+                primary_role_title = ?, summary = ?, status = ?, workflow_state = ?,
                 metadata = ?, updated_at = ?
                 WHERE id = ?
             """, (
-                data['vorname'], data['nachname'], data['email'], data['phone'],
-                json.dumps(data['cv_json']), data['hauptrolle_titel'], data['kurzprofil'],
-                data['status'], json.dumps(data['metadata']), data['updated_at'], candidate.id
+                data['first_name'], data['last_name'], data['email'], data['phone'],
+                data['cv_json'], data['primary_role_title'], data['summary'],
+                data['status'], data['workflow_state'], data['metadata'], 
+                data['updated_at'], candidate.id
             ))
             return cursor.rowcount > 0
     
@@ -368,3 +352,46 @@ class Database:
                 history.append(WorkflowHistory.from_dict(dict(row)))
             
             return history
+    
+    # --- Job Profile Comments ---
+    def add_comment(self, job_profile_id: int, username: Optional[str], comment_text: str) -> Tuple[bool, str]:
+        """Add a comment to a job profile"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO job_profile_comments (job_profile_id, username, comment_text, created_at)
+                    VALUES (?, ?, ?, ?)
+                """, (job_profile_id, username, comment_text, datetime.now()))
+                conn.commit()
+            return True, "Kommentar hinzugefügt"
+        except Exception as e:
+            return False, f"Fehler beim Hinzufügen des Kommentars: {str(e)}"
+    
+    def get_comments(self, job_profile_id: int) -> List[JobProfileComment]:
+        """Get all comments for a job profile"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, job_profile_id, username, comment_text, created_at
+                FROM job_profile_comments
+                WHERE job_profile_id = ?
+                ORDER BY created_at DESC
+            """, (job_profile_id,))
+            
+            comments = []
+            for row in cursor.fetchall():
+                comments.append(JobProfileComment.from_dict(dict(row)))
+            
+            return comments
+    
+    def delete_comment(self, comment_id: int) -> Tuple[bool, str]:
+        """Delete a comment"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM job_profile_comments WHERE id = ?", (comment_id,))
+                conn.commit()
+            return True, "Kommentar gelöscht"
+        except Exception as e:
+            return False, f"Fehler beim Löschen des Kommentars: {str(e)}"

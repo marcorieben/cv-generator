@@ -1,12 +1,13 @@
 -- Migration: 001_initial_schema
--- Purpose: Create initial database schema for CV Generator
+-- Purpose: Create initial database schema for CV Generator with English standardization
+-- Database Layer: English (language-neutral) | UI Layer: Translated via translations.json
 -- IMPORTANT: This migration is IDEMPOTENT - safe to run multiple times
--- It only creates tables if they don't exist (using IF NOT EXISTS)
 
 -- Job Profiles table
 CREATE TABLE IF NOT EXISTS job_profiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(255) NOT NULL,
+    customer VARCHAR(255),
     description TEXT,
     required_skills TEXT,
     level TEXT,
@@ -18,17 +19,18 @@ CREATE TABLE IF NOT EXISTS job_profiles (
     metadata TEXT
 );
 
--- Candidates table
+-- Candidates table (English field names)
 CREATE TABLE IF NOT EXISTS candidates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    vorname VARCHAR(100) NOT NULL,
-    nachname VARCHAR(100) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(20),
     cv_json TEXT,
-    hauptrolle_titel VARCHAR(255),
-    kurzprofil TEXT,
+    primary_role_title VARCHAR(255),
+    summary TEXT,
     status TEXT,
+    workflow_state TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     metadata TEXT
@@ -81,6 +83,16 @@ CREATE TABLE IF NOT EXISTS workflow_history (
     metadata TEXT
 );
 
+-- Job Profile Comments (English)
+CREATE TABLE IF NOT EXISTS job_profile_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_profile_id INTEGER NOT NULL,
+    username VARCHAR(255),
+    comment_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (job_profile_id) REFERENCES job_profiles(id) ON DELETE CASCADE
+);
+
 -- Database metadata (version, sync status, etc.)
 CREATE TABLE IF NOT EXISTS db_metadata (
     key VARCHAR(100) PRIMARY KEY,
@@ -89,7 +101,11 @@ CREATE TABLE IF NOT EXISTS db_metadata (
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_job_profiles_status ON job_profiles(status);
+CREATE INDEX IF NOT EXISTS idx_job_profiles_workflow_state ON job_profiles(current_workflow_state);
+CREATE INDEX IF NOT EXISTS idx_job_profile_comments_profile ON job_profile_comments(job_profile_id);
 CREATE INDEX IF NOT EXISTS idx_candidates_email ON candidates(email);
+CREATE INDEX IF NOT EXISTS idx_candidates_status ON candidates(status);
 CREATE INDEX IF NOT EXISTS idx_job_profile_candidates_profile ON job_profile_candidates(job_profile_id);
 CREATE INDEX IF NOT EXISTS idx_job_profile_candidates_candidate ON job_profile_candidates(candidate_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_history_entity ON workflow_history(entity_type, entity_id);
+

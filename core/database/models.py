@@ -62,6 +62,7 @@ class JobProfile:
     """
     id: Optional[int] = None
     name: str = ""
+    customer: Optional[str] = None
     description: str = ""
     required_skills: List[str] = field(default_factory=list)
     level: SkillLevel = SkillLevel.INTERMEDIATE
@@ -100,29 +101,34 @@ class Candidate:
     """
     Candidate model - represents a person applying for positions
     Integrates with existing CV schema (cv_json field)
+    
+    Database Layer: English field names for language-neutral storage
+    UI Layer: Translations handled in Streamlit pages via translations.json
     """
     id: Optional[int] = None
-    vorname: str = ""
-    nachname: str = ""
+    first_name: str = ""
+    last_name: str = ""
     email: Optional[str] = None
     phone: Optional[str] = None
     cv_json: Dict[str, Any] = field(default_factory=dict)
-    hauptrolle_titel: Optional[str] = None
-    kurzprofil: Optional[str] = None
+    primary_role_title: Optional[str] = None
+    summary: Optional[str] = None
     status: CandidateStatus = CandidateStatus.APPLIED
+    workflow_state: CandidateWorkflowState = CandidateWorkflowState.INITIAL
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def full_name(self) -> str:
         """Return full name"""
-        return f"{self.vorname} {self.nachname}".strip()
+        return f"{self.first_name} {self.last_name}".strip()
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for database storage"""
         data = asdict(self)
         data['status'] = self.status.value
-        data['cv_json'] = json.dumps(self.cv_json)
+        data['workflow_state'] = self.workflow_state.value
+        data['cv_json'] = json.dumps(self.cv_json) if isinstance(self.cv_json, dict) else self.cv_json
         data['metadata'] = json.dumps(self.metadata)
         return data
     
@@ -135,6 +141,7 @@ class Candidate:
             data['metadata'] = json.loads(data['metadata'])
         
         data['status'] = CandidateStatus(data.get('status', 'applied'))
+        data['workflow_state'] = CandidateWorkflowState(data.get('workflow_state', 'initial'))
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
@@ -241,4 +248,26 @@ class WorkflowHistory:
         if isinstance(data.get('metadata'), str):
             data['metadata'] = json.loads(data['metadata'])
         
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class JobProfileComment:
+    """
+    Comment on a job profile
+    Stores notes from users about the position
+    """
+    id: Optional[int] = None
+    job_profile_id: int = 0
+    username: Optional[str] = None
+    comment_text: str = ""
+    created_at: Optional[datetime] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for database storage"""
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'JobProfileComment':
+        """Create from database dictionary"""
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})

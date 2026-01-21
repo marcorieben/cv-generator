@@ -9,6 +9,7 @@ from .models import (
     JobProfileCandidate,
     Attachment,
     WorkflowHistory,
+    JobProfileComment,
     JobProfileStatus,
     JobProfileWorkflowState,
     CandidateStatus,

@@ -167,7 +167,7 @@ class CandidateWorkflow:
     def add_candidate(self, candidate: Candidate) -> Tuple[bool, int, str]:
         """Add new candidate to system"""
         try:
-            if not candidate.vorname or not candidate.nachname:
+            if not candidate.first_name or not candidate.last_name:
                 return False, 0, "Candidate must have first and last name"
             
             candidate_id = self.db.create_candidate(candidate)
