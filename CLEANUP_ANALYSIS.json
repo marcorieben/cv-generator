@@ -1,0 +1,32 @@
+{
+  "total_files": 1564,
+  "cleanup_items": {
+    "REDUNDANT": [
+      {
+        "file": "docs\\CHANGELOG.md",
+        "reason": "Duplicate CHANGELOG (keep only root/CHANGELOG.md)",
+        "severity": "high"
+      },
+      {
+        "file": "scripts\\CHANGELOG.md",
+        "reason": "Duplicate CHANGELOG (keep only root/CHANGELOG.md)",
+        "severity": "high"
+      }
+    ],
+    "REGENERABLE": [
+      {
+        "file": "batch_test_output.txt",
+        "reason": "Test output / build artifact (can be regenerated)",
+        "severity": "low"
+      },
+      {
+        "file": "test_output.txt",
+        "reason": "Test output / build artifact (can be regenerated)",
+        "severity": "low"
+      }
+    ],
+    "OBSOLETE": [],
+    "ARCHIVABLE": []
+  },
+  "total_cleanup_candidates": 4
+}
