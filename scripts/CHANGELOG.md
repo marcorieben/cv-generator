@@ -60,3 +60,8 @@
 2026-01-19 17:29:47 | BUGFIX | replace hardcoded 'job' with meaningful profile identifier from stellenprofil data
 2026-01-19 17:35:11 | BUGFIX | correct batch_results key and add defensive index checks in app.py
 2026-01-19 17:51:43 | REFACTOR | rename batch_comparison to batch_run in folder paths to reduce character count
+2026-01-19 20:57:02 | BUGFIX | batch results display button keys and add log formatting utility
+2026-01-21 10:48:05 | DOCS | Add Lean MVP architecture documentation for meeting
+2026-01-21 10:56:05 | UPDATE | (chore): Add pre-commit hook system for structured documentation and file cleanup
+2026-01-21 10:58:15 | UPDATE | (refactor): Consolidate pre-commit hook system for simpler maintenance
+2026-01-21 11:41:20 | UPDATE | (chore): Add comprehensive cleanup infrastructure with interactive archival system
