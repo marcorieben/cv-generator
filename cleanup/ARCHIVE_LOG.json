@@ -1,0 +1,23 @@
+{
+  "created_at": "2026-01-21T11:35:58.898643",
+  "last_updated": "2026-01-21T11:38:55.281784",
+  "total_archived": 2,
+  "items": [
+    {
+      "file": ".\\docs\\CHANGELOG.md",
+      "category": "REDUNDANT",
+      "reason": "Duplicate CHANGELOG (keep only root/CHANGELOG.md)",
+      "archived_at": "2026-01-21T11:35:58.900611",
+      "status": "archived",
+      "target": "cleanup\\redundant\\docs\\CHANGELOG.md"
+    },
+    {
+      "file": ".\\batch_test_output.txt",
+      "category": "REGENERABLE",
+      "reason": "User-selected via cleanup scanner",
+      "archived_at": "2026-01-21T11:38:55.281609",
+      "status": "archived",
+      "target": "cleanup\\regenerable\\batch_test_output.txt"
+    }
+  ]
+}

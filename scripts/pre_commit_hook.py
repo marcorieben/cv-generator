@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Pre-Commit Hook: Structured Documentation & Cleanup
 Scans for unused files, validates commit metadata, and generates in-app documentation.
@@ -10,6 +11,11 @@ import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
+
+# Fix encoding for Windows
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # Configuration
 EXCLUDE_DIRS = {'.git', '__pycache__', '.pytest_cache', 'htmlcov', '.venv', 'node_modules', 'archive'}
@@ -246,12 +252,30 @@ def validate_commit_message(commit_message):
 def main():
     """Main pre-commit hook logic"""
     print("\n" + "="*60)
-    print("🔍 PRE-COMMIT HOOK: Cleanup & Documentation")
+    print("PRE-COMMIT HOOK: Cleanup & Documentation")
     print("="*60)
+    
+    # Import cleanup logger
+    from cleanup_logger import CleanupLogger
+    from interactive_cleanup import InteractiveCleanupScanner
+    logger = CleanupLogger()
+    scanner = InteractiveCleanupScanner()
 
     try:
+        # 0. Run interactive cleanup scanner
+        print("\n Checking for cleanup candidates...")
+        candidates = scanner.scan_cleanup_candidates()
+        total_candidates = sum(len(v) for v in candidates.values())
+        
+        if total_candidates > 0:
+            print(f"\n Found {total_candidates} cleanup candidates")
+            selected = scanner.display_candidates(candidates)
+            
+            if selected > 0:
+                scanner.archive_selected()
+        
         # 1. Get commit message
-        print("\n📝 Reading commit message...")
+        print("\n Reading commit message...")
         try:
             # Git provides commit message via argv or file
             if len(sys.argv) > 1:
@@ -333,18 +357,41 @@ def main():
 
         # 6. Summary
         print("\n" + "="*60)
-        print("✅ PRE-COMMIT CHECKS PASSED")
+        print("PRE-COMMIT CHECKS PASSED")
         print("="*60)
-        print(f"\n✨ Commit details:")
-        print(f"  • Type: {metadata.icon or 'unspecified'}")
-        print(f"  • Feature: {metadata.feature_name or 'unnamed'}")
-        print(f"  • Metadata: scripts/commit_metadata.json")
+        print(f"\n Commit details:")
+        print(f"  Type: {metadata.icon or 'unspecified'}")
+        print(f"  Feature: {metadata.feature_name or 'unnamed'}")
+        print(f"  Metadata: scripts/commit_metadata.json")
+        
+        # Log this operation to cleanup logger
+        try:
+            commit_hash = subprocess.run(
+                ['git', 'rev-parse', '--short', 'HEAD'],
+                capture_output=True, text=True
+            ).stdout.strip()
+            
+            # Log the pre-commit operation
+            logger.log_operation(
+                operation_type='pre-commit-validation',
+                items=[],  # No items archived in validation
+                commit_hash=commit_hash,
+                commit_message=commit_message,
+                metadata={
+                    'validated': True,
+                    'metadata_extracted': True,
+                    'author': metadata.author
+                }
+            )
+        except Exception as e:
+            print(f" Warning: Could not log to cleanup logger: {e}")
+        
         print()
 
         return 0
 
     except Exception as e:
-        print(f"\n❌ ERROR in pre-commit hook: {e}")
+        print(f"\n ERROR in pre-commit hook: {e}")
         import traceback
         traceback.print_exc()
         return 1

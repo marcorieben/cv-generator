@@ -1,0 +1,27 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.0 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.3.0">
+  <diagram name="Seite-1" id="lB4pP1lnurn0YaNKUcog">
+    <mxGraphModel dx="1440" dy="1402" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="QUwjoAmC0RVsmwa_2TuA-2" edge="1" parent="1" source="QUwjoAmC0RVsmwa_2TuA-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QUwjoAmC0RVsmwa_2TuA-1" parent="1" style="swimlane;startSize=0;" value="" vertex="1">
+          <mxGeometry height="1000" width="200" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="QUwjoAmC0RVsmwa_2TuA-3" parent="1" style="swimlane;startSize=0;" value="" vertex="1">
+          <mxGeometry height="1000" width="200" x="250" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="QUwjoAmC0RVsmwa_2TuA-4" parent="1" style="swimlane;startSize=0;" value="" vertex="1">
+          <mxGeometry height="1000" width="200" x="330" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="QUwjoAmC0RVsmwa_2TuA-5" parent="1" style="swimlane;startSize=0;" value="" vertex="1">
+          <mxGeometry height="1000" width="200" x="627" y="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
