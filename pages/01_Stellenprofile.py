@@ -104,6 +104,14 @@ def is_profile_aged(created_at):
     """Check if profile is older than 10 days"""
     if not created_at:
         return False
+    
+    # Handle string datetime from database
+    if isinstance(created_at, str):
+        try:
+            created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        except (ValueError, AttributeError):
+            return False
+    
     age = datetime.now() - created_at
     return age > timedelta(days=10)
 

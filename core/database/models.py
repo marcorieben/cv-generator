@@ -88,6 +88,14 @@ class JobProfile:
         if isinstance(data.get('metadata'), str):
             data['metadata'] = json.loads(data['metadata'])
         
+        # Convert datetime strings to datetime objects
+        for dt_field in ['created_at', 'updated_at']:
+            if dt_field in data and isinstance(data[dt_field], str):
+                try:
+                    data[dt_field] = datetime.fromisoformat(data[dt_field].replace('Z', '+00:00'))
+                except (ValueError, AttributeError):
+                    data[dt_field] = None
+        
         data['status'] = JobProfileStatus(data.get('status', 'draft'))
         data['level'] = SkillLevel(data.get('level', 'intermediate'))
         data['current_workflow_state'] = JobProfileWorkflowState(
@@ -139,6 +147,14 @@ class Candidate:
             data['cv_json'] = json.loads(data['cv_json'])
         if isinstance(data.get('metadata'), str):
             data['metadata'] = json.loads(data['metadata'])
+        
+        # Convert datetime strings to datetime objects
+        for dt_field in ['created_at', 'updated_at']:
+            if dt_field in data and isinstance(data[dt_field], str):
+                try:
+                    data[dt_field] = datetime.fromisoformat(data[dt_field].replace('Z', '+00:00'))
+                except (ValueError, AttributeError):
+                    data[dt_field] = None
         
         data['status'] = CandidateStatus(data.get('status', 'applied'))
         data['workflow_state'] = CandidateWorkflowState(data.get('workflow_state', 'initial'))
