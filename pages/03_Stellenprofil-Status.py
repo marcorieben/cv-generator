@@ -6,6 +6,7 @@ Handles workflow transitions, status changes, and decision making
 import streamlit as st
 import os
 import json
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -319,7 +320,7 @@ else:
                             success, msg = workflow.publish_profile(profile_id, performed_by="system")
                             if success:
                                 st.success(f"✅ {msg}")
-                                st.sleep(1)
+                                time.sleep(1)
                                 st.session_state.status_detail_view = False
                                 st.rerun()
                             else:
@@ -337,7 +338,7 @@ else:
                             success, msg = workflow.close_profile(profile_id, reason=reason, performed_by="system")
                             if success:
                                 st.success(f"✅ {msg}")
-                                st.sleep(1)
+                                time.sleep(1)
                                 st.session_state.status_detail_view = False
                                 st.rerun()
                             else:
@@ -374,7 +375,7 @@ else:
                     
                     if success:
                         st.success(f"✅ Status geändert zu: {selected_new_status}")
-                        st.sleep(1)
+                        time.sleep(1)
                         st.rerun()
                     else:
                         st.error(f"❌ Status-Änderung fehlgeschlagen: {msg}")

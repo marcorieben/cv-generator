@@ -6,6 +6,7 @@ Handles creation, editing, deletion, and archiving of job profiles
 import streamlit as st
 import os
 import json
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -245,7 +246,7 @@ with tab_list:
                     if success:
                         st.success(f"✅ {msg}")
                         st.session_state.confirm_delete = False
-                        st.sleep(1)
+                        time.sleep(1)
                         st.rerun()
                     else:
                         st.error(f"❌ {msg}")
@@ -452,7 +453,7 @@ with tab_form:
                             st.success(f"📎 {uploaded_file.name} hochgeladen")
                     
                     st.session_state.form_mode = None
-                    st.sleep(1)
+                    time.sleep(1)
                     st.rerun()
                 else:
                     st.error(f"❌ {msg}")
