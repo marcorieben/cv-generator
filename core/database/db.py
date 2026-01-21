@@ -34,7 +34,7 @@ class Database:
     All tables store metadata as JSON for cloud migration flexibility
     """
     
-    SCHEMA_VERSION = 2  # Updated to support English standardization
+    SCHEMA_VERSION = 3  # Updated to include translations table for multilingual UI
     
     def __init__(self, db_path: str):
         # Accept both config object and string path
