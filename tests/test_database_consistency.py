@@ -328,7 +328,7 @@ class TestDatabaseSchemaConsistency:
         required_indexes = [
             'idx_job_profiles_status',
             'idx_candidates_email',
-            'idx_job_profile_comments_profile'
+            'idx_comments_profile'
         ]
 
         for idx in required_indexes:

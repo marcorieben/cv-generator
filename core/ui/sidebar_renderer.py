@@ -240,13 +240,57 @@ def _render_design_settings(get_text_func, language):
 
 
 def _render_history(get_text_func, language, load_history_func):
-    """History Komponente"""
+    """Rendert die History Section (aus alter Implementierung)"""
+    from datetime import datetime
     
     history = load_history_func()
+    
     if not history:
         st.caption(get_text_func("ui", "history_empty", language))
     else:
-        st.caption(f"{len(history)} Einträge")
+        for i, item in enumerate(history):
+            timestamp = item.get("timestamp", "")
+            try:
+                dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
+                display_time = dt.strftime("%d.%m. %H:%M")
+            except:
+                display_time = timestamp
+
+            candidate_name = item.get("candidate_name", get_text_func("ui", "history_unknown", language))
+
+            with st.expander(f"{display_time} - {candidate_name}", expanded=False):
+                model_used = item.get("model_name", get_text_func("ui", "history_unknown", language))
+                st.caption(f"Modus: {item.get('mode')} | Modell: {model_used}")
+
+                score = item.get("match_score")
+                if score:
+                    try:
+                        score_val = float(score)
+                        if score_val >= 80:
+                            bar_color = "#27ae60"
+                        elif score_val >= 60:
+                            bar_color = "#f39c12"
+                        else:
+                            bar_color = "#c0392b"
+
+                        st.markdown(f"""
+                            <div style="margin-bottom: 5px; font-size: 0.8em; color: #666;">{get_text_func('dashboard', 'matching_score', language)}: {score}%</div>
+                            <div style="background-color: #eee; border-radius: 4px; height: 8px; width: 100%; margin-bottom: 15px;">
+                                <div style="background-color: {bar_color}; width: {score_val}%; height: 100%; border-radius: 4px;"></div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    except:
+                        pass
+
+                # Details Button - zur Results-View navigieren
+                if st.button(get_text_func('ui', 'history_details_btn', language), key=f"hist_btn_{timestamp}_{i}", use_container_width=True):
+                    # Speichere die Run-Results in Session State
+                    st.session_state.generation_results = item
+                    st.session_state.show_results_view = True
+                    st.session_state.show_results_view_requested = True  # Flag dass die Details explizit angefordert wurden
+                    st.session_state.show_pipeline_dialog = True
+                    # Navigiere zur CV_Generator Page
+                    st.switch_page("pages/04_CV_Generator.py")
 
 
 def _render_user_section(get_text_func, language, load_authenticator, load_password_reset_func, name):
@@ -254,7 +298,14 @@ def _render_user_section(get_text_func, language, load_authenticator, load_passw
     
     try:
         authenticator = load_authenticator()
-        st.write(f'{get_text_func("ui", "welcome_msg", language)} *{name}*')
-        authenticator.logout(get_text_func("ui", "logout_btn", language), 'sidebar')
+        # Only show logout if authenticator exists and user is logged in
+        if authenticator and name and name != "Guest":
+            st.write(f'{get_text_func("ui", "welcome_msg", language)} *{name}*')
+            try:
+                authenticator.logout(get_text_func("ui", "logout_btn", language), 'sidebar')
+            except Exception as logout_error:
+                # If logout fails, just skip it silently
+                pass
     except Exception as e:
-        st.error(f"Fehler beim Logout-Button: {e}")
+        # Silently skip if there's any issue with authenticator
+        pass

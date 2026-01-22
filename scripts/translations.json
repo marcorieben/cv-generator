@@ -400,6 +400,36 @@
       "en": "📄 Word CV",
       "fr": "📄 CV Word"
     },
+    "generate_word_button": {
+      "de": "Generiere Word CV",
+      "en": "Generate Word CV",
+      "fr": "Générer Word CV"
+    },
+    "generating_word": {
+      "de": "Generiere Word CV...",
+      "en": "Generating Word CV...",
+      "fr": "Génération du CV Word..."
+    },
+    "word_ready": {
+      "de": "✅ Word CV bereit",
+      "en": "✅ Word CV ready",
+      "fr": "✅ CV Word prêt"
+    },
+    "word_success": {
+      "de": "Word CV erfolgreich generiert",
+      "en": "Word CV generated successfully",
+      "fr": "CV Word généré avec succès"
+    },
+    "word_generation_failed": {
+      "de": "Word CV Generierung fehlgeschlagen",
+      "en": "Word CV generation failed",
+      "fr": "Échec de la génération du CV Word"
+    },
+    "word_error": {
+      "de": "Fehler bei Word-Generierung",
+      "en": "Error generating Word CV",
+      "fr": "Erreur lors de la génération du CV Word"
+    },
     "error_status": {
       "de": "❌ Fehler",
       "en": "❌ Error",
@@ -1481,6 +1511,26 @@
       "de": "Feld:",
       "en": "Field:",
       "fr": "Champ :"
+    },
+    "generate_word_cv": {
+      "de": "Word CV generieren",
+      "en": "Generate Word CV",
+      "fr": "Générer Word CV"
+    },
+    "generate_word_cv_desc": {
+      "de": "Nachdem der Match-Score überprüft wurde, können Sie das Word CV-Dokument generieren.",
+      "en": "After reviewing the match score, you can generate the Word CV document.",
+      "fr": "Après avoir examiné le score de correspondance, vous pouvez générer le document CV Word."
+    },
+    "generate_now": {
+      "de": "Jetzt generieren",
+      "en": "Generate now",
+      "fr": "Générer maintenant"
+    },
+    "generating": {
+      "de": "Wird generiert",
+      "en": "Generating",
+      "fr": "Génération en cours"
     }
   },
   "levels": {

@@ -20,17 +20,20 @@ from core.database.translations import initialize_translations
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
-from core.ui.sidebar_init import render_sidebar_in_page
 
 # Set current page for sidebar
 st.session_state.current_page = "pages/04_CV_Generator.py"
 
-# --- Page Configuration ---
-st.set_page_config(
-    page_title="CV Generator | CV Generator",
-    page_icon="📄",
-    layout="wide"
-)
+# --- Import get_text and sidebar rendering from app ---
+try:
+    from app import get_text, render_simple_sidebar
+except ImportError:
+    def get_text(section, key, lang="de"):
+        """Fallback if app import fails"""
+        return key
+    def render_simple_sidebar():
+        """Fallback if sidebar rendering fails"""
+        pass
 
 # --- Helper Functions ---
 def get_translations_manager():
@@ -116,20 +119,16 @@ if 'language' not in st.session_state:
 # Set current page for sidebar active state detection
 st.session_state.current_page = "pages/04_CV_Generator.py"
 
-# --- Render Sidebar ---
-if st.session_state.get("authentication_status"):
-    try:
-        from app import get_text, authenticator, config, name, username
-        render_sidebar_in_page(
-            get_text_func=get_text,
-            language=st.session_state.language,
-            authenticator=authenticator,
-            name=name,
-            username=username,
-            config=config
-        )
-    except ImportError:
-        st.sidebar.warning("Sidebar konnte nicht geladen werden")
+# Reset results view on page load ONLY if not explicitly requested from history details button
+# This prevents old results from being shown when navigating to this page
+if not st.session_state.get("show_results_view_requested", False):
+    st.session_state.show_results_view = False
+else:
+    # Clear the flag after using it (one-time use)
+    st.session_state.show_results_view_requested = False
+
+# --- Simple Sidebar with Logo and Navigation ---
+render_simple_sidebar()
 
 # --- Sidebar Navigation ---
 db = get_database()
@@ -179,6 +178,170 @@ st.divider()
 
 # Check for Mock Mode
 is_mock = os.environ.get("MODEL_NAME") == "mock"
+
+# Helper function to show results content
+def show_results_content(results, lang):
+    """Display CV generation results with downloads and dashboard"""
+    st.subheader(get_text("ui", "results_title", lang))
+    
+    candidate_name = get_text("ui", "history_unknown", lang)
+    if results.get("cv_json"):
+        try:
+            filename = os.path.basename(results["cv_json"])
+            parts = filename.split('_')
+            if len(parts) >= 3: candidate_name = f"{parts[1]} {parts[2]}"
+        except: pass
+    
+    model_used = results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini"))
+    st.caption(f"{get_text('ui', 'history_mode', lang)}: {results.get('mode', get_text('ui', 'history_unknown', lang))} | {get_text('ui', 'history_model', lang)}: {model_used}")
+        
+    cv_btn_label = f"{get_text('ui', 'word_cv_btn', lang)} - {candidate_name}"
+    if len(cv_btn_label) > 30:
+        cv_btn_label = cv_btn_label[:27] + "..."
+    
+    with st.success(get_text("ui", "downloads_title", lang), icon="📥"):
+        res_col1, res_col2, res_col3 = st.columns(3)
+        with res_col1:
+            # Word CV Generation or Download
+            word_path = results.get("word_path")
+            word_pending = results.get("word_generation_pending", False)
+            
+            if word_path and os.path.exists(word_path):
+                # Word already generated - show download
+                with open(word_path, "rb") as f:
+                    st.download_button(cv_btn_label, f, os.path.basename(word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+            elif word_pending:
+                # Show button to generate Word on demand
+                if st.button("📄 " + get_text("ui", "generate_word_button", lang), use_container_width=True, key="generate_word_btn"):
+                    with st.status(get_text("ui", "generating_word", lang), expanded=True) as status:
+                        try:
+                            from scripts.visualize_results import generate_cv_word_on_demand
+                            cv_json_path = results.get("cv_json_path") or results.get("cv_json")
+                            output_dir = results.get("output_dir")
+                            
+                            # Fallback to derive output_dir from cv_json_path if not available
+                            if not output_dir and cv_json_path:
+                                output_dir = os.path.dirname(cv_json_path)
+                            
+                            # Validation
+                            if not cv_json_path:
+                                raise ValueError("CV JSON Pfad nicht verfügbar. Bitte führen Sie die Pipeline erneut aus.")
+                            if not output_dir:
+                                raise ValueError("Output Directory nicht verfügbar. Bitte führen Sie die Pipeline erneut aus.")
+                            
+                            status.write("⏳ Generiere Word Document...")
+                            word_path = generate_cv_word_on_demand(cv_json_path, output_dir, language=lang)
+                            
+                            if word_path and os.path.exists(word_path):
+                                results["word_path"] = word_path
+                                results["word_generation_pending"] = False
+                                st.session_state.generation_results = results
+                                status.update(label=get_text('ui', 'word_ready', lang), state="complete", expanded=False)
+                                st.success(get_text('ui', 'word_success', lang))
+                                st.rerun()
+                            else:
+                                status.update(label=get_text('ui', 'error_label', lang), state="error")
+                                st.error(get_text('ui', 'word_generation_failed', lang))
+                        except Exception as e:
+                            status.update(label=get_text('ui', 'error_label', lang), state="error")
+                            st.error(f"{get_text('ui', 'word_error', lang)}: {str(e)}")
+                            import traceback
+                            st.code(traceback.format_exc())
+            
+        with res_col2:
+            # JSON Data Button
+            if results.get("cv_json") and os.path.exists(results["cv_json"]):
+                with open(results["cv_json"], "rb") as f:
+                    st.download_button(get_text("ui", "json_data_btn", lang), f, os.path.basename(results["cv_json"]), "application/json", use_container_width=True)
+                    
+        with res_col3:
+            # Dashboard Button
+            if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
+                with open(results["dashboard_path"], "rb") as f:
+                    st.download_button(get_text("ui", "dashboard_btn", lang), f, os.path.basename(results["dashboard_path"]), "text/html", use_container_width=True)
+
+    if not results.get("stellenprofil_json") and results.get("cv_json"):
+        output_dir = os.path.dirname(results["cv_json"])
+        try:
+            for f in os.listdir(output_dir):
+                if f.startswith("stellenprofil_") and f.endswith(".json"):
+                    results["stellenprofil_json"] = os.path.join(output_dir, f)
+                    break
+        except: pass
+
+    if not results.get("match_json") and results.get("cv_json"):
+        output_dir = os.path.dirname(results["cv_json"])
+        try:
+            for f in os.listdir(output_dir):
+                if f.startswith("Match_") and f.endswith(".json"):
+                    results["match_json"] = os.path.join(output_dir, f)
+                    break
+        except: pass
+
+    if results.get("stellenprofil_json") and os.path.exists(results["stellenprofil_json"]):
+        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+        
+        offer_word_path = results.get("offer_word_path")
+        is_offer_ready = offer_word_path and os.path.exists(offer_word_path)
+        
+        if is_offer_ready:
+            offer_container = st.success(get_text("ui", "offer_ready", lang), icon="✅")
+        else:
+            offer_container = st.info(get_text("ui", "offer_create_title", lang), icon="✨")
+        
+        with offer_container:
+            off_col1, off_col2, off_col3 = st.columns(3)
+            with off_col1:
+                if is_offer_ready:
+                     with open(offer_word_path, "rb") as f:
+                        st.download_button(get_text("ui", "offer_download_btn", lang), f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
+                else:
+                    off_btn_key = f"gen_offer_btn_{results.get('cv_json', '')}"
+                    if st.button(get_text("ui", "offer_create_btn", lang), use_container_width=True, key=off_btn_key):
+                        with st.status(get_text("ui", "status_offer", lang), expanded=True) as status:
+                            try:
+                                cv_json = results["cv_json"]
+                                stellenprofil_json = results["stellenprofil_json"]
+                                match_json = results.get("match_json")
+                                output_dir = os.path.dirname(cv_json)
+                                base_name = os.path.basename(cv_json).replace("cv_", "").replace(".json", "")
+                                angebot_json_path = os.path.join(output_dir, f"Angebot_{base_name}.json")
+                                angebot_word_path = os.path.join(output_dir, f"Angebot_{base_name}.docx")
+                                schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
+                                
+                                status.write("🧠 KI-Inhalte generieren...")
+                                generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path, language=lang)
+                                
+                                status.write("📝 Word-Dokument formatieren...")
+                                generate_angebot_word(angebot_json_path, angebot_word_path)
+                                
+                                if os.path.exists(angebot_word_path):
+                                    results["offer_word_path"] = angebot_word_path
+                                    st.session_state.generation_results = results
+                                    st.session_state.show_pipeline_dialog = True
+                                    st.session_state.show_results_view = True
+                                    status.update(label=get_text('ui', 'offer_ready_label', lang), state="complete")
+                                    st.success(get_text('ui', 'offer_success', lang))
+                                    st.rerun()
+                                else:
+                                    st.error(get_text('ui', 'file_not_found_on_disk', lang))
+                            except Exception as e:
+                                status.update(label=get_text('ui', 'error_label', lang), state="error")
+                                st.error(f"{get_text('ui', 'offer_error', lang)} {e}")
+                                import traceback
+                                st.code(traceback.format_exc())
+            with off_col2:
+                if not is_offer_ready:
+                    st.caption(get_text('ui', 'offer_button_caption', lang))
+                else:
+                    st.caption(get_text('ui', 'offer_ready_caption', lang))
+
+    st.markdown("<div style='margin-top: 40px; margin-bottom: 20px; border-top: 1px solid #ddd;'></div>", unsafe_allow_html=True)
+
+    if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
+        with open(results["dashboard_path"], "r", encoding='utf-8') as f:
+            html_content = f.read()
+            st.components.v1.html(html_content, height=1200, scrolling=True)
 
 # Helper function for custom upload UI
 def render_custom_uploader(label, key_prefix, file_type=["pdf"]):
@@ -287,15 +450,16 @@ if is_mock:
 else:
     start_disabled = not cv_file or not api_key or not dsgvo_accepted
 
-@st.dialog(get_text('ui', 'dialog_pipeline', st.session_state.language), width="large")
+@st.dialog("Pipeline Processing", width="large")
 def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, custom_logo_path):
     
     if "generation_results" in st.session_state and st.session_state.get("show_results_view"):
         phase = "results"
     else:
         phase = "processing"
-
-    if phase == "results":
+    
+    # Apply wide CSS if results are being shown OR if explicitly requested
+    if phase == "results" or st.session_state.get("show_results_view_requested"):
         st.markdown("""
             <style>
             div[data-testid="stDialog"] div[role="dialog"] {
@@ -317,22 +481,14 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
             }
             </style>
         """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-            <style>
-            div[data-testid="stDialog"] div[role="dialog"] {
-                width: 50vw !important;
-                max-width: 800px !important;
-            }
-            </style>
-        """, unsafe_allow_html=True)
 
     if phase == "processing":
-        with st.status(get_text("ui", "processing_title", st.session_state.language), expanded=True) as status:
+        lang = st.session_state.get("language", "de")
+        with st.status(get_text("ui", "processing_title", lang), expanded=True) as status:
             log_container = st.empty()
             
             def progress_callback(pct, text, state="running"):
-                log_container.write(f"{get_text('ui', 'current_step', st.session_state.language)} {text}")
+                log_container.write(f"{get_text('ui', 'current_step', lang)} {text}")
                 status.update(label=f"🔄 {text} ({pct}%)", state="running")
 
             try:
@@ -355,7 +511,7 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                         custom_styles=current_custom_styles,
                         custom_logo_path=current_custom_logo_path,
                         pipeline_mode=mode,
-                        language=st.session_state.language
+                        language=lang
                     )
                     st.session_state.current_generation_results = results
                 
@@ -367,153 +523,50 @@ def run_cv_pipeline_dialog(cv_file, job_file, api_key, mode, custom_styles, cust
                             "mode": mode,
                             "word_path": results.get("word_path"),
                             "cv_json": results.get("cv_json"),
+                            "cv_json_path": results.get("cv_json_path"),  # Für spätere on-demand Word-Generierung
+                            "output_dir": results.get("output_dir"),  # Für spätere on-demand Word-Generierung
                             "dashboard_path": results.get("dashboard_path"),
                             "match_score": results.get("match_score"),
                             "model_name": results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini")),
                             "stellenprofil_json": results.get("stellenprofil_json"),
                             "match_json": results.get("match_json"),
-                            "offer_word_path": results.get("offer_word_path")
+                            "offer_word_path": results.get("offer_word_path"),
+                            "word_generation_pending": results.get("word_generation_pending", False)  # Flag für Button-Anzeige
                         }
                         save_to_history(history_entry)
                         st.session_state.history_saved = True
 
                     st.session_state.generation_results = results
-                    status.update(label=get_text('ui', 'processing_complete_label', st.session_state.language), state="complete", expanded=False)
-                    st.success(get_text('ui', 'generation_success', st.session_state.language))
+                    # Set flag BEFORE showing results so CSS renders correctly
+                    st.session_state.show_results_view = True
                     
-                    if st.button(get_text("ui", "show_results", st.session_state.language), type="primary", use_container_width=True):
-                        st.session_state.show_results_view = True
-                        st.rerun()
+                    status.update(label=get_text('ui', 'processing_complete_label', lang), state="complete")
+                    st.success(get_text('ui', 'generation_success', lang))
+                    st.markdown("<hr style='margin: 20px 0;'/>", unsafe_allow_html=True)
+                    
+                    # Show results immediately after processing
+                    show_results_content(results, lang)
                 else:
-                    st.error(f"{get_text('ui', 'error_prefix_colon', st.session_state.language)} {results.get('error')}")
-                    status.update(label=get_text('ui', 'processing_error_label', st.session_state.language), state="error")
-                    if st.button(get_text('ui', 'close_btn', st.session_state.language)):
+                    st.error(f"{get_text('ui', 'error_prefix_colon', lang)} {results.get('error')}")
+                    status.update(label=get_text('ui', 'processing_error_label', lang), state="error")
+                    if st.button(get_text('ui', 'close_btn', lang)):
                         st.rerun()
 
             except Exception as e:
-                st.error(f"{get_text('ui', 'unexpected_error', st.session_state.language)} {str(e)}")
-                status.update(label=get_text("ui", "error_status", st.session_state.language), state="error")
-                if st.button(get_text("ui", "close_btn", st.session_state.language)):
+                st.error(f"{get_text('ui', 'unexpected_error', lang)} {str(e)}")
+                status.update(label=get_text("ui", "error_status", lang), state="error")
+                if st.button(get_text("ui", "close_btn", lang)):
                         st.rerun()
     
     elif phase == "results":
+        lang = st.session_state.get("language", "de")
         results = st.session_state.generation_results
-        st.subheader(get_text("ui", "results_title", st.session_state.language))
         
-        candidate_name = get_text("ui", "history_unknown", st.session_state.language)
-        if results.get("cv_json"):
-            try:
-                filename = os.path.basename(results["cv_json"])
-                parts = filename.split('_')
-                if len(parts) >= 3: candidate_name = f"{parts[1]} {parts[2]}"
-            except: pass
+        # Show results content
+        show_results_content(results, lang)
         
-        model_used = results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini"))
-        st.caption(f"{get_text('ui', 'history_mode', st.session_state.language)}: {results.get('mode', get_text('ui', 'history_unknown', st.session_state.language))} | {get_text('ui', 'history_model', st.session_state.language)}: {model_used}")
-            
-        cv_btn_label = f"{get_text('ui', 'word_cv_btn', st.session_state.language)} - {candidate_name}"
-        if len(cv_btn_label) > 30:
-            cv_btn_label = cv_btn_label[:27] + "..."
-        
-        with st.success(get_text("ui", "downloads_title", st.session_state.language), icon="📥"):
-            res_col1, res_col2, res_col3 = st.columns(3)
-            with res_col1:
-                if results.get("word_path") and os.path.exists(results["word_path"]):
-                    with open(results["word_path"], "rb") as f:
-                        st.download_button(cv_btn_label, f, os.path.basename(results["word_path"]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
-            with res_col2:
-                if results.get("cv_json") and os.path.exists(results["cv_json"]):
-                    with open(results["cv_json"], "rb") as f:
-                        st.download_button(get_text("ui", "json_data_btn", st.session_state.language), f, os.path.basename(results["cv_json"]), "application/json", use_container_width=True)
-            with res_col3:
-                if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
-                    with open(results["dashboard_path"], "rb") as f:
-                        st.download_button(get_text("ui", "dashboard_btn", st.session_state.language), f, os.path.basename(results["dashboard_path"]), "text/html", use_container_width=True)
-
-        if not results.get("stellenprofil_json") and results.get("cv_json"):
-            output_dir = os.path.dirname(results["cv_json"])
-            try:
-                for f in os.listdir(output_dir):
-                    if f.startswith("stellenprofil_") and f.endswith(".json"):
-                        results["stellenprofil_json"] = os.path.join(output_dir, f)
-                        break
-            except: pass
-
-        if not results.get("match_json") and results.get("cv_json"):
-            output_dir = os.path.dirname(results["cv_json"])
-            try:
-                for f in os.listdir(output_dir):
-                    if f.startswith("Match_") and f.endswith(".json"):
-                        results["match_json"] = os.path.join(output_dir, f)
-                        break
-            except: pass
-
-        if results.get("stellenprofil_json") and os.path.exists(results["stellenprofil_json"]):
-            st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
-            
-            offer_word_path = results.get("offer_word_path")
-            is_offer_ready = offer_word_path and os.path.exists(offer_word_path)
-            
-            if is_offer_ready:
-                offer_container = st.success(get_text("ui", "offer_ready", st.session_state.language), icon="✅")
-            else:
-                offer_container = st.info(get_text("ui", "offer_create_title", st.session_state.language), icon="✨")
-            
-            with offer_container:
-                off_col1, off_col2, off_col3 = st.columns(3)
-                with off_col1:
-                    if is_offer_ready:
-                         with open(offer_word_path, "rb") as f:
-                            st.download_button(get_text("ui", "offer_download_btn", st.session_state.language), f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
-                    else:
-                        off_btn_key = f"gen_offer_btn_{results.get('cv_json', '')}"
-                        if st.button(get_text("ui", "offer_create_btn", st.session_state.language), use_container_width=True, key=off_btn_key):
-                            with st.status(get_text("ui", "status_offer", st.session_state.language), expanded=True) as status:
-                                try:
-                                    cv_json = results["cv_json"]
-                                    stellenprofil_json = results["stellenprofil_json"]
-                                    match_json = results.get("match_json")
-                                    output_dir = os.path.dirname(cv_json)
-                                    base_name = os.path.basename(cv_json).replace("cv_", "").replace(".json", "")
-                                    angebot_json_path = os.path.join(output_dir, f"Angebot_{base_name}.json")
-                                    angebot_word_path = os.path.join(output_dir, f"Angebot_{base_name}.docx")
-                                    schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
-                                    
-                                    status.write("🧠 KI-Inhalte generieren...")
-                                    generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path, language=st.session_state.language)
-                                    
-                                    status.write("📝 Word-Dokument formatieren...")
-                                    generate_angebot_word(angebot_json_path, angebot_word_path)
-                                    
-                                    if os.path.exists(angebot_word_path):
-                                        results["offer_word_path"] = angebot_word_path
-                                        st.session_state.generation_results = results
-                                        st.session_state.show_pipeline_dialog = True
-                                        st.session_state.show_results_view = True
-                                        status.update(label=get_text('ui', 'offer_ready_label', st.session_state.language), state="complete", expanded=False)
-                                        st.success(get_text('ui', 'offer_success', st.session_state.language))
-                                        st.rerun()
-                                    else:
-                                        st.error(get_text('ui', 'file_not_found_on_disk', st.session_state.language))
-                                except Exception as e:
-                                    status.update(label=get_text('ui', 'error_label', st.session_state.language), state="error")
-                                    st.error(f"{get_text('ui', 'offer_error', st.session_state.language)} {e}")
-                                    import traceback
-                                    st.code(traceback.format_exc())
-                with off_col2:
-                    if not is_offer_ready:
-                        st.caption(get_text('ui', 'offer_button_caption', st.session_state.language))
-                    else:
-                        st.caption(get_text('ui', 'offer_ready_caption', st.session_state.language))
-
-        st.markdown("<div style='margin-top: 40px; margin-bottom: 20px; border-top: 1px solid #ddd;'></div>", unsafe_allow_html=True)
-
-        if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
-            with open(results["dashboard_path"], "r", encoding='utf-8') as f:
-                html_content = f.read()
-                st.components.v1.html(html_content, height=1200, scrolling=True)
-                
-        if st.button(get_text("ui", "close_btn", st.session_state.language), use_container_width=True):
+        # Close button
+        if st.button(get_text("ui", "close_btn", lang), use_container_width=True):
             st.session_state.show_pipeline_dialog = False
             st.session_state.show_results_view = False
             if "current_generation_results" in st.session_state:

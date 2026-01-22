@@ -10,13 +10,6 @@ parent_dir = str(Path(__file__).parent.parent)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-# Page config
-st.set_page_config(
-    page_title="Admin - Sidebar Manager",
-    page_icon="⚙️",
-    layout="wide"
-)
-
 # Initialize session state
 if 'language' not in st.session_state:
     st.session_state.language = "de"
@@ -27,7 +20,17 @@ st.session_state.current_page = "pages/05_Admin_Sidebar_Manager.py"
 # Auth check
 from core.database.db import Database
 from core.database.translations import initialize_translations
-from core.ui.sidebar_init import render_sidebar_in_page
+
+# --- Import get_text and sidebar rendering from app ---
+try:
+    from app import get_text, render_simple_sidebar
+except ImportError:
+    def get_text(section, key, lang="de"):
+        """Fallback if app import fails"""
+        return key
+    def render_simple_sidebar():
+        """Fallback if sidebar rendering fails"""
+        pass
 
 def get_text(section, key, lang=None):
     """Safely retrieves translated text from database or fallback"""
@@ -50,20 +53,8 @@ if "authentication_status" not in st.session_state or not st.session_state.get("
     st.markdown("Klick [hier](/) um dich einzuloggen.")
     st.stop()
 
-# --- Render Sidebar ---
-if st.session_state.get("authentication_status"):
-    try:
-        from app import get_text as app_get_text, authenticator, config, name, username
-        render_sidebar_in_page(
-            get_text_func=app_get_text,
-            language=st.session_state.language,
-            authenticator=authenticator,
-            name=name,
-            username=username,
-            config=config
-        )
-    except ImportError:
-        st.sidebar.warning("Sidebar konnte nicht geladen werden")
+# --- Simple Sidebar with Logo and Navigation ---
+render_simple_sidebar()
 
 # ============ MAIN CONTENT ============
 

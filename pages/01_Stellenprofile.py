@@ -19,25 +19,20 @@ from core.database.db import Database
 from core.database.workflows import JobProfileWorkflow
 from core.database.models import JobProfileStatus, JobProfileWorkflowState
 from core.database.translations import initialize_translations, t as get_translation
-from core.ui.sidebar_init import render_sidebar_in_page
 
 # Set current page for sidebar
 st.session_state.current_page = "pages/01_Stellenprofile.py"
 
-# --- Page Configuration ---
-st.set_page_config(
-    page_title="Stellenprofile | CV Generator",
-    page_icon="📋",
-    layout="wide"
-)
-
 # --- Import get_text from app for translations ---
 try:
-    from app import get_text
+    from app import get_text, render_simple_sidebar
 except ImportError:
     def get_text(section, key, lang="de"):
         """Fallback if app import fails"""
         return key
+    def render_simple_sidebar():
+        """Fallback if sidebar rendering fails"""
+        pass
 
 # --- Helper Functions ---
 def get_translations_manager():
@@ -170,23 +165,8 @@ def is_profile_aged(created_at):
 if 'language' not in st.session_state:
     st.session_state.language = "de"
 
-# Set current page for sidebar active state detection
-st.session_state.current_page = "pages/01_Stellenprofile.py"
-
-# --- Render Sidebar ---
-if st.session_state.get("authentication_status"):
-    try:
-        from app import get_text, authenticator, config, name, username
-        render_sidebar_in_page(
-            get_text_func=get_text,
-            language=st.session_state.language,
-            authenticator=authenticator,
-            name=name,
-            username=username,
-            config=config
-        )
-    except ImportError:
-        st.sidebar.warning("Sidebar konnte nicht geladen werden")
+# --- Simple Sidebar with Logo and Navigation ---
+render_simple_sidebar()
 
 # --- Main Content ---
 st.title("📋 Stellenprofile verwalten")
@@ -296,25 +276,27 @@ if view_mode == "tabs":
                 st.warning("⚠️ Keine Profile entsprechen den Filterkriterien.")
             else:
                 # Display table headers
-                col0, col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([0.5, 2, 1.5, 2, 1, 1, 1, 1, 1], gap="small")
+                col0, col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([0.5, 0.5, 2, 1.5, 2, 0.8, 0.8, 1, 1, 1], gap="small")
                 
                 with col0:
                     st.write(f"**{get_text('ui', 'job_profile_attr_id', st.session_state.language)}**")
                 with col1:
-                    st.write(f"**{get_text('ui', 'job_profile_column_name', st.session_state.language)}**")
+                    st.write(f"**Alert**")
                 with col2:
-                    st.write(f"**{get_text('ui', 'job_profile_column_customer', st.session_state.language)}**")
+                    st.write(f"**{get_text('ui', 'job_profile_column_name', st.session_state.language)}**")
                 with col3:
-                    st.write(f"**{get_text('ui', 'job_profile_column_skills', st.session_state.language)}**")
+                    st.write(f"**{get_text('ui', 'job_profile_column_customer', st.session_state.language)}**")
                 with col4:
-                    st.write(f"**{get_text('ui', 'job_profile_column_status', st.session_state.language)}**")
+                    st.write(f"**{get_text('ui', 'job_profile_column_skills', st.session_state.language)}**")
                 with col5:
-                    st.write(f"**{get_text('ui', 'job_profile_column_workflow', st.session_state.language)}**")
+                    st.write(f"**{get_text('ui', 'job_profile_column_status', st.session_state.language)}**")
                 with col6:
-                    st.write(f"**{get_text('ui', 'job_profile_column_created', st.session_state.language)}**")
+                    st.write(f"**{get_text('ui', 'job_profile_column_workflow', st.session_state.language)}**")
                 with col7:
-                    st.write(f"**{get_text('ui', 'job_profile_column_modified', st.session_state.language)}**")
+                    st.write(f"**{get_text('ui', 'job_profile_column_created', st.session_state.language)}**")
                 with col8:
+                    st.write(f"**{get_text('ui', 'job_profile_column_modified', st.session_state.language)}**")
+                with col9:
                     st.write(f"**{get_text('ui', 'job_profile_column_action', st.session_state.language)}**")
                 
                 st.divider()
@@ -322,22 +304,32 @@ if view_mode == "tabs":
                 # Display interactive rows for each profile
                 for idx, profile in enumerate(filtered_profiles):
                     # Create interactive row for each profile
-                    col0, col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([0.5, 2, 1.5, 2, 1, 1, 1, 1, 1], gap="small")
+                    col0, col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([0.5, 0.5, 2, 1.5, 2, 0.8, 0.8, 1, 1, 1], gap="small")
                     
                     # ID
                     with col0:
                         st.write(f"{profile.id}")
                     
-                    # Name
+                    # Alert Status based on days_since_created
                     with col1:
+                        days = getattr(profile, 'days_since_created', 0) or 0
+                        if days < 5:
+                            st.markdown("🟢")
+                        elif days < 10:
+                            st.markdown("🟡")
+                        else:
+                            st.markdown("🔴")
+                    
+                    # Name
+                    with col2:
                         st.write(f"{profile.name}")
                     
                     # Customer
-                    with col2:
+                    with col3:
                         st.write(profile.customer or "-")
                     
                     # Skills
-                    with col3:
+                    with col4:
                         skills_display = ""
                         if profile.required_skills:
                             skills = profile.required_skills if isinstance(profile.required_skills, list) else []
@@ -354,7 +346,7 @@ if view_mode == "tabs":
                             st.write(skills_display)
                     
                     # Status
-                    with col4:
+                    with col5:
                         status_options = [s.value for s in JobProfileStatus]
                         status_display = [format_status(s) for s in status_options]
                         current_index = status_options.index(profile.status)
@@ -372,7 +364,7 @@ if view_mode == "tabs":
                             st.rerun()
                     
                     # Workflow
-                    with col5:
+                    with col6:
                         workflow_options = [w.value for w in JobProfileWorkflowState]
                         workflow_display = [format_workflow(w) for w in workflow_options]
                         current_index = workflow_options.index(profile.current_workflow_state)
@@ -390,17 +382,17 @@ if view_mode == "tabs":
                             st.rerun()
                     
                     # Created date
-                    with col6:
+                    with col7:
                         created_text = profile.created_at.strftime('%d.%m.%Y %H:%M') if profile.created_at else "-"
                         st.write(created_text)
                     
                     # Modified date
-                    with col7:
+                    with col8:
                         modified_text = profile.updated_at.strftime('%d.%m.%Y %H:%M') if profile.updated_at else (profile.created_at.strftime('%d.%m.%Y %H:%M') if profile.created_at else "-")
                         st.write(modified_text)
                     
                     # Actions
-                    with col8:
+                    with col9:
                         col_edit, col_delete = st.columns(2, gap="small")
                         with col_edit:
                             if st.button(f"✏️", key=f"edit_{profile.id}", help=get_text('ui', 'edit', st.session_state.language), use_container_width=True):
@@ -441,7 +433,10 @@ if view_mode == "tabs":
         workflow = get_workflow()
         
         st.subheader("➕ Neues Stellenprofil erstellen")
-        profile_id = None  # No profile ID for new profiles
+        st.divider()
+        
+        # Initialize form data for new profile
+        profile_id = None
         form_data = {
             "name": "",
             "customer": "",
@@ -449,104 +444,123 @@ if view_mode == "tabs":
             "required_skills": [],
             "level": "intermediate",
             "status": "active",
-            "workflow_state": "draft"
+            "workflow_state": "draft",
+            "created_at": "—",
+            "updated_at": "—",
+            "attachment_blob": None,
+            "attachment_filename": None
         }
         is_edit = False
         
-        st.divider()
+        # METADATA SECTION HEADER (without ID, created/updated dates for new profile)
+        st.write(f"**{get_text('ui', 'job_profile_metadata_section', st.session_state.language)}**")
         
-        # Form fields
-        col_name, col_customer = st.columns(2)
+        col1, col2 = st.columns([2, 2], gap="small")
         
-        with col_name:
+        with col1:
+            st.caption(f"{get_text('ui', 'job_profile_attr_status', st.session_state.language)}")
+            status_value = form_data.get("status", "active")
+            status_options = [s.value for s in JobProfileStatus]
+            status_display = [format_status(s) for s in status_options]
+            current_index = status_options.index(status_value)
+            selected_display = st.selectbox(
+                "Status",
+                options=status_display,
+                index=current_index,
+                key="input_status_new",
+                label_visibility="collapsed"
+            )
+            st.session_state.input_status_new_value = status_options[status_display.index(selected_display)]
+        
+        with col2:
+            st.caption(f"{get_text('ui', 'job_profile_attr_workflow', st.session_state.language)}")
+            workflow_value = form_data.get("workflow_state", "draft")
+            workflow_options = [w.value for w in JobProfileWorkflowState]
+            workflow_display = [format_workflow(w) for w in workflow_options]
+            current_index = workflow_options.index(workflow_value)
+            selected_display = st.selectbox(
+                "Workflow",
+                options=workflow_display,
+                index=current_index,
+                key="input_workflow_new",
+                label_visibility="collapsed"
+            )
+            st.session_state.input_workflow_new_value = workflow_options[workflow_display.index(selected_display)]
+        
+        # DETAILS SECTION HEADER
+        st.write(f"**{get_text('ui', 'job_profile_details_section', st.session_state.language)}**")
+        
+        # ROW: Name / Customer / Level / Anhang
+        col1b, col2b, col3b, col4b = st.columns(4, gap="small")
+        
+        with col1b:
+            st.caption(f"{get_text('ui', 'job_profile_attr_name', st.session_state.language)}")
             profile_name = st.text_input(
                 "Stellenbezeichnung",
                 value=form_data.get("name", ""),
                 placeholder="z.B. Senior Python Developer",
-                key="input_name"
+                key="input_name_new",
+                label_visibility="collapsed"
             )
         
-        with col_customer:
+        with col2b:
+            st.caption(f"{get_text('ui', 'job_profile_attr_customer', st.session_state.language)}")
             customer = st.text_input(
                 "Kunde",
                 value=form_data.get("customer", ""),
                 placeholder="z.B. Acme Corp",
-                key="input_customer"
+                key="input_customer_new",
+                label_visibility="collapsed"
             )
         
-        col_level, col_status = st.columns(2)
-        
-        with col_level:
+        with col3b:
+            st.caption(f"{get_text('ui', 'job_profile_attr_level', st.session_state.language)}")
             level = st.selectbox(
                 "Level",
                 options=["junior", "intermediate", "senior", "lead"],
                 index=["junior", "intermediate", "senior", "lead"].index(form_data.get("level", "intermediate")),
-                key="input_level"
+                key="input_level_new",
+                label_visibility="collapsed"
             )
         
-        # Description
+        with col4b:
+            st.caption(f"{get_text('ui', 'job_profile_attr_attachment', st.session_state.language)}")
+            st.file_uploader(
+                "Anhang",
+                accept_multiple_files=False,
+                key="input_attachments_new",
+                label_visibility="collapsed"
+            )
+        
+        st.divider()
+        
+        # DESCRIPTION SECTION HEADER
+        st.write(f"**{get_text('ui', 'job_profile_description_section', st.session_state.language)}**")
+        
+        st.caption(f"{get_text('ui', 'job_profile_attr_description', st.session_state.language)}")
         description = st.text_area(
             "Stellenbeschreibung",
             value=form_data.get("description", ""),
             height=150,
             placeholder="Beschreiben Sie die Position, Anforderungen und Erwartungen...",
-            key="input_description"
+            key="input_description_new",
+            label_visibility="collapsed"
         )
         
-        # Required Skills
-        st.subheader("Erforderliche Skills")
+        # SKILLS SECTION HEADER
+        st.write(f"**{get_text('ui', 'job_profile_skills_section', st.session_state.language)}**")
+        
+        st.caption(f"{get_text('ui', 'job_profile_attr_skills', st.session_state.language)}")
         skills_input = st.text_area(
             "Skills (eine pro Zeile)",
             value="\n".join(form_data.get("required_skills", [])),
             height=150,
             placeholder="Python\nDjango\nPostgreSQL\nDocker\nGit",
-            key="input_skills"
+            key="input_skills_new",
+            label_visibility="collapsed"
         )
         
         skills = [s.strip() for s in skills_input.split("\n") if s.strip()]
-        
-        st.divider()
-        
-        # Attachments section
-        st.subheader("📎 Anhänge")
-        uploaded_files = st.file_uploader(
-            "PDF-Dateien hochladen",
-            type=["pdf"],
-            accept_multiple_files=True,
-            key="input_attachments"
-        )
-        
-        # Comments section
-        st.subheader("💬 Kommentare & Notizen")
-        
-        if is_edit:
-            # Show existing comments
-            comments = db.get_comments(profile_id)
-            if comments:
-                st.write(f"**{len(comments)} Kommentar(e)**")
-                for comment in comments:
-                    with st.container(border=True):
-                        st.caption(f"👤 {comment.username} • {comment.created_at.strftime('%d.%m.%Y %H:%M')}")
-                        st.write(comment.comment_text)
-            
-            # Add new comment
-            new_comment = st.text_area(
-                "Neuer Kommentar hinzufügen",
-                placeholder="Geben Sie eine Notiz ein...",
-                key="input_new_comment",
-                height=100
-            )
-            
-            if st.button("💬 Kommentar hinzufügen", key="btn_add_comment"):
-                if new_comment.strip():
-                    success, msg = db.add_comment(profile_id, "system", new_comment)
-                    if success:
-                        st.success(f"✅ {msg}")
-                        st.rerun()
-                    else:
-                        st.error(f"❌ {msg}")
-                else:
-                    st.warning("⚠️ Bitte geben Sie einen Kommentar ein")
         
         st.divider()
         
@@ -554,7 +568,7 @@ if view_mode == "tabs":
         col_save, col_cancel = st.columns(2)
         
         with col_save:
-            if st.button("💾 Speichern", use_container_width=True, type="primary", key="btn_save"):
+            if st.button("💾 Speichern", use_container_width=True, type="primary", key="btn_save_new"):
                 # Validation
                 if not profile_name or not profile_name.strip():
                     st.error("❌ Stellenbezeichnung ist erforderlich")
@@ -563,62 +577,42 @@ if view_mode == "tabs":
                 elif not skills:
                     st.error("❌ Mindestens ein Skill ist erforderlich")
                 else:
-                    # Save profile
-                    if is_edit:
-                        # Update existing profile
-                        from core.database.models import JobProfile
-                        profile_to_update = db.get_job_profile(profile_id)
-                        if profile_to_update:
-                            profile_to_update.name = profile_name
-                            profile_to_update.customer = customer if customer else None
-                            profile_to_update.description = description
-                            profile_to_update.required_skills = skills
-                            profile_to_update.level = level
-                            success = db.update_job_profile(profile_to_update)
-                            msg = f"Stellenprofil '{profile_name}' aktualisiert"
-                        else:
-                            success = False
-                            msg = "Profil nicht gefunden"
-                    else:
-                        # Create new profile
-                        from core.database.models import JobProfile
-                        new_profile = JobProfile(
-                            name=profile_name,
-                            customer=customer if customer else None,
-                            description=description,
-                            required_skills=skills,
-                            level=level
-                        )
-                        profile_id = db.create_job_profile(new_profile)
-                        success = profile_id > 0
-                        msg = f"Stellenprofil '{profile_name}' erstellt"
+                    # Create new profile
+                    from core.database.models import JobProfile
+                    new_profile = JobProfile(
+                        name=profile_name,
+                        customer=customer if customer else None,
+                        description=description,
+                        required_skills=skills,
+                        level=level,
+                        status=JobProfileStatus(st.session_state.get("input_status_new_value", "active")),
+                        current_workflow_state=JobProfileWorkflowState(st.session_state.get("input_workflow_new_value", "draft"))
+                    )
+                    profile_id = db.create_job_profile(new_profile)
+                    success = profile_id > 0
+                    msg = f"Stellenprofil '{profile_name}' erstellt"
                     
                     if success:
                         st.success(f"✅ {msg}")
                         
                         # Handle file uploads
-                        if uploaded_files:
-                            for uploaded_file in uploaded_files:
-                                # Save file to database as BLOB
-                                file_blob = uploaded_file.getbuffer()
-                                
-                                # Update profile with attachment blob
-                                profile_to_save = db.get_job_profile(profile_id)
-                                if profile_to_save:
-                                    profile_to_save.attachment_blob = file_blob.tobytes()
-                                    profile_to_save.attachment_filename = uploaded_file.name
-                                    db.update_job_profile(profile_to_save)
-                                    st.success(f"📎 {uploaded_file.name} gespeichert")
+                        uploaded_file = st.session_state.get("input_attachments_new")
+                        if uploaded_file and hasattr(uploaded_file, 'getbuffer'):
+                            file_blob = uploaded_file.getbuffer()
+                            profile_to_save = db.get_job_profile(profile_id)
+                            if profile_to_save:
+                                profile_to_save.attachment_blob = file_blob.tobytes()
+                                profile_to_save.attachment_filename = uploaded_file.name
+                                db.update_job_profile(profile_to_save)
+                                st.success(f"📎 {uploaded_file.name} gespeichert")
                         
-                        st.session_state.form_mode = None
                         time.sleep(1)
                         st.rerun()
                     else:
                         st.error(f"❌ {msg}")
         
         with col_cancel:
-            if st.button("❌ Abbrechen", use_container_width=True, key="btn_cancel"):
-                reset_form()
+            if st.button("❌ Abbrechen", use_container_width=True, key="btn_cancel_new"):
                 st.rerun()
 
 # =============================================================================
@@ -803,6 +797,60 @@ elif view_mode == "edit":
         )
         
         skills = [s.strip() for s in skills_input.split("\n") if s.strip()]
+        
+        st.divider()
+        
+        # COMMENTS SECTION
+        st.write(f"**💬 Kommentare & Notizen**")
+        
+        # Add new comment (APPEARS FIRST)
+        st.subheader("➕ Neuer Kommentar")
+        with st.container(border=True):
+            new_comment = st.text_area(
+                "Kommentar hinzufügen",
+                placeholder="Schreiben Sie einen Kommentar zum Profil...",
+                key="input_new_comment_edit",
+                height=100,
+                label_visibility="collapsed"
+            )
+            
+            col_comment_save, col_comment_empty = st.columns([1, 4])
+            with col_comment_save:
+                if st.button("💬 Kommentar speichern", use_container_width=True, key="btn_save_comment"):
+                    if new_comment.strip():
+                        success, msg = db.add_comment(profile_id, st.session_state.get("username", "System"), new_comment)
+                        if success:
+                            st.success(f"✅ {msg}")
+                            time.sleep(0.5)
+                            st.rerun()
+                        else:
+                            st.error(f"❌ {msg}")
+                    else:
+                        st.warning("⚠️ Bitte geben Sie einen Kommentar ein")
+        
+        st.divider()
+        
+        # Load and display existing comments (APPEARS BELOW INPUT)
+        comments = db.get_comments(profile_id)
+        
+        if comments:
+            st.markdown(f"### 📋 Kommentar-Historie ({len(comments)} Kommentar(e))")
+            with st.container(border=True):
+                for i, comment in enumerate(comments):
+                    if i > 0:
+                        st.divider()
+                    # User and timestamp header
+                    col_comment_user, col_comment_date = st.columns([0.65, 0.35])
+                    with col_comment_user:
+                        st.markdown(f"**👤 {comment.username}**")
+                    with col_comment_date:
+                        if comment.created_at:
+                            created_at_str = comment.created_at.strftime('%d.%m.%Y %H:%M') if hasattr(comment.created_at, 'strftime') else str(comment.created_at)[:16]
+                            st.markdown(f"*🕐 {created_at_str}*")
+                    # Comment text
+                    st.write(comment.comment_text)
+        else:
+            st.info("📭 Noch keine Kommentare vorhanden")
         
         st.divider()
         

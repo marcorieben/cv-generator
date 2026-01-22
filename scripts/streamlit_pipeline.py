@@ -116,11 +116,17 @@ class StreamlitCVGenerator:
             "stellenprofil_json": None,
             "match_json": None,
             "model_name": os.environ.get("MODEL_NAME", "gpt-4o-mini"),
-            "error": None
+            "error": None,
+            "performance_metrics": {}  # Performance measurements
         }
+        
+        # Performance tracking
+        perf_start = time.time()
+        perf_times = {}
 
         try:
             # --- PHASE 1: PDF Extraction ---
+            phase_1_start = time.time()
             stellenprofil_data = None
             if job_file:
                 if progress_callback: progress_callback(10, get_text('ui', 'status_extract_job', language), "running")
@@ -129,6 +135,7 @@ class StreamlitCVGenerator:
 
             if progress_callback: progress_callback(30, get_text('ui', 'status_extract_cv', language), "running")
             cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data, target_language=language)
+            perf_times["PDF Extraction"] = round(time.time() - phase_1_start, 2)
             
             # Save JSONs
             vorname = cv_data.get("Vorname", get_text('ui', 'history_unknown', language))
@@ -151,23 +158,23 @@ class StreamlitCVGenerator:
                 results["stellenprofil_json"] = stellenprofil_json_path
 
             # --- STEP 3: Validation ---
+            validation_start = time.time()
             if progress_callback: progress_callback(50, get_text('ui', 'status_validate', language), "running")
             critical, info = validate_json_structure(cv_data, language=language)
             if critical:
                 val_error_prefix = get_text('validation', 'error_prefix', language) if 'validation' in translations else "Validierungsfehler"
                 raise ValueError(f"{val_error_prefix}: {'; '.join(critical)}")
+            perf_times["Validation"] = round(time.time() - validation_start, 2)
 
-            # --- STEP 4: Generation (Word, Match, Feedback) ---
+            # --- STEP 4: Generation (Match, Feedback) - Word wird ausgelagert ---
+            generation_start = time.time()
             if progress_callback: progress_callback(70, get_text('ui', 'status_generate', language), "running")
             
-            word_path = None
+            word_path = None  # Wird später on-demand generiert
             matchmaking_json_path = None
             feedback_json_path = None
             
-            with ThreadPoolExecutor(max_workers=3) as executor:
-                # Word (interactive=False to suppress dialogs)
-                future_word = executor.submit(generate_cv, cv_json_path, output_dir, interactive=False, language=language)
-                
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 # Match
                 future_match = None
                 if stellenprofil_json_path:
@@ -194,11 +201,17 @@ class StreamlitCVGenerator:
                     language=language
                 )
                 
-                word_path = future_word.result()
                 if future_match: future_match.result()
                 future_feedback.result()
+            
+            perf_times["Match & Feedback Generation"] = round(time.time() - generation_start, 2)
+            
+            # Speichere Infos für spätere Word-Generierung
+            results["cv_json_path"] = cv_json_path
+            results["output_dir"] = output_dir
 
             # --- STEP 4.5: Offer (Background) ---
+            offer_start = time.time()
             angebot_json_path = None
             if pipeline_mode == "Full" and stellenprofil_json_path and matchmaking_json_path:
                 if progress_callback: progress_callback(85, get_text('ui', 'status_offer', language), "running")
@@ -214,11 +227,15 @@ class StreamlitCVGenerator:
                     results["offer_word_path"] = angebot_word_path
                 except Exception as e:
                     print(f"⚠️ Fehler bei Angebotserstellung: {str(e)}")
+            
+            perf_times["Offer Generation"] = round(time.time() - offer_start, 2)
 
-            results["word_path"] = word_path
+            results["word_path"] = word_path  # None, wird später on-demand generiert
             results["match_json"] = matchmaking_json_path
+            results["word_generation_pending"] = True  # Flag für UI
 
             # --- STEP 5: Dashboard ---
+            dashboard_start = time.time()
             if progress_callback: progress_callback(90, get_text('ui', 'status_dashboard', language), "running")
             
             dashboard_path = generate_dashboard(
@@ -235,6 +252,21 @@ class StreamlitCVGenerator:
                 language=language
             )
             results["dashboard_path"] = dashboard_path
+            perf_times["Dashboard Generation"] = round(time.time() - dashboard_start, 2)
+            
+            # Calculate total pipeline duration
+            perf_times["Total Pipeline"] = round(time.time() - perf_start, 2)
+            results["performance_metrics"] = perf_times
+            
+            # Display performance metrics
+            print("\n" + "="*60)
+            print("⏱️  PERFORMANCE METRICS")
+            print("="*60)
+            for phase, duration in perf_times.items():
+                bar_length = int(duration * 2)
+                bar = "█" * bar_length
+                print(f"{phase:.<35} {duration:>6.2f}s {bar}")
+            print("="*60 + "\n")
 
             # Final success
             if progress_callback: progress_callback(100, get_text('ui', 'status_complete', language), "complete")

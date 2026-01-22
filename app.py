@@ -58,6 +58,137 @@ def get_text(section, key, lang=None):
         print(f"Translation error: {e}")
         return key
 
+def render_simple_sidebar():
+    """Render a consistent sidebar for all pages with full menu"""
+    with st.sidebar:
+        # Logo
+        if os.path.exists("templates/logo.png"):
+            st.image("templates/logo.png", use_container_width=True)
+        
+        st.divider()
+        
+        # Try to render the full sidebar menu
+        try:
+            sidebar_config = load_sidebar_config()
+            
+            if sidebar_config:
+                def show_model_settings_component(get_text_fn, lang, reset_fn, show_info_fn, get_key_fn, user):
+                    pass
+                
+                def get_authenticator():
+                    try:
+                        return authenticator
+                    except NameError:
+                        return None
+                
+                def reset_password_func(user, location):
+                    try:
+                        if 'authenticator' in globals():
+                            if authenticator.reset_password(user, location):
+                                st.success(get_text("ui", "password_changed", st.session_state.language))
+                                if 'config' in globals():
+                                    with open('config.yaml', 'w') as file:
+                                        yaml.dump(config, file, default_flow_style=False)
+                    except Exception as e:
+                        pass
+                
+                render_sidebar(
+                    config=sidebar_config,
+                    get_text_func=get_text,
+                    language=st.session_state.language,
+                    show_model_settings_func=show_model_settings_component,
+                    reset_pipeline_states_func=reset_all_pipeline_states,
+                    show_model_info_func=show_model_info_dialog,
+                    get_api_key_func=get_api_key,
+                    username=st.session_state.get("username", ""),
+                    show_app_info_func=show_app_info_dialog,
+                    load_history_func=load_history,
+                    load_authenticator=get_authenticator,
+                    load_password_reset_func=reset_password_func,
+                    name=st.session_state.get("name", "")
+                )
+            else:
+                # Fallback: Simple navigation if sidebar config not available
+                st.markdown("### 📱 Navigation")
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    if st.button("📋", use_container_width=True, help="Stellenprofile"):
+                        st.switch_page("pages/01_Stellenprofile.py")
+                with col2:
+                    if st.button("👥", use_container_width=True, help="Kandidaten"):
+                        st.switch_page("pages/02_Kandidaten.py")
+                with col3:
+                    if st.button("📊", use_container_width=True, help="Status"):
+                        st.switch_page("pages/03_Stellenprofil-Status.py")
+        except Exception as e:
+            # Fallback: Simple navigation if sidebar rendering fails
+            st.markdown("### 📱 Navigation")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("📋", use_container_width=True, help="Stellenprofile"):
+                    st.switch_page("pages/01_Stellenprofile.py")
+            with col2:
+                if st.button("👥", use_container_width=True, help="Kandidaten"):
+                    st.switch_page("pages/02_Kandidaten.py")
+            with col3:
+                if st.button("📊", use_container_width=True, help="Status"):
+                    st.switch_page("pages/03_Stellenprofil-Status.py")
+
+def render_page_sidebar():
+    """Render the sidebar for pages that call this function"""
+    try:
+        with st.sidebar:
+            # Logo (Top Left)
+            if os.path.exists("templates/logo.png"):
+                st.image("templates/logo.png", use_container_width=True)
+            
+            st.divider()
+            
+            # Load and render sidebar from config
+            sidebar_config = load_sidebar_config()
+            
+            if sidebar_config:
+                def show_model_settings_component(get_text_fn, lang, reset_fn, show_info_fn, get_key_fn, user):
+                    pass
+                
+                def get_authenticator():
+                    try:
+                        return authenticator
+                    except NameError:
+                        return None
+                
+                def reset_password_func(user, location):
+                    try:
+                        if 'authenticator' in globals():
+                            if authenticator.reset_password(user, location):
+                                st.success(get_text("ui", "password_changed", st.session_state.language))
+                                if 'config' in globals():
+                                    with open('config.yaml', 'w') as file:
+                                        yaml.dump(config, file, default_flow_style=False)
+                    except Exception as e:
+                        pass
+                
+                try:
+                    render_sidebar(
+                        config=sidebar_config,
+                        get_text_func=get_text,
+                        language=st.session_state.language,
+                        show_model_settings_func=show_model_settings_component,
+                        reset_pipeline_states_func=reset_all_pipeline_states,
+                        show_model_info_func=show_model_info_dialog,
+                        get_api_key_func=get_api_key,
+                        username=st.session_state.get("username", ""),
+                        show_app_info_func=show_app_info_dialog,
+                        load_history_func=load_history,
+                        load_authenticator=get_authenticator,
+                        load_password_reset_func=reset_password_func,
+                        name=st.session_state.get("name", "")
+                    )
+                except Exception as e:
+                    st.warning(f"Sidebar error: {str(e)[:50]}")
+    except Exception as e:
+        pass  # Silently fail if sidebar can't render
+
 def load_history():
     HISTORY_FILE = os.path.join("output", "run_history.json")
     if os.path.exists(HISTORY_FILE):
@@ -264,61 +395,8 @@ tm = initialize_translations(db)
 # Set current page for sidebar active state detection
 st.session_state.current_page = "app.py"
 
-# --- Sidebar ---
-with st.sidebar:
-    # Logo (Top Left)
-    if os.path.exists("templates/logo.png"):
-        st.image("templates/logo.png", use_container_width=True)
-    
-    st.divider()
-    
-    # Load and render sidebar from config (with cache busting)
-    sidebar_config = load_sidebar_config()
-    
-    # Optional: Add manual reload button for testing
-    if st.session_state.get("username") == "admin":
-        if st.button("🔄 Sidebar neuladen", key="reload_sidebar_btn", use_container_width=False):
-            st.rerun()
-    
-    if sidebar_config:
-        # Wrapper functions for components (called by render_sidebar)
-        def show_model_settings_component(get_text_fn, lang, reset_fn, show_info_fn, get_key_fn, user):
-            """This function is called by render_sidebar to display model settings"""
-            # The actual rendering is done by render_sidebar
-            # This function just needs to exist for the renderer to call
-            pass
-        
-        def get_authenticator():
-            return authenticator
-        
-        def reset_password_func(user, location):
-            """Called by render_sidebar for password reset"""
-            try:
-                if authenticator.reset_password(user, location):
-                    st.success(get_text("ui", "password_changed", st.session_state.language))
-                    with open('config.yaml', 'w') as file:
-                        yaml.dump(config, file, default_flow_style=False)
-            except Exception as e:
-                st.error(e)
-        
-        # Render sidebar
-        render_sidebar(
-            config=sidebar_config,
-            get_text_func=get_text,
-            language=st.session_state.language,
-            show_model_settings_func=show_model_settings_component,
-            reset_pipeline_states_func=reset_all_pipeline_states,
-            show_model_info_func=show_model_info_dialog,
-            get_api_key_func=get_api_key,
-            username=username,
-            show_app_info_func=show_app_info_dialog,
-            load_history_func=load_history,
-            load_authenticator=get_authenticator,
-            load_password_reset_func=reset_password_func,
-            name=name
-        )
-    else:
-        st.error("Sidebar-Konfiguration konnte nicht geladen werden")
+# --- Render Sidebar ---
+render_page_sidebar()
 
 # --- Main Content ---
 st.title(get_text("ui", "app_title", st.session_state.language))
