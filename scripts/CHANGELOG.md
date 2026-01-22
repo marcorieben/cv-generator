@@ -19,3 +19,4 @@
 2026-01-21 14:57:10 | DOCS | Add translations feature summary
 2026-01-21 21:17:54 | BUGFIX | Move form fields to new profile tab, sort profiles by updated_at desc by default
 2026-01-22 09:09:58 | FEATURE | Add sidebar integration, new pages, and UI enhancements with translations
+2026-01-22 17:41:11 | BUGFIX | Dialog and PDF error handling improvements
