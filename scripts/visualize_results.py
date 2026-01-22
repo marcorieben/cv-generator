@@ -25,6 +25,58 @@ def get_text(translations, section, key, lang="de"):
     except:
         return f"[{key}]"
 
+
+def generate_cv_word_on_demand(cv_json_path, output_dir, language="de"):
+    """
+    Generiert das Word CV on-demand basierend auf den gleichen JSON-Daten.
+    Diese Funktion wird aufgerufen wenn der Nutzer den "Generiere Word CV" Button klickt.
+    
+    Args:
+        cv_json_path: Path to the CV JSON file
+        output_dir: Output directory for the Word document
+        language: Language for generation
+        
+    Returns:
+        Path to generated Word file or None if failed
+    """
+    try:
+        # Validierung: cv_json_path darf nicht None sein
+        if not cv_json_path:
+            raise ValueError("CV JSON Pfad ist leer oder None. Bitte versuchen Sie später erneut.")
+        
+        # Validierung: Datei muss existieren
+        if not os.path.exists(cv_json_path):
+            raise ValueError(f"CV JSON Datei nicht gefunden: {cv_json_path}")
+        
+        # Import here to avoid circular imports
+        from scripts.generate_cv import generate_cv, validate_json_structure
+        
+        print(f"📄 Starte Word-Generierung für: {os.path.basename(cv_json_path)}")
+        
+        # Validate first
+        with open(cv_json_path, 'r', encoding='utf-8') as f:
+            cv_data = json.load(f)
+        
+        critical, info = validate_json_structure(cv_data, language=language)
+        if critical:
+            print(f"❌ Validierungsfehler: {'; '.join(critical)}")
+            return None
+        
+        # Generate Word
+        word_path = generate_cv(cv_json_path, output_dir, interactive=False, language=language)
+        
+        if word_path and os.path.exists(word_path):
+            print(f"✅ Word erfolgreich generiert: {word_path}")
+            return word_path
+        else:
+            print(f"❌ Word-Generierung fehlgeschlagen")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Fehler bei Word-Generierung: {str(e)}")
+        return None
+
+
 def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, 
                        validation_warnings=None, model_name=None, pipeline_mode=None, 
                        cv_filename=None, job_filename=None, angebot_json_path=None,
@@ -597,46 +649,6 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
             <div style="text-align: center; padding: 20px; color: #27ae60;">
                 <div style="font-size: 24px; margin-bottom: 10px;">✨</div>
                 <div>{get_text(translations, 'dashboard', 'no_errors_found', language)}</div>
-            </div>
-        """
-        
-    html_content += """
-                </div>
-            </div>
-        </div>
-    """
-
-    # --- VALIDATION SECTION ---
-    # Always show validation section, even if empty
-    html_content += f"""
-        <h2 style="color: var(--primary-color); margin-top: 30px;">Technische Validierung</h2>
-        <div class="grid">
-            <div class="card" style="grid-column: 1 / -1;">
-                <div class="card-header">
-                    <span>{'⚠️ Validierungshinweise' if validation_warnings else '✅ Validierung erfolgreich'}</span>
-                </div>
-                <div style="margin-bottom: 10px; color: #666; font-size: 14px;">
-                    Ergebnis der technischen Prüfung der CV-Struktur (Pflichtfelder, Datentypen, Längen).
-                </div>
-                <div style="max-height: 300px; overflow-y: auto;">
-    """
-    
-    if validation_warnings:
-        for warning in validation_warnings:
-             html_content += f"""
-                <div class="feedback-item warning">
-                    <div style="display:flex; justify-content:space-between;">
-                        <strong>Struktur-Check</strong>
-                        <span style="font-size: 11px; text-transform: uppercase; opacity: 0.7;">Info</span>
-                    </div>
-                    <div>{warning}</div>
-                </div>
-            """
-    else:
-        html_content += """
-            <div style="text-align: center; padding: 20px; color: #27ae60;">
-                <div style="font-size: 24px; margin-bottom: 10px;">✨</div>
-                <div>Keine strukturellen Fehler oder Warnungen gefunden.</div>
             </div>
         """
         

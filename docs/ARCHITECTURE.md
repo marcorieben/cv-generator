@@ -9,6 +9,41 @@ The CV Generator provides two distinct pipelines for creating professional CV do
 
 Both pipelines converge at the validation and document generation stages, ensuring consistent output quality.
 
+## Multilingual Support
+
+As of 2026-01-21, the CV Generator now supports multilingual UI with **database-backed translations**:
+
+- **Languages Supported**: German (de), English (en), French (fr)
+- **Storage**: SQLite `translations` table (migration 002)
+- **Initialization**: Automatic seeding from `scripts/translations.json` on first migration run
+- **Features**:
+  - Dynamic translation switching without app restart
+  - In-memory caching for performance
+  - JSON fallback for initialization
+  - Deployment-ready (translations table tracked in Git migrations)
+
+### Translation Architecture
+
+```
+TranslationsManager (core/database/translations.py)
+├── load_from_database() → Populate cache from SQLite
+├── seed_from_json() → Initialize DB from JSON file
+├── get(section, key, language) → Retrieve translation
+└── get_all(section, language) → Retrieve section translations
+
+Database: translations table (data/migrations/002_translations_table.sql)
+├── Columns: id, section, key, language, value, created_at, updated_at
+├── Unique constraint: (section, key, language)
+├── Indexes: (section, language), (key)
+└── Supported sections: ui, cv, offer, job_profile
+
+Integration points:
+├── app.py → get_translations_manager() → get_text()
+├── pages/01_Stellenprofile.py → get_translations_manager() → t()
+├── pages/02_Kandidaten.py → get_translations_manager() → t()
+└── pages/03_Stellenprofil-Status.py → get_translations_manager() → t()
+```
+
 ---
 
 ## Flow Diagram

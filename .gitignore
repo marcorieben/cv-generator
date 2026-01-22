@@ -49,5 +49,14 @@ desktop.ini
 # Logs
 *.log
 
+# DATABASE - PRODUCTION DATA PROTECTION!
+# Never commit actual database files to prevent data loss during deployments
+# Each instance (dev, staging, prod) must have its own database
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+!data/migrations/
+data/migrations/*.py
+
 # Backups
 templates/*_original.png
