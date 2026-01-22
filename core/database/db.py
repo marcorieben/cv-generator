@@ -147,12 +147,13 @@ class Database:
             cursor.execute("""
                 INSERT INTO job_profiles 
                 (name, customer, description, required_skills, level, status, current_workflow_state, 
-                 created_by, metadata)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_by, metadata, attachment_blob, attachment_filename)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 data['name'], data.get('customer'), data['description'], json.dumps(data['required_skills']),
                 data['level'], data['status'], data['current_workflow_state'],
-                data['created_by'], json.dumps(data['metadata'])
+                data['created_by'], json.dumps(data['metadata']), 
+                profile.attachment_blob, profile.attachment_filename
             ))
             return cursor.lastrowid
     
@@ -205,12 +206,14 @@ class Database:
             cursor.execute("""
                 UPDATE job_profiles SET
                 name = ?, customer = ?, description = ?, required_skills = ?, level = ?,
-                status = ?, current_workflow_state = ?, metadata = ?, updated_at = ?
+                status = ?, current_workflow_state = ?, metadata = ?, updated_at = ?,
+                attachment_blob = ?, attachment_filename = ?
                 WHERE id = ?
             """, (
                 data['name'], data.get('customer'), data['description'], json.dumps(data['required_skills']),
                 data['level'], data['status'], data['current_workflow_state'],
-                json.dumps(data['metadata']), data['updated_at'], profile.id
+                json.dumps(data['metadata']), data['updated_at'], 
+                profile.attachment_blob, profile.attachment_filename, profile.id
             ))
             return cursor.rowcount > 0
     

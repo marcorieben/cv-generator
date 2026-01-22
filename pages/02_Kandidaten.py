@@ -19,6 +19,10 @@ from core.database.db import Database
 from core.database.workflows import CandidateWorkflow
 from core.database.models import CandidateStatus, CandidateWorkflowState
 from core.database.translations import initialize_translations, t as get_translation
+from core.ui.sidebar_init import render_sidebar_in_page
+
+# Set current page for sidebar
+st.session_state.current_page = "pages/02_Kandidaten.py"
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -86,6 +90,31 @@ def load_candidate_for_edit(candidate_id: int):
             "workflow_state": candidate.workflow_state
         }
         st.rerun()
+
+# Initialize session state variables
+if 'language' not in st.session_state:
+    st.session_state.language = "de"
+
+# Set current page for sidebar active state detection
+st.session_state.current_page = "pages/02_Kandidaten.py"
+
+# --- Render Sidebar ---
+if st.session_state.get("authentication_status"):
+    try:
+        from app import get_text, authenticator, config, name, username
+        render_sidebar_in_page(
+            get_text_func=get_text,
+            language=st.session_state.language,
+            authenticator=authenticator,
+            name=name,
+            username=username,
+            config=config
+        )
+    except ImportError:
+        st.sidebar.warning("Sidebar konnte nicht geladen werden")
+
+# --- Sidebar Navigation ---
+tm = get_translations_manager()
 
 # --- Main Content ---
 st.title("👥 Kandidaten verwalten")

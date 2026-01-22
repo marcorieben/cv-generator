@@ -16,3 +16,5 @@
 2026-01-21 14:46:38 | FEATURE | Add translations database infrastructure
 2026-01-21 14:51:45 | FEATURE | Integrate translations database into all pages
 2026-01-21 14:52:57 | DOCS | Update ARCHITECTURE.md with multilingual database translations section
+2026-01-21 14:57:10 | DOCS | Add translations feature summary
+2026-01-21 21:17:54 | BUGFIX | Move form fields to new profile tab, sort profiles by updated_at desc by default

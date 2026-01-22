@@ -1,9 +1,39 @@
 {
   "ui": {
+    "nav_home": {
+      "de": "🏠 Startseite",
+      "en": "🏠 Home",
+      "fr": "🏠 Accueil"
+    },
     "sidebar_title": {
       "de": "⚙️ Einstellungen",
       "en": "⚙️ Settings",
       "fr": "⚙️ Paramètres"
+    },
+    "sidebar_processes": {
+      "de": "📋 Prozesse",
+      "en": "📋 Processes",
+      "fr": "📋 Processus"
+    },
+    "sidebar_processes_profiles": {
+      "de": "📌 Stellenprofil",
+      "en": "📌 Job Profile",
+      "fr": "📌 Profil de poste"
+    },
+    "sidebar_processes_candidates": {
+      "de": "👥 Kandidaten",
+      "en": "👥 Candidates",
+      "fr": "👥 Candidats"
+    },
+    "sidebar_processes_cv_generator": {
+      "de": "📄 CV Generator",
+      "en": "📄 CV Generator",
+      "fr": "📄 Générateur de CV"
+    },
+    "sidebar_processes_status": {
+      "de": "⚡ Status & Workflow",
+      "en": "⚡ Status & Workflow",
+      "fr": "⚡ Statut & Flux"
     },
     "language_label": {
       "de": "🌐 Sprache",
@@ -49,6 +79,166 @@
       "de": "Firmenlogo (PNG/JPG)",
       "en": "Company Logo (PNG/JPG)",
       "fr": "Logo de l'entreprise (PNG/JPG)"
+    },
+    "job_profile_status_label": {
+      "de": "Status",
+      "en": "Status",
+      "fr": "Statut"
+    },
+    "job_profile_status_info": {
+      "de": "Unabhängige Kategorisierung: draft (Entwurf), published (Veröffentlicht), active (Aktiv - wird gerade besetzt), closed (Geschlossen), archived (Archiviert), rejected (Abgelehnt). Kann flexibel wechseln.",
+      "en": "Independent categorization: draft (Draft), published (Published), active (Active - currently being filled), closed (Closed), archived (Archived), rejected (Rejected). Can change flexibly.",
+      "fr": "Catégorisation indépendante : draft (Brouillon), published (Publié), active (Actif - actuellement en cours de pourvoi), closed (Fermé), archived (Archivé), rejected (Rejeté). Peut changer flexiblement."
+    },
+    "job_profile_workflow_label": {
+      "de": "Workflow",
+      "en": "Workflow",
+      "fr": "Flux de travail"
+    },
+    "job_profile_workflow_info": {
+      "de": "Linearer Prozess: draft → published → closed. Stellt sicher, dass alle Schritte in der richtigen Reihenfolge passieren. Du kannst nicht von draft direkt zu closed springen.",
+      "en": "Linear process: draft → published → closed. Ensures all steps happen in the correct order. You cannot jump directly from draft to closed.",
+      "fr": "Processus linéaire : draft → published → closed. Garantit que toutes les étapes se déroulent dans le bon ordre. Vous ne pouvez pas passer directement de draft à closed."
+    },
+    "job_profile_column_name": {
+      "de": "Name",
+      "en": "Name",
+      "fr": "Nom"
+    },
+    "job_profile_column_customer": {
+      "de": "Kunde",
+      "en": "Customer",
+      "fr": "Client"
+    },
+    "job_profile_column_skills": {
+      "de": "Skills",
+      "en": "Skills",
+      "fr": "Compétences"
+    },
+    "job_profile_column_status": {
+      "de": "Status",
+      "en": "Status",
+      "fr": "Statut"
+    },
+    "job_profile_column_workflow": {
+      "de": "Workflow",
+      "en": "Workflow",
+      "fr": "Flux de travail"
+    },
+    "job_profile_column_created": {
+      "de": "Erstellt",
+      "en": "Created",
+      "fr": "Créé"
+    },
+    "job_profile_column_modified": {
+      "de": "Zuletzt bearbeitet",
+      "en": "Last Modified",
+      "fr": "Dernière modification"
+    },
+    "job_profile_column_action": {
+      "de": "Aktion",
+      "en": "Action",
+      "fr": "Action"
+    },
+    "job_profile_created": {
+      "de": "Erstellt",
+      "en": "Created",
+      "fr": "Créé"
+    },
+    "job_profile_modified": {
+      "de": "Bearbeitet",
+      "en": "Modified",
+      "fr": "Modifié"
+    },
+    "job_profile_metadata_section": {
+      "de": "Metadaten",
+      "en": "Metadata",
+      "fr": "Métadonnées"
+    },
+    "job_profile_details_section": {
+      "de": "Stellendetails",
+      "en": "Job Details",
+      "fr": "Détails du poste"
+    },
+    "job_profile_description_section": {
+      "de": "Beschreibung",
+      "en": "Description",
+      "fr": "Description"
+    },
+    "job_profile_skills_section": {
+      "de": "Erforderliche Skills",
+      "en": "Required Skills",
+      "fr": "Compétences requises"
+    },
+    "job_profile_attr_id": {
+      "de": "ID",
+      "en": "ID",
+      "fr": "ID"
+    },
+    "job_profile_attr_status": {
+      "de": "Status",
+      "en": "Status",
+      "fr": "Statut"
+    },
+    "job_profile_attr_workflow": {
+      "de": "Workflow",
+      "en": "Workflow",
+      "fr": "Flux de travail"
+    },
+    "job_profile_attr_created_at": {
+      "de": "Erstellt",
+      "en": "Created",
+      "fr": "Créé"
+    },
+    "job_profile_attr_updated_at": {
+      "de": "Zuletzt bearbeitet",
+      "en": "Last Modified",
+      "fr": "Dernière modification"
+    },
+    "job_profile_attr_age": {
+      "de": "Alter (Tage)",
+      "en": "Age (Days)",
+      "fr": "Âge (jours)"
+    },
+    "job_profile_attr_name": {
+      "de": "Stellenbezeichnung",
+      "en": "Job Title",
+      "fr": "Titre du poste"
+    },
+    "job_profile_attr_customer": {
+      "de": "Kunde",
+      "en": "Customer",
+      "fr": "Client"
+    },
+    "job_profile_attr_level": {
+      "de": "Level",
+      "en": "Level",
+      "fr": "Niveau"
+    },
+    "job_profile_attr_attachment": {
+      "de": "Anhang",
+      "en": "Attachment",
+      "fr": "Pièce jointe"
+    },
+    "job_profile_attr_description": {
+      "de": "Stellenbeschreibung",
+      "en": "Job Description",
+      "fr": "Description du poste"
+    },
+    "job_profile_attr_skills": {
+      "de": "Skills (eine pro Zeile)",
+      "en": "Skills (one per line)",
+      "fr": "Compétences (une par ligne)"
+    },
+    "edit": {
+      "de": "Bearbeiten",
+      "en": "Edit",
+      "fr": "Modifier"
+    },
+    "delete": {
+      "de": "Löschen",
+      "en": "Delete",
+      "fr": "Supprimer"
     },
     "select_model": {
       "de": "Modell auswählen:",
@@ -1444,6 +1634,55 @@
       "de": "nicht explizit erwähnt",
       "en": "not explicitly mentioned",
       "fr": "pas explicitement mentionné"
+    }
+  },
+  "status_values": {
+    "draft": {
+      "de": "Entwurf",
+      "en": "Draft",
+      "fr": "Brouillon"
+    },
+    "published": {
+      "de": "Veröffentlicht",
+      "en": "Published",
+      "fr": "Publié"
+    },
+    "active": {
+      "de": "Aktiv",
+      "en": "Active",
+      "fr": "Actif"
+    },
+    "closed": {
+      "de": "Geschlossen",
+      "en": "Closed",
+      "fr": "Fermé"
+    },
+    "archived": {
+      "de": "Archiviert",
+      "en": "Archived",
+      "fr": "Archivé"
+    },
+    "rejected": {
+      "de": "Abgelehnt",
+      "en": "Rejected",
+      "fr": "Rejeté"
+    }
+  },
+  "workflow_values": {
+    "draft": {
+      "de": "Entwurf",
+      "en": "Draft",
+      "fr": "Brouillon"
+    },
+    "published": {
+      "de": "Veröffentlicht",
+      "en": "Published",
+      "fr": "Publié"
+    },
+    "closed": {
+      "de": "Geschlossen",
+      "en": "Closed",
+      "fr": "Fermé"
     }
   },
   "system": {

@@ -16,7 +16,7 @@ class TranslationsManager:
     """
     
     SUPPORTED_LANGUAGES = ['de', 'en', 'fr']
-    SECTIONS = ['ui', 'cv', 'offer', 'job_profile']
+    SECTIONS = ['ui', 'cv', 'offer', 'job_profile', 'status_values', 'workflow_values']
     
     def __init__(self, db=None):
         """

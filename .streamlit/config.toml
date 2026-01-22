@@ -1,6 +1,9 @@
 [browser]
 gatherUsageStats = false
 
+[client]
+showSidebarNavigation = false
+
 [theme]
 primaryColor = "#FF7900"
 backgroundColor = "#FFFFFF"

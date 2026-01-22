@@ -19,6 +19,10 @@ from core.database.db import Database
 from core.database.workflows import JobProfileWorkflow
 from core.database.models import JobProfileStatus, JobProfileWorkflowState
 from core.database.translations import initialize_translations, t as get_translation
+from core.ui.sidebar_init import render_sidebar_in_page
+
+# Set current page for sidebar
+st.session_state.current_page = "pages/03_Stellenprofil-Status.py"
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -128,6 +132,31 @@ def get_available_status_changes(current_status: str) -> list:
         "rejected": []
     }
     return transitions_map.get(current_status, [])
+
+# Initialize session state variables
+if 'language' not in st.session_state:
+    st.session_state.language = "de"
+
+# Set current page for sidebar active state detection
+st.session_state.current_page = "pages/03_Stellenprofil-Status.py"
+
+# --- Render Sidebar ---
+if st.session_state.get("authentication_status"):
+    try:
+        from app import get_text, authenticator, config, name, username
+        render_sidebar_in_page(
+            get_text_func=get_text,
+            language=st.session_state.language,
+            authenticator=authenticator,
+            name=name,
+            username=username,
+            config=config
+        )
+    except ImportError:
+        st.sidebar.warning("Sidebar konnte nicht geladen werden")
+
+# --- Sidebar Navigation ---
+tm = get_translations_manager()
 
 # --- Main Content ---
 st.title("⚙️ Stellenprofil-Status verwalten")

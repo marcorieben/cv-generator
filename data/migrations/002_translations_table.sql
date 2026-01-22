@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS translations (
     UNIQUE(section, key, language),
     
     -- Foreign key constraints for referential integrity
-    CONSTRAINT valid_section CHECK(section IN ('ui', 'cv', 'offer', 'job_profile'))
+    CONSTRAINT valid_section CHECK(section IN ('ui', 'cv', 'offer', 'job_profile', 'status_values', 'workflow_values'))
 );
 
 -- Index for fast lookups by section and language

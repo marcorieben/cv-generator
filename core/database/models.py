@@ -72,6 +72,8 @@ class JobProfile:
     updated_at: Optional[datetime] = None
     created_by: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    attachment_blob: Optional[bytes] = None
+    attachment_filename: Optional[str] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for database storage"""
