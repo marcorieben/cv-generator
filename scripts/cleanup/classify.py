@@ -15,13 +15,13 @@ def classify_file(path: str) -> FileCategory:
     
     Rules applied in order:
     1. SOURCE_CODE: .py, .ts, .js, .md (not in docs/)
-    2. CONFIG: .yaml, .json in root/config areas
+    2. CONFIG: .yaml, .json, .env*, .gitignore in root/config areas
     3. PROMPT: in /prompts/ or _prompt.txt files
     4. INPUT_DATA: in /input/ or /data/input/
     5. INTERMEDIATE_ARTIFACT: in /data/intermediate/ or /tmp/
     6. GENERATED_OUTPUT: in /output/ with matching template
     7. LOG_FILE: .log or in /logs/
-    8. TEMP_FILE: .tmp, .bak, .cache, .pyc
+    8. TEMP_FILE: .tmp, .bak, .cache, .pyc, .coverage
     9. EXPERIMENT: _experiment_, _test_, _demo_ in name
     10. Default: UNKNOWN
     
@@ -33,6 +33,28 @@ def classify_file(path: str) -> FileCategory:
     """
     path_lower = path.lower()
     path_obj = Path(path)
+    filename_lower = path_obj.name.lower()
+    
+    # Special case: .coverage is temp
+    if filename_lower == ".coverage" or ".coverage" in filename_lower:
+        return FileCategory.TEMP_FILE
+    
+    # Special case: .env files are config
+    if filename_lower.startswith(".env"):
+        return FileCategory.CONFIG
+    
+    # Special case: .gitignore is config
+    if filename_lower == ".gitignore":
+        return FileCategory.CONFIG
+    
+    # Special case: *.bat and *.cmd in root are often runners/scripts
+    if path_obj.suffix in ['.bat', '.cmd'] and path_obj.parent.name == '':
+        # Root-level batch files - these are utility scripts
+        return FileCategory.PROMPT  # Treat as utility/runner scripts
+    
+    # Special case: requirements*.txt is config
+    if filename_lower.startswith('requirements') and path_obj.suffix == '.txt':
+        return FileCategory.CONFIG
     
     # SOURCE_CODE: Python, TypeScript, JavaScript, Markdown (except docs/)
     if path_obj.suffix in ['.py', '.ts', '.js'] or path_obj.suffix == '.md':
@@ -41,7 +63,7 @@ def classify_file(path: str) -> FileCategory:
     
     # CONFIG: YAML and JSON in root or config directories
     if path_obj.suffix in ['.yaml', '.yml', '.json']:
-        if any(p in path_lower for p in ['config', 'settings', '.env']):
+        if any(p in path_lower for p in ['config', 'settings']):
             return FileCategory.CONFIG
         # Root-level config files
         if path_obj.parent.name == '':  # Root directory
@@ -76,7 +98,7 @@ def classify_file(path: str) -> FileCategory:
         return FileCategory.LOG_FILE
     
     # TEMP_FILE: Temporary file extensions
-    temp_extensions = ['.tmp', '.bak', '.cache', '.pyc', '.pyo', '.swp']
+    temp_extensions = ['.tmp', '.bak', '.cache', '.pyc', '.pyo', '.swp', '.coverage']
     if path_obj.suffix in temp_extensions:
         return FileCategory.TEMP_FILE
     
@@ -92,6 +114,14 @@ def classify_file(path: str) -> FileCategory:
     # Special case: __pycache__ is generated
     if '__pycache__' in path_lower or '.pytest_cache' in path_lower:
         return FileCategory.GENERATED_OUTPUT
+    
+    # Special case: .git directory contents
+    if '/.git/' in path_lower or '\\.git\\' in path_lower:
+        return FileCategory.CONFIG
+    
+    # Special case: .venv is generated/config
+    if '/.venv/' in path_lower or '\\.venv\\' in path_lower:
+        return FileCategory.CONFIG
     
     # Default to UNKNOWN
     return FileCategory.UNKNOWN
