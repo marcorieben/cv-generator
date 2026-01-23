@@ -101,7 +101,7 @@ The cleanup system implements a safe, multi-stage file analysis:
 ## Report Locations
 
 ```
-cleanup/runs/
+scripts/cleanup/runs/
   └─ 2026-01-23_14-30-00/
      ├─ cleanup_report.json
      ├─ cleanup_report.md
@@ -134,7 +134,7 @@ max_deletion_size_mb = 100.0         # Deletion size limit
 ### View Reports
 ```bash
 # After running analyze
-cat cleanup/runs/2026-01-23_14-30-00/cleanup_report.md
+cat scripts/cleanup/runs/2026-01-23_14-30-00/cleanup_report.md
 ```
 
 ### Find REVIEW_REQUIRED Files
@@ -148,7 +148,7 @@ cat cleanup/runs/2026-01-23_14-30-00/cleanup_report.md
 # 1. Run analyze
 python scripts/cleanup/run.py
 
-# 2. Review report in cleanup/runs/
+# 2. Review report in scripts/cleanup/runs/
 
 # 3. If satisfied, apply
 python scripts/cleanup/run.py apply

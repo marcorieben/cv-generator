@@ -53,7 +53,7 @@ scripts\cleanup\cleanup.bat apply
 
 Nach jedem Lauf findest du Reports hier:
 ```
-cleanup/runs/YYYY-MM-DD_HH-MM-SS/
+scripts/cleanup/runs/YYYY-MM-DD_HH-MM-SS/
 ├── cleanup_report.json      (Machine-readable)
 ├── cleanup_report.md        (Human-readable)
 └── deleted_files.log        (Bei apply mode)
@@ -61,7 +61,7 @@ cleanup/runs/YYYY-MM-DD_HH-MM-SS/
 
 **Bericht in Browser öffnen:**
 ```bash
-cleanup/runs/2026-01-23_14-30-00/cleanup_report.md
+scripts/cleanup/runs/2026-01-23_14-30-00/cleanup_report.md
 ```
 
 ---

@@ -260,5 +260,5 @@ def run_cleanup(
 def _get_run_folder(run_id: str) -> str:
     """Get the cleanup run folder path."""
     project_root = Path(__file__).parent.parent.parent
-    run_folder = project_root / "cleanup" / "runs" / run_id
+    run_folder = project_root / "scripts" / "cleanup" / "runs" / run_id
     return str(run_folder)
