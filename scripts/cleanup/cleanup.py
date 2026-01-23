@@ -2,9 +2,12 @@
 Command-line interface for the cleanup system.
 
 Usage:
-    python run_cleanup.py              # Analyze mode (safe, no changes)
-    python run_cleanup.py apply        # Apply mode (may delete files)
-    python run_cleanup.py --help       # Show help
+    python scripts/cleanup/cleanup.py              # Analyze mode (safe, no changes)
+    python scripts/cleanup/cleanup.py apply        # Apply mode (may delete files)
+    python scripts/cleanup/cleanup.py --help       # Show help
+    
+Or as Python module:
+    python -m scripts.cleanup.cleanup
 """
 
 import sys
@@ -45,7 +48,7 @@ def main():
         if summary["delete_safe"] > 0:
             print(f"💡 {summary['delete_safe']} files are safe to delete")
             if mode == "analyze":
-                print("   Run: python run_cleanup.py apply")
+                print("   Run: python scripts/cleanup/cleanup.py apply")
                 print("   to actually delete them.")
         
         if summary["review_required"] > 0:

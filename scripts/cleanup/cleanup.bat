@@ -2,8 +2,8 @@
 REM Cleanup System - Run via BAT file
 REM
 REM Usage:
-REM   run_3_cleanup.bat          - Analyze mode (safe, no changes)
-REM   run_3_cleanup.bat apply    - Apply mode (may delete files)
+REM   scripts\cleanup\cleanup.bat              - Analyze mode (safe, no changes)
+REM   scripts\cleanup\cleanup.bat apply        - Apply mode (may delete files)
 
 setlocal enabledelayedexpansion
 
@@ -11,9 +11,10 @@ echo.
 echo Initializing cleanup environment...
 echo.
 
-REM Get the directory where this batch file is located
+REM Get the project root (two levels up from this script)
 set "SCRIPT_DIR=%~dp0"
-cd /d "%SCRIPT_DIR%"
+for %%I in ("%SCRIPT_DIR%..\..\") do set "PROJECT_ROOT=%%~fI"
+cd /d "%PROJECT_ROOT%"
 
 REM Check if venv exists
 if not exist ".venv\Scripts\python.exe" (
@@ -35,10 +36,10 @@ echo.
 REM Pass arguments through to Python
 if "%1"=="" (
     REM No arguments - analyze mode
-    .venv\Scripts\python.exe run_cleanup.py
+    .venv\Scripts\python.exe scripts\cleanup\cleanup.py
 ) else (
     REM Pass arguments
-    .venv\Scripts\python.exe run_cleanup.py %*
+    .venv\Scripts\python.exe scripts\cleanup\cleanup.py %*
 )
 
 set EXIT_CODE=%ERRORLEVEL%

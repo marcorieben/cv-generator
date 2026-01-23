@@ -8,12 +8,17 @@ Du kannst jetzt das Cleanup-System aufrufen und manuelle Cleanups durchführen.
 
 **Via Python:**
 ```bash
-python run_cleanup.py
+python scripts/cleanup/cleanup.py
 ```
 
-**Via BAT-Datei:**
+**Oder als Python-Modul:**
 ```bash
-run_3_cleanup.bat
+python -m scripts.cleanup.cleanup
+```
+
+**Via BAT-Datei (Windows):**
+```bash
+scripts\cleanup\cleanup.bat
 ```
 
 **Was passiert:**
@@ -27,12 +32,12 @@ run_3_cleanup.bat
 
 **Via Python:**
 ```bash
-python run_cleanup.py apply
+python scripts/cleanup/cleanup.py apply
 ```
 
-**Via BAT-Datei:**
+**Via BAT-Datei (Windows):**
 ```bash
-run_3_cleanup.bat apply
+scripts\cleanup\cleanup.bat apply
 ```
 
 **Was passiert:**
@@ -176,9 +181,10 @@ max_deletion_size_mb = 100.0     # Höchstens 100MB löschen
 
 ## Noch Fragen?
 
+
 Siehe vollständige Dokumentation:
-- [docs/feature_structured_cleanup/REQUIREMENTS.md](../feature_structured_cleanup/REQUIREMENTS.md)
-- [docs/feature_structured_cleanup/README.md](../feature_structured_cleanup/README.md)
-- [docs/feature_structured_cleanup/CHECKLIST.md](../feature_structured_cleanup/CHECKLIST.md)
+- [../feature_structured_cleanup/REQUIREMENTS.md](../feature_structured_cleanup/REQUIREMENTS.md)
+- [../feature_structured_cleanup/README.md](../feature_structured_cleanup/README.md)
+- [../feature_structured_cleanup/CHECKLIST.md](../feature_structured_cleanup/CHECKLIST.md)
 
 Oder schau den generierten Bericht nach dem ersten Lauf an!
