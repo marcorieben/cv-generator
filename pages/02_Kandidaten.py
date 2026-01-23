@@ -19,13 +19,19 @@ from core.database.db import Database
 from core.database.workflows import CandidateWorkflow
 from core.database.models import CandidateStatus, CandidateWorkflowState
 from core.database.translations import initialize_translations, t as get_translation
+# Set current page for sidebar
+st.session_state.current_page = "pages/02_Kandidaten.py"
 
-# --- Page Configuration ---
-st.set_page_config(
-    page_title="Kandidaten | CV Generator",
-    page_icon="👥",
-    layout="wide"
-)
+# --- Import get_text and sidebar rendering from app ---
+try:
+    from app import get_text, render_simple_sidebar
+except ImportError:
+    def get_text(section, key, lang="de"):
+        """Fallback if app import fails"""
+        return key
+    def render_simple_sidebar():
+        """Fallback if sidebar rendering fails"""
+        pass
 
 # --- Helper Functions ---
 def get_translations_manager():
@@ -86,6 +92,16 @@ def load_candidate_for_edit(candidate_id: int):
             "workflow_state": candidate.workflow_state
         }
         st.rerun()
+
+# Initialize session state variables
+if 'language' not in st.session_state:
+    st.session_state.language = "de"
+
+# --- Simple Sidebar with Logo and Navigation ---
+render_simple_sidebar()
+
+# --- Sidebar Navigation ---
+tm = get_translations_manager()
 
 # --- Main Content ---
 st.title("👥 Kandidaten verwalten")

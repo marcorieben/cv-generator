@@ -1,0 +1,182 @@
+sidebar_structure:
+- order: 0.0
+  level: 1
+  type: expander
+  icon: ⚙️
+  label_key: sidebar_processes
+  expanded: true
+  hidden: false
+  children:
+  - order: 1
+    level: 2
+    type: button
+    icon: 📋
+    label_key: sidebar_processes_profiles
+    action: switch_page
+    page: pages/01_Stellenprofile.py
+    key: nav_profiles_main
+    hidden: false
+  - order: 2
+    level: 2
+    type: button
+    icon: 👥
+    label_key: sidebar_processes_candidates
+    action: switch_page
+    page: pages/02_Kandidaten.py
+    key: nav_candidates_main
+    hidden: false
+  - order: 3
+    level: 2
+    type: expander
+    icon: 📄
+    label_key: sidebar_processes_cv_generator
+    expanded: false
+    hidden: false
+    children:
+    - order: 1
+      level: 3
+      type: expander
+      icon: 🤖
+      label_key: model_settings
+      expanded: false
+      component: model_settings
+      hidden: false
+    - order: 2
+      level: 3
+      type: expander
+      icon: ⏱️
+      label_key: history_tab
+      expanded: false
+      component: history_section
+      hidden: false
+    - order: 3
+      level: 3
+      type: divider
+      hidden: false
+    - order: 4
+      level: 3
+      type: button
+      icon: 🚀
+      label_key: sidebar_processes_cv_generator
+      action: switch_page
+      page: pages/04_CV_Generator.py
+      key: nav_cv_gen_main
+      hidden: false
+  - order: 4
+    level: 2
+    type: button
+    icon: 📊
+    label_key: sidebar_processes_status
+    action: switch_page
+    page: pages/03_Stellenprofil-Status.py
+    button_type: secondary
+    key: nav_status_main
+    hidden: true
+- order: 1.5
+  level: 1
+  type: divider
+  hidden: false
+- order: 3
+  level: 1
+  type: expander
+  icon: ⚡
+  label_key: sidebar_title
+  expanded: true
+  hidden: false
+  children:
+  - order: 1
+    level: 2
+    type: expander
+    icon: 👤
+    label_key: personal_settings
+    expanded: false
+    component: personal_settings
+    hidden: false
+  - order: 2
+    level: 2
+    type: expander
+    icon: 🎨
+    label_key: design_settings
+    expanded: false
+    component: design_settings
+    hidden: false
+- order: 2.5
+  level: 1
+  type: divider
+  hidden: false
+- order: 3
+  level: 1
+  type: expander
+  icon: ℹ️
+  label_key: app_info
+  expanded: false
+  hidden: false
+  children:
+  - order: 1
+    level: 2
+    type: custom
+    component: app_info_section
+    hidden: false
+- order: 4
+  level: 1
+  type: spacer
+  hidden: false
+- order: 5
+  level: 1
+  type: divider
+  hidden: false
+- order: 5.5
+  level: 1
+  type: button
+  icon: ⚙️
+  label_key: admin_sidebar_manager
+  action: switch_page
+  page: pages/05_Admin_Sidebar_Manager.py
+  key: nav_admin_sidebar
+  hidden: false
+- order: 6
+  level: 1
+  type: divider
+  hidden: false
+- order: 7
+  level: 1
+  type: custom
+  component: user_info_logout
+  hidden: false
+components:
+  model_settings:
+    description: Model selection with cost info and API key handling
+    requires:
+    - get_text
+    - reset_all_pipeline_states
+    - show_model_info_dialog
+    - get_api_key
+    - username
+  history_section:
+    description: History list with scores and details
+    requires:
+    - get_text
+    - load_history
+    - datetime
+  personal_settings:
+    description: Password reset functionality
+    requires:
+    - get_text
+    - authenticator
+    - username
+  design_settings:
+    description: Color picker, font selection, logo upload
+    requires:
+    - get_text
+    - os
+  app_info_section:
+    description: App info and changelog dialog
+    requires:
+    - get_text
+    - show_app_info_dialog
+  user_info_logout:
+    description: User display and logout button
+    requires:
+    - get_text
+    - name
+    - authenticator

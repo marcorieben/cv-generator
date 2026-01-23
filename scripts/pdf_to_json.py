@@ -292,25 +292,52 @@ def extract_text_from_pdf(pdf_path):
     Extrahiert Text aus einer PDF-Datei
     
     Args:
-        pdf_path: Pfad zur PDF-Datei
+        pdf_path: Pfad zur PDF-Datei oder File-Objekt (Streamlit UploadedFile)
         
     Returns:
         String mit dem extrahierten Text
     """
     try:
-        reader = PdfReader(pdf_path)
-        text = ""
+        # Validierung: Überprüfe, ob pdf_path None ist
+        if pdf_path is None:
+            raise ValueError("PDF-Datei ist leer (None). Bitte laden Sie eine gültige PDF-Datei hoch.")
         
+        # Wenn Streamlit UploadedFile, seek auf Position 0 zurücksetzen
+        if hasattr(pdf_path, 'seek'):
+            try:
+                pdf_path.seek(0)
+            except Exception as seek_err:
+                # Wenn seek fehlschlägt, kann die Datei beschädigt sein
+                raise ValueError(f"Fehler beim Zugriff auf PDF-Datei: {str(seek_err)}. Bitte laden Sie eine neue Datei hoch.")
+        
+        # Validierung: Überprüfe, ob die Datei lesbar ist
+        if hasattr(pdf_path, 'size') and pdf_path.size == 0:
+            raise ValueError("Die hochgeladene PDF-Datei ist leer. Bitte laden Sie eine gültige PDF-Datei hoch.")
+        
+        reader = PdfReader(pdf_path)
+        
+        # Validierung: Überprüfe, ob die PDF Seiten hat
+        if not reader.pages:
+            raise ValueError("Die PDF-Datei enthält keine Seiten. Bitte laden Sie eine gültige PDF-Datei hoch.")
+        
+        text = ""
         for page_num, page in enumerate(reader.pages, 1):
-            page_text = page.extract_text()
-            if page_text:
-                text += f"\n--- Seite {page_num} ---\n{page_text}"
+            try:
+                page_text = page.extract_text()
+                if page_text:
+                    text += f"\n--- Seite {page_num} ---\n{page_text}"
+            except Exception as page_err:
+                print(f"⚠️ Warnung: Seite {page_num} konnte nicht gelesen werden: {str(page_err)}")
+                continue
         
         if not text.strip():
-            raise ValueError("Keine Text-Inhalte in PDF gefunden")
+            raise ValueError("Keine Text-Inhalte in PDF gefunden. Überprüfen Sie, ob die Datei Text enthält.")
             
         return text
     
+    except ValueError:
+        # ValueError weitergeben (wichtige Fehler für den Nutzer)
+        raise
     except Exception as e:
         raise Exception(f"Fehler beim Lesen der PDF: {str(e)}")
 
@@ -341,7 +368,7 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
     Konvertiert eine PDF-CV zu strukturiertem JSON via OpenAI API
     
     Args:
-        pdf_path: Pfad zur PDF-Datei
+        pdf_path: Pfad zur PDF-Datei oder Streamlit UploadedFile
         output_path: Optionaler Pfad für JSON-Output (wenn None, nur zurückgeben)
         schema_path: Pfad zur Schema-Datei
         job_profile_context: Optionales Dictionary mit Stellenprofildaten zur Kontextualisierung
@@ -350,6 +377,10 @@ def pdf_to_json(pdf_path, output_path=None, schema_path="scripts/pdf_to_json_str
     Returns:
         Dictionary mit den extrahierten CV-Daten
     """
+    # Validierung: Überprüfe, ob pdf_path None ist
+    if pdf_path is None:
+        raise ValueError("PDF-Datei ist leer (None). Bitte laden Sie eine gültige PDF-Datei hoch.")
+    
     # Lade Environment Variables
     load_dotenv()
     

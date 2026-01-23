@@ -43,7 +43,6 @@ class Database:
         else:
             self.config = DatabaseConfig(db_path)
         self.init_db()
-        self.apply_migrations()
     
     @contextmanager
     def get_connection(self):
@@ -60,81 +59,25 @@ class Database:
             conn.close()
     
     def init_db(self):
-        """Initialize database - setup migration infrastructure"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            
-            # Only create schema_migrations table - all other tables created via migrations
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS schema_migrations (
-                    id INTEGER PRIMARY KEY,
-                    name VARCHAR(255) UNIQUE,
-                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS db_metadata (
-                    key VARCHAR(100) PRIMARY KEY,
-                    value TEXT
-                )
-            """)
-            
-            # Insert schema version metadata if not exists
-            cursor.execute("""
-                INSERT OR IGNORE INTO db_metadata (key, value) 
-                VALUES ('schema_version', '2')
-            """)
-    
-    def apply_migrations(self):
-        """Apply pending database migrations"""
-        migrations_dir = Path(__file__).parent.parent.parent / "data" / "migrations"
-        if not migrations_dir.exists():
-            return
+        """Initialize database by loading schema.sql (single source of truth)"""
+        schema_file = Path(__file__).parent.parent.parent / "data" / "schema.sql"
+        
+        if not schema_file.exists():
+            raise FileNotFoundError(f"schema.sql not found at {schema_file}")
         
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            # Create migrations table if not exists
+            # Read and execute schema.sql (contains all table definitions)
+            schema_sql = schema_file.read_text(encoding='utf-8')
+            cursor.executescript(schema_sql)
+            
+            # Initialize db_metadata with schema version if not exists
             cursor.execute("""
-                CREATE TABLE IF NOT EXISTS schema_migrations (
-                    id INTEGER PRIMARY KEY,
-                    name VARCHAR(255) UNIQUE,
-                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
+                INSERT OR IGNORE INTO db_metadata (key, value) 
+                VALUES ('schema_version', '4')
             """)
             conn.commit()
-            
-            # Get list of migration files
-            migration_files = sorted(migrations_dir.glob("*.sql"))
-            
-            for migration_file in migration_files:
-                migration_name = migration_file.name
-                
-                # Check if migration already applied
-                cursor.execute(
-                    "SELECT id FROM schema_migrations WHERE name = ?",
-                    (migration_name,)
-                )
-                if cursor.fetchone():
-                    continue  # Migration already applied
-                
-                # Read and execute migration
-                try:
-                    migration_sql = migration_file.read_text()
-                    # Execute the entire migration script as one (SQLite supports multiple statements)
-                    cursor.executescript(migration_sql)
-                    
-                    # Mark migration as applied
-                    cursor.execute(
-                        "INSERT INTO schema_migrations (name) VALUES (?)",
-                        (migration_name,)
-                    )
-                    conn.commit()
-                except Exception as e:
-                    print(f"Error applying migration {migration_name}: {e}")
-                    conn.rollback()
-                    raise
     
     # Job Profile operations
     
@@ -147,12 +90,13 @@ class Database:
             cursor.execute("""
                 INSERT INTO job_profiles 
                 (name, customer, description, required_skills, level, status, current_workflow_state, 
-                 created_by, metadata)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_by, metadata, attachment_blob, attachment_filename)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 data['name'], data.get('customer'), data['description'], json.dumps(data['required_skills']),
                 data['level'], data['status'], data['current_workflow_state'],
-                data['created_by'], json.dumps(data['metadata'])
+                data['created_by'], json.dumps(data['metadata']), 
+                profile.attachment_blob, profile.attachment_filename
             ))
             return cursor.lastrowid
     
@@ -205,12 +149,14 @@ class Database:
             cursor.execute("""
                 UPDATE job_profiles SET
                 name = ?, customer = ?, description = ?, required_skills = ?, level = ?,
-                status = ?, current_workflow_state = ?, metadata = ?, updated_at = ?
+                status = ?, current_workflow_state = ?, metadata = ?, updated_at = ?,
+                attachment_blob = ?, attachment_filename = ?
                 WHERE id = ?
             """, (
                 data['name'], data.get('customer'), data['description'], json.dumps(data['required_skills']),
                 data['level'], data['status'], data['current_workflow_state'],
-                json.dumps(data['metadata']), data['updated_at'], profile.id
+                json.dumps(data['metadata']), data['updated_at'], 
+                profile.attachment_blob, profile.attachment_filename, profile.id
             ))
             return cursor.rowcount > 0
     

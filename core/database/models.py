@@ -72,6 +72,24 @@ class JobProfile:
     updated_at: Optional[datetime] = None
     created_by: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    attachment_blob: Optional[bytes] = None
+    attachment_filename: Optional[str] = None
+    
+    @property
+    def days_since_created(self) -> int:
+        """Calculate days since profile creation (for alert indicators)"""
+        if not self.created_at:
+            return 0
+        from datetime import datetime
+        if isinstance(self.created_at, str):
+            try:
+                created = datetime.fromisoformat(self.created_at.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                return 0
+        else:
+            created = self.created_at
+        delta = datetime.now(created.tzinfo) - created if created.tzinfo else datetime.now() - created
+        return int(delta.total_seconds() / 86400)  # Convert seconds to days
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for database storage"""

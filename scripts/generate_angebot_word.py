@@ -509,35 +509,7 @@ def generate_angebot_word(json_path, output_path, language="de"):
     kandidat = data.get("kandidatenvorschlag", {})
     add_paragraph_with_bold(doc, kandidat.get("eignungs_summary", ""))
 
-    # 4. Profil & Kompetenzen
-    prof_comp = data.get("profil_und_kompetenzen", {})
-    if prof_comp:
-        doc.add_heading(get_text(translations, 'offer', 'profile_label', language), level=1)
-        
-        # Methoden & Technologien
-        methods = prof_comp.get("methoden_und_technologien", [])
-        if methods:
-            doc.add_heading(get_text(translations, 'offer', 'methods_tech_label', language), level=2)
-            for m in methods:
-                add_bullet_paragraph(doc, m)
-        
-        # Operative & Führung
-        ops = prof_comp.get("operative_und_fuehrungserfahrung", [])
-        if ops:
-            doc.add_heading(get_text(translations, 'offer', 'ops_leadership_label', language), level=2)
-            for o in ops:
-                add_bullet_paragraph(doc, o)
-        
-        # Sprachen
-        sprachen = prof_comp.get("sprachen", [])
-        if sprachen:
-            doc.add_heading(get_text(translations, 'offer', 'languages_label', language), level=2)
-            for s in sprachen:
-                label = s.get("sprache", "")
-                level = s.get("level", "")
-                add_bullet_paragraph(doc, f"{label}: {level}")
-
-    # 5. Einsatzkonditionen (Moved to Page 1)
+    # 4. Einsatzkonditionen (moved to page 1)
     konditionen = data.get("einsatzkonditionen", {})
     doc.add_heading(get_text(translations, 'offer', 'engagement_terms', language), level=1)
     doc.add_paragraph(get_text(translations, 'offer', 'conditions_intro', language))

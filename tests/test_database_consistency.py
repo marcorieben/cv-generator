@@ -107,7 +107,7 @@ class TestDatabaseLanguageConsistency:
         expected_profile_fields = {
             'id', 'name', 'customer', 'description', 'required_skills',
             'level', 'status', 'current_workflow_state', 'created_at',
-            'updated_at', 'created_by', 'metadata'
+            'updated_at', 'created_by', 'metadata', 'attachment_blob', 'attachment_filename'
         }
         assert set(profile_fields) == expected_profile_fields, \
             f"JobProfile fields mismatch. Got: {set(profile_fields)}"
@@ -328,7 +328,7 @@ class TestDatabaseSchemaConsistency:
         required_indexes = [
             'idx_job_profiles_status',
             'idx_candidates_email',
-            'idx_job_profile_comments_profile'
+            'idx_comments_profile'
         ]
 
         for idx in required_indexes:
