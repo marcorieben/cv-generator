@@ -44,7 +44,7 @@ def check_database_protection():
     
     # Check for database files
     dangerous_extensions = ['.db', '.sqlite', '.sqlite3']
-    dangerous_patterns = ['data/cv_generator', 'database.', '.db.bak']
+    dangerous_patterns = ['data/cv_generator', 'cv_generator.db', '.db.bak']
     
     violations = []
     
@@ -121,6 +121,70 @@ def check_migrations_only():
         print(f"✅ Found {len(migration_files)} migration files:")
         for f in migration_files:
             print(f"   - {f}")
+        
+        # Check SQL migration files for data-destructive operations
+        print("\n🔍 Checking migration files for data-safe operations...")
+        
+        violations = []
+        for sql_file in migration_files:
+            try:
+                with open(sql_file, 'r', encoding='utf-8') as f:
+                    content = f.read().upper()
+                
+                # Check for dangerous SQL operations that modify production data
+                dangerous_keywords = [
+                    'DELETE FROM',     # Would delete production data
+                    'UPDATE ',         # Could modify production data (if not WHERE-filtered)
+                    'DROP TABLE',      # Would destroy production schema
+                    'TRUNCATE',        # Would clear production tables
+                    'INSERT INTO job_profiles',  # Inserting into production tables
+                    'INSERT INTO candidates',    # Inserting into production tables
+                ]
+                
+                for keyword in dangerous_keywords:
+                    if keyword in content:
+                        violations.append(f"  ❌ {sql_file}: Contains '{keyword}' (data-destructive!)")
+                        break
+            except Exception as e:
+                violations.append(f"  ⚠️  {sql_file}: Error reading file ({e})")
+        
+        if violations:
+            print("\n⚠️  CRITICAL: Data-destructive SQL operations detected!")
+            print("\nViolations found:")
+            for v in violations:
+                print(v)
+            print("\n" + "=" * 60)
+            print("🛡️  SQL MIGRATION RULES (Production Data Safety):")
+            print("=" * 60)
+            print("""
+✅ ALLOWED in migrations:
+   - ALTER TABLE (schema changes)
+   - CREATE TABLE (new schema)
+   - ADD COLUMN, DROP COLUMN (schema modifications)
+   - CREATE INDEX, DROP INDEX
+   - Seed data ONLY for test/dev environments
+
+❌ NEVER commit in migrations:
+   - DELETE FROM (destroys production data!)
+   - UPDATE (modifies production data!)
+   - DROP TABLE (destroys production schema!)
+   - TRUNCATE (clears production tables!)
+   - INSERT INTO with hardcoded production data
+   - Any direct inserts into job_profiles, candidates, etc.
+
+⚠️  IMPORTANT:
+   Production databases have LIVE DATA:
+   - 10+ job profile entries
+   - Active candidates and applications
+   - Production workflow states
+   
+   A single bad migration can PERMANENTLY DELETE all this!
+            """)
+            print("=" * 60)
+            return False
+        
+        print("✅ Migration files are data-safe (schema changes only)")
+        return True
     
     if data_files:
         # Check if any non-.sql, non-dir files
