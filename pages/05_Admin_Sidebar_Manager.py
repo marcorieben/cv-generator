@@ -20,32 +20,16 @@ st.session_state.current_page = "pages/05_Admin_Sidebar_Manager.py"
 # Auth check
 from core.database.db import Database
 from core.database.translations import initialize_translations
+from core.utils.session import get_database, get_translations_manager, get_text
 
-# --- Import get_text and sidebar rendering from app ---
+# --- Import render_simple_sidebar from app ---
 try:
-    from app import get_text, render_simple_sidebar
+    from app import render_simple_sidebar
 except ImportError:
-    def get_text(section, key, lang="de"):
-        """Fallback if app import fails"""
-        return key
     def render_simple_sidebar():
         """Fallback if sidebar rendering fails"""
         pass
 
-def get_text(section, key, lang=None):
-    """Safely retrieves translated text from database or fallback"""
-    if lang is None:
-        lang = st.session_state.get("language", "de")
-    try:
-        if "translations_manager" not in st.session_state:
-            db_path = os.path.join(os.path.dirname(__file__), "..", "data", "cv_generator.db")
-            os.makedirs(os.path.dirname(db_path), exist_ok=True)
-            db = Database(db_path)
-            st.session_state.translations_manager = initialize_translations(db)
-        tm = st.session_state.translations_manager
-        return tm.get(section, key, lang) or key
-    except:
-        return key
 
 # Check if authenticated - if not, redirect to main app
 if "authentication_status" not in st.session_state or not st.session_state.get("authentication_status"):

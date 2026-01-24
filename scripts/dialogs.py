@@ -1316,7 +1316,8 @@ class ProcessingDialog(ModernDialog):
             try:
                 self.root.quit()
                 self.root.destroy()
-            except:
+            except Exception:
+                # Window may already be destroyed
                 pass
             return
             

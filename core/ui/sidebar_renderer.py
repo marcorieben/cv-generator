@@ -252,7 +252,7 @@ def _render_history(get_text_func, language, load_history_func):
             try:
                 dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
                 display_time = dt.strftime("%d.%m. %H:%M")
-            except:
+            except ValueError:
                 display_time = timestamp
 
             candidate_name = item.get("candidate_name", get_text_func("ui", "history_unknown", language))
@@ -278,7 +278,7 @@ def _render_history(get_text_func, language, load_history_func):
                                 <div style="background-color: {bar_color}; width: {score_val}%; height: 100%; border-radius: 4px;"></div>
                             </div>
                         """, unsafe_allow_html=True)
-                    except:
+                    except (ValueError, TypeError):
                         pass
 
                 # Details Button - zur Results-View navigieren

@@ -20,37 +20,15 @@ try:
 except ImportError:
     from scripts.dialogs import show_warning, select_json_file
 
+try:
+    from scripts.utils.translations import load_translations, get_text
+except ImportError:
+    from utils.translations import load_translations, get_text
+
 # Globale Konstante für fehlende Daten
 MISSING_DATA_MARKER = "! bitte prüfen !"
 
-def load_translations():
-    """Lädt die Übersetzungen aus der translations.json Datei."""
-    try:
-        # Versuche verschiedene Pfade (für Streamlit und direkte Ausführung)
-        paths = [
-            os.path.join(os.path.dirname(__file__), "translations.json"),
-            os.path.join("scripts", "translations.json"),
-            "translations.json"
-        ]
-        for path in paths:
-            if os.path.exists(path):
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-        return {}
-    except Exception as e:
-        print(f"Warnung: Übersetzungen konnten nicht geladen werden: {e}")
-        return {}
 
-def get_text(translations, section, key, lang="de"):
-    """Holt einen übersetzten Text."""
-    try:
-        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
-    except:
-        return f"[{key}]"
-
-# -------------------------------------
-# Hilfsfunktion: Absoluten Pfad bilden
-# -------------------------------------
 def validate_json_structure(data, language="de"):
     """Validiert die Struktur der JSON-Daten und gibt kritische Fehler und Info zurück"""
     translations = load_translations()

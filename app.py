@@ -21,6 +21,7 @@ from scripts.generate_angebot_word import generate_angebot_word
 from core.database.db import Database
 from core.database.translations import initialize_translations
 from core.ui.sidebar_renderer import load_sidebar_config, render_sidebar
+from core.utils.session import get_database, get_translations_manager, get_text
 
 # Page config must be the first Streamlit command
 st.set_page_config(
@@ -42,31 +43,8 @@ if 'custom_styles' not in st.session_state:
 # Set current page IMMEDIATELY for sidebar active state
 st.session_state.current_page = "app.py"
 
+
 # --- Helper Functions ---
-def get_translations_manager():
-    """Get or initialize translations manager from database"""
-    if "translations_manager" not in st.session_state:
-        try:
-            db_path = os.path.join(os.path.dirname(__file__), "data", "cv_generator.db")
-            os.makedirs(os.path.dirname(db_path), exist_ok=True)
-            db = Database(db_path)
-            st.session_state.translations_manager = initialize_translations(db)
-        except Exception as e:
-            print(f"Error initializing translations: {e}")
-            st.session_state.translations_manager = initialize_translations(None)
-    return st.session_state.translations_manager
-
-def get_text(section, key, lang=None):
-    """Safely retrieves translated text from database or fallback"""
-    if lang is None:
-        lang = st.session_state.get("language", "de")
-    try:
-        tm = get_translations_manager()
-        return tm.get(section, key, lang) or key
-    except Exception as e:
-        print(f"Translation error: {e}")
-        return key
-
 def render_simple_sidebar():
     """Render a consistent sidebar for all pages with full menu"""
     with st.sidebar:
@@ -204,7 +182,7 @@ def load_history():
         try:
             with open(HISTORY_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except:
+        except (json.JSONDecodeError, IOError):
             return []
     return []
 

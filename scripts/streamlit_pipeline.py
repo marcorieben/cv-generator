@@ -22,6 +22,7 @@ from scripts.generate_cv_feedback import generate_cv_feedback_json
 from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
 from scripts.visualize_results import generate_dashboard
+from scripts.utils.translations import load_translations, get_text as _get_text
 
 class StreamlitCVGenerator:
     def __init__(self, base_dir: str):
@@ -94,19 +95,10 @@ class StreamlitCVGenerator:
             language: Target language (de, en, fr)
         """
         # Load translations
-        trans_path = os.path.join(self.base_dir, "scripts", "translations.json")
-        translations = {}
-        try:
-            with open(trans_path, "r", encoding="utf-8") as f:
-                translations = json.load(f)
-        except:
-            pass
+        translations = load_translations()
 
         def get_text(section, key, lang="de"):
-            try:
-                return translations.get(section, {}).get(key, {}).get(lang, key)
-            except:
-                return key
+            return _get_text(translations, section, key, lang)
         
         # Set API Key
         if api_key:

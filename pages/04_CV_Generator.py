@@ -17,6 +17,7 @@ if parent_dir not in sys.path:
 
 from core.database.db import Database
 from core.database.translations import initialize_translations
+from core.utils.session import get_database, get_translations_manager, get_text
 from scripts.streamlit_pipeline import StreamlitCVGenerator
 from scripts.generate_angebot import generate_angebot_json
 from scripts.generate_angebot_word import generate_angebot_word
@@ -24,47 +25,20 @@ from scripts.generate_angebot_word import generate_angebot_word
 # Set current page for sidebar
 st.session_state.current_page = "pages/04_CV_Generator.py"
 
-# --- Import get_text and sidebar rendering from app ---
+# --- Import render_simple_sidebar from app ---
 try:
-    from app import get_text, render_simple_sidebar
+    from app import render_simple_sidebar
 except ImportError:
-    def get_text(section, key, lang="de"):
-        """Fallback if app import fails"""
-        return key
     def render_simple_sidebar():
         """Fallback if sidebar rendering fails"""
         pass
 
-# --- Helper Functions ---
-def get_translations_manager():
-    """Get or initialize translations manager"""
-    if "translations_manager" not in st.session_state:
-        db = get_database()
-        st.session_state.translations_manager = initialize_translations(db)
-    return st.session_state.translations_manager
 
+# --- Helper Functions ---
 def t(section, key, lang="de"):
     """Get translated text using database-backed translations"""
-    try:
-        tm = get_translations_manager()
-        return tm.get(section, key, lang) or key
-    except Exception as e:
-        print(f"Translation error: {e}")
-        return key
+    return get_text(section, key, lang)
 
-def get_text(section, key, lang=None):
-    """Safely retrieves translated text from database or fallback"""
-    if lang is None:
-        lang = st.session_state.get("language", "de")
-    return t(section, key, lang)
-
-def get_database():
-    """Get or create database instance"""
-    if "db_instance" not in st.session_state:
-        db_path = os.path.join(os.path.dirname(__file__), "..", "data", "cv_generator.db")
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        st.session_state.db_instance = Database(db_path)
-    return st.session_state.db_instance
 
 def reset_all_pipeline_states():
     """Resets all session state variables related to the pipeline dialog/view."""
@@ -79,7 +53,7 @@ def load_history():
         try:
             with open(HISTORY_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except:
+        except (json.JSONDecodeError, IOError):
             return []
     return []
 
@@ -190,7 +164,8 @@ def show_results_content(results, lang):
             filename = os.path.basename(results["cv_json"])
             parts = filename.split('_')
             if len(parts) >= 3: candidate_name = f"{parts[1]} {parts[2]}"
-        except: pass
+        except (IndexError, AttributeError):
+            pass
     
     model_used = results.get("model_name", os.environ.get("MODEL_NAME", "gpt-4o-mini"))
     st.caption(f"{get_text('ui', 'history_mode', lang)}: {results.get('mode', get_text('ui', 'history_unknown', lang))} | {get_text('ui', 'history_model', lang)}: {model_used}")
@@ -267,7 +242,8 @@ def show_results_content(results, lang):
                 if f.startswith("stellenprofil_") and f.endswith(".json"):
                     results["stellenprofil_json"] = os.path.join(output_dir, f)
                     break
-        except: pass
+        except OSError:
+            pass
 
     if not results.get("match_json") and results.get("cv_json"):
         output_dir = os.path.dirname(results["cv_json"])
@@ -276,7 +252,8 @@ def show_results_content(results, lang):
                 if f.startswith("Match_") and f.endswith(".json"):
                     results["match_json"] = os.path.join(output_dir, f)
                     break
-        except: pass
+        except OSError:
+            pass
 
     if results.get("stellenprofil_json") and os.path.exists(results["stellenprofil_json"]):
         st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)

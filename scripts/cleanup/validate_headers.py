@@ -19,7 +19,7 @@ def extract_header(filepath: str) -> str:
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()[:30]
             return ''.join(lines)
-    except:
+    except (OSError, IOError):
         return ""
 
 

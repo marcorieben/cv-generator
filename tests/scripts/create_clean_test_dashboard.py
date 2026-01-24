@@ -17,37 +17,33 @@ sys.path.append(os.path.dirname(__file__))
 
 from visualize_results import generate_dashboard
 
-def create_test_data():
+def create_clean_test_data():
     # Base paths
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    output_dir = os.path.join(base_dir, "output", "Test_Validation_20251228_120000")
+    output_dir = os.path.join(base_dir, "output", "Test_Clean_20251228_120500")
     os.makedirs(output_dir, exist_ok=True)
     
-    # Create a dummy CV JSON
+    # Create a dummy CV JSON (Clean)
     cv_data = {
-        "Vorname": "Test",
-        "Nachname": "User",
-        "Hauptrolle": {"Titel": "Developer", "Beschreibung": "Too short"},
+        "Vorname": "Max",
+        "Nachname": "Mustermann",
+        "Hauptrolle": {"Titel": "Senior Developer", "Beschreibung": "Erfahrener Entwickler mit Fokus auf Python und Cloud Technologien."},
         "Nationalität": "Schweiz",
-        "Ausbildung": "Master",
-        "Kurzprofil": "Ein Test Profil.",
-        "Fachwissen_und_Schwerpunkte": [],
+        "Ausbildung": "Master of Science",
+        "Kurzprofil": "Max Mustermann ist ein erfahrener Software Engineer...",
+        "Fachwissen_und_Schwerpunkte": [{"Kategorie": "Tech", "Inhalt": ["Python"]}],
         "Aus_und_Weiterbildung": [],
         "Trainings_und_Zertifizierungen": [],
-        "Sprachen": [{"Sprache": "Deutsch", "Level": "Unknown"}],
+        "Sprachen": [{"Sprache": "Deutsch", "Level": "Muttersprache"}],
         "Ausgewählte_Referenzprojekte": []
     }
     
-    cv_json_path = os.path.join(output_dir, "cv_test.json")
+    cv_json_path = os.path.join(output_dir, "cv_clean.json")
     with open(cv_json_path, "w", encoding="utf-8") as f:
         json.dump(cv_data, f, indent=2, ensure_ascii=False)
         
-    # Define warnings
-    warnings = [
-        "Hauptrolle.Beschreibung sollte 5-10 Wörter haben (aktuell 2)",
-        "Sprachen[0]: Ungültiges oder fehlendes Feld 'Level' (muss eine Zahl 1-5, Text wie 'Muttersprache' oder Kombination sein)",
-        "Fachwissen_und_Schwerpunkte: Liste ist leer"
-    ]
+    # NO WARNINGS
+    warnings = []
     
     # Generate Dashboard
     dashboard_path = generate_dashboard(
@@ -55,7 +51,9 @@ def create_test_data():
         match_json_path=None,
         feedback_json_path=None,
         output_dir=output_dir,
-        validation_warnings=warnings
+        validation_warnings=warnings,
+        model_name="TEST-MODEL-GPT-4",
+        pipeline_mode="Test Mode"
     )
     
     print(f"Dashboard created at: {dashboard_path}")
@@ -64,7 +62,7 @@ def create_test_data():
     history_path = os.path.join(base_dir, "output", "run_history.json")
     history_entry = {
         "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
-        "candidate_name": "Test User (Validation Warnings)",
+        "candidate_name": "Max Mustermann (Clean Test)",
         "mode": "Basic (Nur CV)",
         "word_path": None,
         "cv_json": cv_json_path,
@@ -80,7 +78,7 @@ def create_test_data():
         with open(history_path, "r", encoding="utf-8") as f:
             try:
                 history = json.load(f)
-            except:
+            except json.JSONDecodeError:
                 pass
     
     # Insert at beginning
@@ -92,4 +90,4 @@ def create_test_data():
     print("Run history updated.")
 
 if __name__ == "__main__":
-    create_test_data()
+    create_clean_test_data()

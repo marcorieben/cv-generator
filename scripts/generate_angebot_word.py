@@ -79,6 +79,12 @@ def abs_path(relative_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(script_dir, relative_path)
 
+try:
+    from scripts.utils.translations import load_translations, get_text
+except ImportError:
+    from utils.translations import load_translations, get_text
+
+
 def load_styles():
     """Loads styles from styles.json"""
     styles_path = abs_path("styles.json")
@@ -87,23 +93,6 @@ def load_styles():
             return json.load(f)
     return {}
 
-def load_translations():
-    """Lädt die Übersetzungen aus der translations.json Datei."""
-    translations_path = abs_path("translations.json")
-    if os.path.exists(translations_path):
-        try:
-            with open(translations_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            pass
-    return {}
-
-def get_text(translations, section, key, lang="de"):
-    """Holt einen übersetzten Text."""
-    try:
-        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
-    except:
-        return f"[{key}]"
 
 def add_page_number(run):
     fldChar1 = create_element('w:fldChar')
@@ -365,7 +354,7 @@ def generate_angebot_word(json_path, output_path, language="de"):
     # Heading 3 (Unterabschnitte)
     try:
         h3 = doc.styles['Heading 3']
-    except:
+    except KeyError:
         h3 = doc.styles.add_style('Heading 3', 1)
     
     h3.font.name = h2_cfg.get("font", "Aptos")

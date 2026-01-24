@@ -19,44 +19,25 @@ from core.database.db import Database
 from core.database.workflows import CandidateWorkflow
 from core.database.models import CandidateStatus, CandidateWorkflowState
 from core.database.translations import initialize_translations, t as get_translation
+from core.utils.session import get_database, get_translations_manager, get_text
+
 # Set current page for sidebar
 st.session_state.current_page = "pages/02_Kandidaten.py"
 
-# --- Import get_text and sidebar rendering from app ---
+# --- Import render_simple_sidebar from app ---
 try:
-    from app import get_text, render_simple_sidebar
+    from app import render_simple_sidebar
 except ImportError:
-    def get_text(section, key, lang="de"):
-        """Fallback if app import fails"""
-        return key
     def render_simple_sidebar():
         """Fallback if sidebar rendering fails"""
         pass
 
-# --- Helper Functions ---
-def get_translations_manager():
-    """Get or initialize translations manager"""
-    if "translations_manager" not in st.session_state:
-        db = get_database()
-        st.session_state.translations_manager = initialize_translations(db)
-    return st.session_state.translations_manager
 
+# --- Helper Functions ---
 def t(section, key, lang="de"):
     """Get translated text using database-backed translations"""
-    try:
-        tm = get_translations_manager()
-        return tm.get(section, key, lang) or key
-    except Exception as e:
-        print(f"⚠️ Translation error: {e}, falling back to key: {key}")
-        return key
+    return get_text(section, key, lang)
 
-def get_database():
-    """Get or create database instance"""
-    if "db_instance" not in st.session_state:
-        db_path = os.path.join(os.path.dirname(__file__), "..", "data", "cv_generator.db")
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        st.session_state.db_instance = Database(db_path)
-    return st.session_state.db_instance
 
 def get_workflow():
     """Get or create workflow instance"""

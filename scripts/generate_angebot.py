@@ -12,28 +12,17 @@ import json
 from openai import OpenAI
 from datetime import datetime
 
+try:
+    from scripts.utils.translations import load_translations, get_text
+except ImportError:
+    from utils.translations import load_translations, get_text
+
+
 def abs_path(relative_path):
     """Gibt den absoluten Pfad relativ zum Skript-Verzeichnis zurück"""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(script_dir, relative_path)
 
-def load_translations():
-    """Lädt die Übersetzungen aus der translations.json Datei."""
-    translations_path = abs_path("translations.json")
-    if os.path.exists(translations_path):
-        try:
-            with open(translations_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            pass
-    return {}
-
-def get_text(translations, section, key, lang="de"):
-    """Holt einen übersetzten Text."""
-    try:
-        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
-    except:
-        return f"[{key}]"
 
 def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path, output_path, schema_path=None, language='de'):
     """

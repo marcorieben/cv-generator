@@ -154,7 +154,7 @@ def analyze_file(path: str, config: CleanupConfig) -> FileAnalysis:
             created = ""
         if not last_updated:
             last_updated = ""
-    except:
+    except (ValueError, OSError, IOError):
         purpose, lifetime, created, last_updated = "", "", "", ""
     
     # Create initial analysis

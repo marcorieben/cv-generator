@@ -12,28 +12,11 @@ import json
 from openai import OpenAI
 from datetime import datetime
 
-def load_translations():
-    """Lädt die Übersetzungen aus der translations.json Datei."""
-    try:
-        paths = [
-            os.path.join(os.path.dirname(__file__), "translations.json"),
-            os.path.join("scripts", "translations.json"),
-            "translations.json"
-        ]
-        for path in paths:
-            if os.path.exists(path):
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-        return {}
-    except:
-        return {}
+try:
+    from scripts.utils.translations import load_translations, get_text
+except ImportError:
+    from utils.translations import load_translations, get_text
 
-def get_text(translations, section, key, lang="de"):
-    """Holt einen übersetzten Text."""
-    try:
-        return translations.get(section, {}).get(key, {}).get(lang, f"[{key}]")
-    except:
-        return f"[{key}]"
 
 def normalize_matching_values(data, language="de"):
     """

@@ -15,25 +15,7 @@ from pypdf import PdfReader
 from dotenv import load_dotenv
 import re
 
-
-def get_text(translations, section, key, lang="de"):
-    """Helper to get translated text from the dictionary."""
-    try:
-        return translations.get(section, {}).get(key, {}).get(lang, key)
-    except:
-        return key
-
-
-def load_translations():
-    """Loads translations from scripts/translations.json."""
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    trans_path = os.path.join(base_dir, "scripts", "translations.json")
-    try:
-        with open(trans_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"⚠️ Warning: Could not load translations: {e}")
-        return {}
+from scripts.utils.translations import load_translations, get_text
 
 
 def normalize_date_format(date_str):
