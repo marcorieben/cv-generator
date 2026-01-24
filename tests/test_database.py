@@ -1,7 +1,12 @@
 """
-Tests for database models and operations
-"""
+Module description
 
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
+"""
 import pytest
 import tempfile
 import os

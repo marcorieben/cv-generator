@@ -1,8 +1,12 @@
 """
-PDF to JSON Converter using OpenAI API
-Converts CV PDFs to structured JSON using the defined schema
-"""
+Module description
 
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2025-12-17
+Last Updated: 2026-01-24
+"""
 import os
 import json
 import sys

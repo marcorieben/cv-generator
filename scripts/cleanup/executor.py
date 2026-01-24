@@ -1,9 +1,12 @@
 """
-Cleanup Executor
+Module description
 
-Orchestrates the cleanup analysis and optional apply modes.
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
 """
-
 import os
 import json
 from datetime import datetime
@@ -24,19 +27,28 @@ from scripts.cleanup.classify import (
 )
 from scripts.cleanup.decisions import apply_decision_rules
 from scripts.cleanup.reports import save_reports
+from scripts.cleanup.dependencies import find_references_for_file
+from scripts.cleanup.file_headers import extract_header_metadata, write_file_header
 
 
 def scan_project_files(exclude_dirs: Optional[List[str]] = None) -> List[str]:
     """
-    Scan entire project directory for files to analyze.
+    Scan project directories that are meaningful for cleanup.
+    
+    Includes:
+    - scripts/        (all Python modules)
+    - core/           (core functionality)
+    - tests/          (test files)
+    - docs/           (documentation)
+    - Root level files: *.py, *.json, *.yaml, *.bat, *.cmd, *.md, *.txt
     
     Excludes:
-    - .git
-    - .venv
-    - __pycache__
-    - .pytest_cache
-    - htmlcov
-    - node_modules
+    - input/          (user input data)
+    - output/         (generated files)
+    - .git, .venv, __pycache__, .pytest_cache, htmlcov
+    - node_modules, .eggs
+    - .github/workflows (CI/CD - auto-generated)
+    - cleanup/runs/ (cleanup history)
     
     Args:
         exclude_dirs: Additional directories to exclude
@@ -46,23 +58,69 @@ def scan_project_files(exclude_dirs: Optional[List[str]] = None) -> List[str]:
     """
     default_excludes = {
         '.git', '.venv', '__pycache__', '.pytest_cache',
-        'htmlcov', 'node_modules', '.eggs', '*.egg-info'
+        'htmlcov', 'node_modules', '.eggs', '*.egg-info',
+        '.github/workflows',  # CI/CD automation
+        'cleanup/runs',  # Cleanup history
+        'output',  # Generated output
+        'input',  # User input data
     }
     
     if exclude_dirs:
         default_excludes.update(exclude_dirs)
     
+    # Directories to include in cleanup scan
+    whitelist_dirs = {
+        'scripts',
+        'core',
+        'tests',
+        'docs',
+        '.github',
+        '.streamlit',
+        '.devcontainer',
+        '.vscode',
+    }
+    
+    # Root level file extensions to include
+    root_extensions = {'.py', '.json', '.yaml', '.yml', '.bat', '.cmd', '.md', '.txt', '.ini'}
+    
     files = []
     project_root = Path(__file__).parent.parent.parent  # cv_generator root
     
     for root, dirs, filenames in os.walk(str(project_root)):
-        # Filter out excluded directories
-        dirs[:] = [d for d in dirs if d not in default_excludes and not d.endswith('.egg-info')]
+        # Get relative directory path
+        rel_dir = Path(root).relative_to(project_root)
+        rel_dir_str = str(rel_dir).lower()
         
-        for filename in filenames:
-            filepath = Path(root) / filename
-            rel_path = filepath.relative_to(project_root)
-            files.append(str(rel_path).replace('\\', '/'))
+        # Check if directory is excluded
+        if any(exc in rel_dir_str for exc in default_excludes):
+            dirs[:] = []  # Don't descend
+            continue
+        
+        # Check if directory is whitelisted (or is root)
+        is_root = str(rel_dir) == '.'
+        is_whitelisted = (
+            is_root or  # Root directory - with selective extensions
+            any(
+                rel_dir_str.startswith(wl.lower()) or
+                rel_dir_str == wl.lower()
+                for wl in whitelist_dirs
+            )
+        )
+        
+        if is_whitelisted:
+            for filename in filenames:
+                filepath = Path(root) / filename
+                rel_path = filepath.relative_to(project_root)
+                
+                # For root directory, only include specific file extensions
+                if is_root:
+                    if Path(filename).suffix.lower() not in root_extensions:
+                        continue
+                
+                files.append(str(rel_path).replace('\\', '/'))
+        else:
+            # Don't descend into non-whitelisted directories
+            dirs[:] = []
     
     return files
 
@@ -85,6 +143,20 @@ def analyze_file(path: str, config: CleanupConfig) -> FileAnalysis:
     
     size_kb = get_file_size_kb(path)
     
+    # Extract purpose, lifetime, dates from file header
+    try:
+        purpose, lifetime, category_from_header, created, last_updated = extract_header_metadata(path)
+        if not purpose:
+            purpose = ""
+        if not lifetime:
+            lifetime = ""
+        if not created:
+            created = ""
+        if not last_updated:
+            last_updated = ""
+    except:
+        purpose, lifetime, created, last_updated = "", "", "", ""
+    
     # Create initial analysis
     analysis = FileAnalysis(
         file_path=path,
@@ -94,6 +166,10 @@ def analyze_file(path: str, config: CleanupConfig) -> FileAnalysis:
         decision=DecisionType.KEEP_REQUIRED,  # Default, will be overridden
         confidence=0.0,
         reasoning=[],
+        file_purpose=purpose,
+        expected_lifetime=lifetime,
+        created_date=created,
+        last_updated_date=last_updated,
     )
     
     # Apply decision rules
@@ -133,16 +209,19 @@ def run_cleanup(
     
     if verbose:
         print("")
-        print("=" * 60)
-        print("🧹 CLEANUP SYSTEM")
-        print("=" * 60)
+        print("=" * 70)
+        print("🧹 CLEANUP SYSTEM - Enhanced Analysis")
+        print("=" * 70)
         print(f"Mode: {mode.upper()}")
         print(f"Run ID: {run_id}")
         print("")
     
-    # Scan all project files
+    # Scan meaningful project directories
     if verbose:
-        print("📂 Scanning project files...")
+        print("📂 Scanning meaningful project directories...")
+        print("   Including: scripts/, core/, tests/, docs/")
+        print("   Root level: *.py, *.json, *.yaml, *.bat, *.cmd, *.md, *.txt")
+        print("   Excluding: .git, .venv, __pycache__, .pytest_cache, htmlcov, cleanup/runs, input/, output/")
     
     files = scan_project_files()
     
@@ -150,25 +229,83 @@ def run_cleanup(
         print(f"✅ Found {len(files)} files to analyze")
         print("")
     
-    # Analyze each file
+    # Analyze each file with detailed progress
     if verbose:
         print("🔍 Analyzing files...")
+        print("")
     
     analyses = []
+    project_root = Path(__file__).parent.parent.parent
+    
+    # Category stats for progress display
+    category_stats = {cat: 0 for cat in FileCategory}
+    decision_stats = {dec: 0 for dec in DecisionType}
+    unclassified = []
+    
     for i, filepath in enumerate(files):
-        if verbose and i % 50 == 0:
-            print(f"   Progress: {i}/{len(files)}")
+        # Detailed progress every 20 files or at specific intervals
+        if verbose and (i % 20 == 0 or i == len(files) - 1):
+            percent = int((i / len(files)) * 100)
+            status_bar = "▓" * (percent // 5) + "░" * (20 - percent // 5)
+            print(f"   [{status_bar}] {percent:3d}% ({i+1:3d}/{len(files)}) ", end="")
+            
+            if len(unclassified) > 0:
+                print(f"⚠️  {len(unclassified)} unclassified", end="")
+            
+            print()
         
         try:
             analysis = analyze_file(filepath, config)
+            
+            # Track category and decision
+            category_stats[analysis.category] += 1
+            decision_stats[analysis.decision] += 1
+            
+            # Track unclassified files
+            if analysis.category == FileCategory.UNKNOWN:
+                unclassified.append(filepath)
+            
+            # Check for references in source code (with detailed context)
+            if analysis.decision == DecisionType.REVIEW_REQUIRED:
+                refs = find_references_for_file(filepath, str(project_root))
+                if refs:
+                    direct_refs = [r for r in refs if not r.is_indirect]
+                    indirect_refs = [r for r in refs if r.is_indirect]
+                    
+                    analysis.references = refs
+                    analysis.reasoning.append(
+                        f"Found {len(direct_refs)} direct + {len(indirect_refs)} indirect references"
+                    )
+                    
+                    # Build recommended action with file references
+                    ref_files = list(set([r.file_path for r in refs]))
+                    if ref_files:
+                        analysis.recommended_action = f"References found in: {', '.join(ref_files[:3])}" + (
+                            f" and {len(ref_files)-3} more" if len(ref_files) > 3 else ""
+                        )
+            
             analyses.append(analysis)
         except Exception as e:
-            if verbose:
+            if verbose and i % 20 == 0:
                 print(f"   ⚠️  Error analyzing {filepath}: {e}")
             continue
     
     if verbose:
+        print("")
         print(f"✅ Analyzed {len(analyses)} files")
+        print("")
+    
+    # Show unclassified files (UNKNOWN after classification)
+    unclassified = [f for f in analyses if f.category == FileCategory.UNKNOWN]
+    if unclassified and verbose:
+        print("⚠️  UNCLASSIFIED FILES (FileCategory.UNKNOWN)")
+        print(f"   {len(unclassified)} files could not be automatically classified:")
+        for unc in unclassified[:10]:
+            print(f"      • {unc.file_path} ({Path(unc.file_path).suffix})")
+
+
+        if len(unclassified) > 10:
+            print(f"      • ... and {len(unclassified) - 10} more")
         print("")
     
     # Create report
@@ -180,15 +317,26 @@ def run_cleanup(
         files=analyses,
     )
     
-    # Print summary
+    # Print detailed summary with category breakdown
     if verbose:
         summary = report.summary
         print("📊 SUMMARY")
-        print("-" * 60)
-        print(f"DELETE_SAFE:     {summary['delete_safe']:4d} files")
-        print(f"KEEP_REQUIRED:   {summary['keep_required']:4d} files")
-        print(f"REVIEW_REQUIRED: {summary['review_required']:4d} files")
-        print("-" * 60)
+        print("=" * 70)
+        print(f"DELETE_SAFE:     {summary['delete_safe']:4d} files 🗑️ ")
+        print(f"KEEP_REQUIRED:   {summary['keep_required']:4d} files 🔒")
+        print(f"REVIEW_REQUIRED: {summary['review_required']:4d} files ⚠️ ")
+        print("=" * 70)
+        
+        # Category breakdown
+        print("")
+        print("📂 CATEGORY BREAKDOWN")
+        print("-" * 70)
+        for cat in sorted(FileCategory, key=lambda x: category_stats[x], reverse=True):
+            count = category_stats[cat]
+            if count > 0:
+                percent = int((count / len(analyses)) * 100)
+                print(f"  {cat.value:25s} {count:4d} ({percent:3d}%)")
+        
         print("")
     
     # Save reports
@@ -222,16 +370,17 @@ def run_cleanup(
             deleted_count = 0
             deleted_log = []
             
-            for analysis in delete_safe:
+            for idx, analysis in enumerate(delete_safe):
+                if verbose:
+                    percent = int(((idx + 1) / len(delete_safe)) * 100)
+                    print(f"   [{percent:3d}%] 🗑️  {analysis.file_path}")
+                
                 try:
                     if os.path.exists(analysis.file_path):
                         size_kb = get_file_size_kb(analysis.file_path)
                         os.remove(analysis.file_path)
                         deleted_count += 1
                         deleted_log.append(f"{analysis.file_path} ({size_kb:.1f} KB)")
-                        
-                        if verbose:
-                            print(f"   🗑️  {analysis.file_path}")
                 except Exception as e:
                     if verbose:
                         print(f"   ⚠️  Failed to delete {analysis.file_path}: {e}")
@@ -251,7 +400,33 @@ def run_cleanup(
                 print("")
     
     if verbose:
-        print("=" * 60)
+        print("=" * 70)
+        print("")
+        print("💾 WRITING FILE HEADERS")
+        print("   Adding Purpose, Lifetime, Created, Last Updated, and Category metadata...")
+        print("")
+    
+    # Write headers to files with valid metadata
+    headers_written = 0
+    for analysis in analyses:
+        # Only update text files with proper metadata
+        if (analysis.file_purpose or analysis.expected_lifetime) and \
+           Path(analysis.file_path).suffix in ['.py', '.ts', '.js', '.sh']:
+            
+            purpose = analysis.file_purpose or "TODO: Add purpose"
+            lifetime = analysis.expected_lifetime or "permanent"
+            created = analysis.created_date or ""
+            last_updated = analysis.last_updated_date or ""
+            
+            if write_file_header(analysis.file_path, purpose, lifetime, analysis.category, created, last_updated):
+                headers_written += 1
+    
+    if verbose and headers_written > 0:
+        print(f"✅ Updated {headers_written} file headers with metadata")
+        print("")
+    
+    if verbose:
+        print("=" * 70)
         print("")
     
     return report

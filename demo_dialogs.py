@@ -1,8 +1,12 @@
 """
-Demo script to showcase all modern dialog styles
-Run this to preview the new corporate-styled dialogs
-"""
+Module description
 
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-14
+Last Updated: 2026-01-24
+"""
 from scripts.dialogs import (
     show_success, show_error, show_warning, ask_yes_no,
     select_pdf_file, select_json_file, ModernDialog

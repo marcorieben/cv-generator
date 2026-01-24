@@ -1,28 +1,72 @@
 """
-Classification Engine
+Module description
 
-Assigns each file to one of 10 categories based on path and filename patterns.
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
 """
-
 import os
+import re
 from pathlib import Path
 from scripts.cleanup.models import FileCategory
+
+
+def get_category_from_header(path: str) -> FileCategory:
+    """
+    Try to extract Category from file header.
+    
+    Looks for: Category: SOURCE_CODE (or other FileCategory values)
+    
+    Args:
+        path: File path
+        
+    Returns:
+        FileCategory if found in header, else FileCategory.UNKNOWN
+    """
+    try:
+        # Only check text files
+        if not Path(path).suffix in ['.py', '.ts', '.js', '.sh', '.bat', '.cmd']:
+            return FileCategory.UNKNOWN
+        
+        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()[:30]
+            header = ''.join(lines)
+        
+        # Look for Category: in header
+        match = re.search(r'Category[:\s=]+([A-Z_]+)', header)
+        if match:
+            category_str = match.group(1).strip()
+            # Try to match to FileCategory
+            for cat in FileCategory:
+                if cat.value == category_str:
+                    return cat
+    
+    except Exception:
+        pass
+    
+    return FileCategory.UNKNOWN
 
 
 def classify_file(path: str) -> FileCategory:
     """
     Classify a file into one of 10 categories.
     
+    Priority:
+    1. Check file header for pre-classified metadata
+    2. Apply pattern-based rules
+    
     Rules applied in order:
     1. SOURCE_CODE: .py, .ts, .js, .md (not in docs/)
-    2. CONFIG: .yaml, .json, .env*, .gitignore in root/config areas
+    2. CONFIG: .yaml, .json, .toml, .ini, .conf, .cfg files
     3. PROMPT: in /prompts/ or _prompt.txt files
-    4. INPUT_DATA: in /input/ or /data/input/
+    4. INPUT_DATA: files in /input/ or document formats
     5. INTERMEDIATE_ARTIFACT: in /data/intermediate/ or /tmp/
-    6. GENERATED_OUTPUT: in /output/ with matching template
-    7. LOG_FILE: .log or in /logs/
-    8. TEMP_FILE: .tmp, .bak, .cache, .pyc, .coverage
-    9. EXPERIMENT: _experiment_, _test_, _demo_ in name
+    6. GENERATED_OUTPUT: in /output/ directory
+    7. LOG_FILE: .log files or in /logs/
+    8. TEMP_FILE: .tmp, .bak, .cache, .pyc, etc.
+    9. EXPERIMENT: experimental/test/demo markers
     10. Default: UNKNOWN
     
     Args:
@@ -31,6 +75,12 @@ def classify_file(path: str) -> FileCategory:
     Returns:
         FileCategory: Assigned category
     """
+    # First check header for pre-classified metadata
+    header_category = get_category_from_header(path)
+    if header_category != FileCategory.UNKNOWN:
+        return header_category
+    
+    # Fall back to pattern-based classification
     path_lower = path.lower()
     path_obj = Path(path)
     filename_lower = path_obj.name.lower()
@@ -47,10 +97,10 @@ def classify_file(path: str) -> FileCategory:
     if filename_lower == ".gitignore":
         return FileCategory.CONFIG
     
-    # Special case: *.bat and *.cmd in root are often runners/scripts
-    if path_obj.suffix in ['.bat', '.cmd'] and path_obj.parent.name == '':
-        # Root-level batch files - these are utility scripts
-        return FileCategory.PROMPT  # Treat as utility/runner scripts
+    # Special case: *.bat and *.cmd in root or cleanup/ are runners/scripts
+    if path_obj.suffix in ['.bat', '.cmd']:
+        # Batch files - treat as utility/runner scripts (PROMPT category)
+        return FileCategory.PROMPT
     
     # Special case: requirements*.txt is config
     if filename_lower.startswith('requirements') and path_obj.suffix == '.txt':
@@ -61,13 +111,21 @@ def classify_file(path: str) -> FileCategory:
         if 'docs/' not in path_lower and 'docs\\' not in path_lower:
             return FileCategory.SOURCE_CODE
     
-    # CONFIG: YAML and JSON in root or config directories
-    if path_obj.suffix in ['.yaml', '.yml', '.json']:
-        if any(p in path_lower for p in ['config', 'settings']):
-            return FileCategory.CONFIG
-        # Root-level config files
-        if path_obj.parent.name == '':  # Root directory
-            return FileCategory.CONFIG
+    # CONFIG: YAML, JSON, TOML, INI, and other config formats
+    config_extensions = ['.yaml', '.yml', '.json', '.toml', '.ini', '.conf', '.cfg']
+    if path_obj.suffix in config_extensions:
+        return FileCategory.CONFIG
+    
+    # CONFIG: Common config files by name
+    config_files = ['config', 'settings', 'pytest.ini', 'setup.cfg', 'pyproject.toml', 
+                    'devcontainer.json', 'tasks.json', 'launch.json', '.gitignore',
+                    '.dockerignore', '.editorconfig', 'tox.ini', '.gitkeep', '.keep']
+    if any(cf in filename_lower for cf in config_files):
+        return FileCategory.CONFIG
+    
+    # CONFIG: Dotfiles in config/settings directories
+    if filename_lower.startswith('.') and any(x in path_lower for x in ['.streamlit', '.vscode', '.devcontainer']):
+        return FileCategory.CONFIG
     
     # PROMPT: Files in /prompts/ or named *_prompt.*
     if '/prompts/' in path_lower or '\\prompts\\' in path_lower:
@@ -75,10 +133,15 @@ def classify_file(path: str) -> FileCategory:
     if '_prompt' in path_lower:
         return FileCategory.PROMPT
     
-    # INPUT_DATA: Files in /input/ or /data/input/
+    # INPUT_DATA: Files in /input/ or /data/input/ or any data formats
     if '/input/' in path_lower or '\\input\\' in path_lower:
         return FileCategory.INPUT_DATA
     if '/data/input/' in path_lower or '\\data\\input\\' in path_lower:
+        return FileCategory.INPUT_DATA
+    
+    # INPUT_DATA: Document and archive formats
+    doc_extensions = ['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt', '.zip', '.rar', '.7z']
+    if path_obj.suffix.lower() in doc_extensions:
         return FileCategory.INPUT_DATA
     
     # INTERMEDIATE_ARTIFACT: /data/intermediate/ or /tmp/
@@ -98,14 +161,34 @@ def classify_file(path: str) -> FileCategory:
         return FileCategory.LOG_FILE
     
     # TEMP_FILE: Temporary file extensions
-    temp_extensions = ['.tmp', '.bak', '.cache', '.pyc', '.pyo', '.swp', '.coverage']
+    temp_extensions = ['.tmp', '.bak', '.backup', '.cache', '.pyc', '.pyo', '.swp', '.coverage']
     if path_obj.suffix in temp_extensions:
         return FileCategory.TEMP_FILE
     
+    # TEMP_FILE: Backup and temporary file markers
+    backup_markers = ['.bak', '.backup', '.old', '.orig', '~', '.tmp', '.temp']
+    if any(path_lower.endswith(marker) for marker in backup_markers):
+        return FileCategory.TEMP_FILE
+    
     # EXPERIMENT: Files with experiment/test/demo markers in name
-    experiment_markers = ['_experiment_', '_test_', '_demo_', '_scratch_']
+    experiment_markers = ['_experiment_', '_test_', '_demo_', '_scratch_', '_backup_', 
+                         '_old_', 'test_', '_archive']
     if any(marker in path_lower for marker in experiment_markers):
         return FileCategory.EXPERIMENT
+    
+    # DOCUMENTATION: .md and .txt files (except code samples)
+    if path_obj.suffix in ['.md', '.txt']:
+        # But not if it's source code markdown
+        if 'docs/' in path_lower or '\\docs\\' in path_lower:
+            return FileCategory.SOURCE_CODE  # Documentation files
+        if path_obj.suffix == '.txt':
+            # Check if it's config-like or data-like
+            if any(x in filename_lower for x in ['changelog', 'readme', 'license', 'todo', 'notes']):
+                return FileCategory.SOURCE_CODE
+            if any(x in path_lower for x in ['log', 'output', 'input', 'test']):
+                if 'test_output' in filename_lower:
+                    return FileCategory.EXPERIMENT  # Test output files
+            return FileCategory.SOURCE_CODE  # Default .txt to SOURCE_CODE
     
     # Special case: .html files in /htmlcov/ are generated test coverage
     if '/htmlcov/' in path_lower or '\\htmlcov\\' in path_lower:

@@ -1,8 +1,12 @@
 """
-Workflow management classes for job profiles and candidates
-Handles state transitions, validation, and audit logging
-"""
+Module description
 
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
+"""
 from typing import Optional, List, Tuple
 from datetime import datetime
 from enum import Enum

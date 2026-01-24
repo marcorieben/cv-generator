@@ -1,6 +1,11 @@
 """
-Tests für Dialog-Grössen und Sichtbarkeit
-Stellt sicher, dass alle Dialog-Elemente sichtbar sind
+Module description
+
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2025-12-17
+Last Updated: 2026-01-24
 """
 import pytest
 from unittest.mock import patch, MagicMock

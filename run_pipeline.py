@@ -1,12 +1,12 @@
 """
-Unified CV Generation Pipeline (Wrapper)
-Delegiert an die neue Class-based Implementation in scripts/pipeline.py
+Module description
 
-Usage:
-    python run_pipeline.py                     # Mit Dialog
-    python run_pipeline.py path/to/file.pdf    # Direkt mit PDF
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2025-12-17
+Last Updated: 2026-01-24
 """
-
 import sys
 import os
 

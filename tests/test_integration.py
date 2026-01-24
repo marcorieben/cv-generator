@@ -1,6 +1,11 @@
 """
-Integration Tests für direkte Script-Ausführung
-Testet, dass Entry Points ohne Import-Fehler starten
+Module description
+
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2025-12-17
+Last Updated: 2026-01-24
 """
 import subprocess
 import sys

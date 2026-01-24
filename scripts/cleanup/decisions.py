@@ -1,12 +1,12 @@
 """
-Decision Rules Engine
+Module description
 
-Applies decision logic to each FileAnalysis to determine:
-- DELETE_SAFE: Can safely delete
-- KEEP_REQUIRED: Must keep
-- REVIEW_REQUIRED: Needs human review
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
 """
-
 from scripts.cleanup.models import FileAnalysis, DecisionType, FileCategory, CleanupConfig
 
 

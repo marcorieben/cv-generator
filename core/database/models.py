@@ -1,8 +1,12 @@
 """
-Database models for CV Generator
-Cloud-agnostic models compatible with SQLite, PostgreSQL, etc.
-"""
+Module description
 
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
+"""
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Any
 from datetime import datetime

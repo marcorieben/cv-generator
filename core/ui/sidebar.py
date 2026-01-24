@@ -1,8 +1,12 @@
 """
-Shared sidebar navigation for all pages
-Provides consistent menu structure across the application
-"""
+Module description
 
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
+"""
 import streamlit as st
 import os
 from pathlib import Path

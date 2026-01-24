@@ -1,26 +1,12 @@
 """
-Cleanup System Module
+Module description
 
-Safe, explainable file cleanup for the CV Generator project.
-Analyzes, classifies, and optionally deletes files with full traceability.
-
-Main exports:
-- FileCategory: Enum of 10 file categories
-- DecisionType: Enum of 3 decision types
-- FileAnalysis: Per-file analysis object
-- CleanupConfig: Configuration dataclass
-- run_cleanup(): Main cleanup orchestration function
-
-Usage:
-    from scripts.cleanup import run_cleanup, CleanupConfig
-    
-    # Analyze only (safe, no changes)
-    report = run_cleanup(mode="analyze")
-    
-    # Apply cleanup (requires confirmation)
-    report = run_cleanup(mode="apply")
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
 """
-
 from scripts.cleanup.models import (
     FileCategory,
     DecisionType,

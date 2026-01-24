@@ -1,9 +1,12 @@
 """
-Translations module for multilingual UI support
-Handles loading and caching translations from database
-Supports dynamic translation switching without app restart
-"""
+Module description
 
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
+"""
 import json
 from typing import Dict, Optional
 from pathlib import Path

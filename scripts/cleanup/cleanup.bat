@@ -1,3 +1,12 @@
+"""
+Module description
+
+Purpose: Analyzed as PROMPT
+Expected Lifetime: permanent
+Category: PROMPT
+Created: 2026-01-23
+Last Updated: 2026-01-24
+"""
 @echo off
 REM Cleanup System - Run via BAT file
 REM

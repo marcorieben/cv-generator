@@ -1,10 +1,12 @@
 """
-Data Models for Cleanup System
+Module description
 
-Defines the core enums, dataclasses, and structures used throughout
-the cleanup system.
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
 """
-
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
@@ -34,6 +36,19 @@ class DecisionType(str, Enum):
     REVIEW_REQUIRED = "REVIEW_REQUIRED"
 
 
+
+
+@dataclass
+class ReferenceInfo:
+    """Information about a file reference."""
+
+    file_path: str  # File that contains the reference
+    line_number: int  # Line number where reference occurs
+    context: str  # Code/text context around the reference
+    is_indirect: bool = False  # True if indirect (e.g., dynamic import)
+    reference_type: str = "direct"  # "direct", "import", "include", "call", etc.
+
+
 @dataclass
 class FileAnalysis:
     """Per-file analysis object with decision and reasoning."""
@@ -47,6 +62,11 @@ class FileAnalysis:
     reasoning: List[str] = field(default_factory=list)  # Why this decision
     risk_assessment: str = ""  # What could break if deleted
     recommended_action: str = ""  # What to do next
+    references: List[ReferenceInfo] = field(default_factory=list)  # Where is this file referenced
+    file_purpose: str = ""  # Purpose extracted from header comment
+    expected_lifetime: str = ""  # "temporary" or "permanent" from header
+    created_date: str = ""  # Creation date from header (YYYY-MM-DD)
+    last_updated_date: str = ""  # Last update date from header (YYYY-MM-DD)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -60,6 +80,13 @@ class FileAnalysis:
             "reasoning": self.reasoning,
             "risk_assessment": self.risk_assessment,
             "recommended_action": self.recommended_action,
+            "file_purpose": self.file_purpose,
+            "expected_lifetime": self.expected_lifetime,
+            "created_date": self.created_date,
+            "last_updated_date": self.last_updated_date,
+            "reference_count": len(self.references),
+            "direct_references": len([r for r in self.references if not r.is_indirect]),
+            "indirect_references": len([r for r in self.references if r.is_indirect]),
         }
 
 

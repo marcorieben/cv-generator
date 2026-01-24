@@ -1,13 +1,12 @@
 """
-NEUE Sidebar Renderer - Vereinfacht für Option C (Custom HTML/CSS)
+Module description
 
-Nur die NEUEN Komponenten:
-1. Language Selection (HTML/CSS)
-2. Navigation Buttons (HTML/CSS)
-3. Expander + Components (Streamlit)
-4. User Info (Streamlit)
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
 """
-
 import streamlit as st
 import yaml
 import os

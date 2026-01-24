@@ -1,3 +1,12 @@
+"""
+Module description
+
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2025-12-24
+Last Updated: 2026-01-24
+"""
 import os
 import pytest
 import json

@@ -1,21 +1,12 @@
 """
-Database Consistency Tests
+Module description
 
-Tests to ensure:
-1. All database layer uses English (language-neutral)
-2. UI layer handles translations via translations.json
-3. Schema is consistent across all instances
-
-Design Principle:
-- Database Layer: English only (customer, description, status, etc)
-- UI Layer: Multilingual translations (German "Kunde", French "Client", etc)
-- Result: Single source of truth with flexible UI
-
-Example:
-  DB stores: status="draft", customer="Acme Corp", level="senior"
-  UI translates: "Entwurf", "Acme Corp", "Leitend" (German) or "Draft", "Acme Corp", "Senior" (English)
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
 """
-
 import pytest
 import sqlite3
 import json

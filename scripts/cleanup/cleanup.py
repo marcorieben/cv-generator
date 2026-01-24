@@ -1,15 +1,12 @@
 """
-Command-line interface for the cleanup system.
+Module description
 
-Usage:
-    python scripts/cleanup/cleanup.py              # Analyze mode (safe, no changes)
-    python scripts/cleanup/cleanup.py apply        # Apply mode (may delete files)
-    python scripts/cleanup/cleanup.py --help       # Show help
-    
-Or as Python module:
-    python -m scripts.cleanup.cleanup
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-23
+Last Updated: 2026-01-24
 """
-
 import sys
 from pathlib import Path
 
