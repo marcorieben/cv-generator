@@ -16,10 +16,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from scripts.generate_cv import generate_cv
-from scripts.generate_matchmaking import generate_matchmaking_json
-from scripts.generate_cv_feedback import generate_cv_feedback_json
-from scripts.visualize_results import generate_dashboard
+from scripts._2_extraction_cv.cv_word import generate_cv
+from scripts._3_analysis_matchmaking.matchmaking_generator import generate_matchmaking_json
+from scripts._4_analysis_feedback.feedback_generator import generate_cv_feedback_json
+from scripts._6_output_dashboard.dashboard_generator import generate_dashboard
 
 def update_test_data():
     """
@@ -29,18 +29,17 @@ def update_test_data():
     """
     print("🔄 Updating Test Data Artifacts...")
     
-    fixtures_dir = project_root / "tests" / "fixtures"
-    output_dir = fixtures_dir / "output"
-    output_dir.mkdir(exist_ok=True)
-    
-    # 1. Load Source Fixtures
-    cv_json_path = fixtures_dir / "valid_cv.json"
+    output_dir = project_root / "tests" / "fixtures" / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. Load Source Fixtures (neue Step-Ordner)
+    cv_json_path = project_root / "tests" / "2_extraction_cv" / "fixtures" / "valid_cv.json"
     if not cv_json_path.exists():
         print(f"❌ Error: {cv_json_path} not found!")
         return False
-        
+
     # Create a dummy job profile if needed
-    job_json_path = fixtures_dir / "valid_job.json"
+    job_json_path = project_root / "tests" / "1_extraction_jobprofile" / "fixtures" / "valid_job.json"
     if not job_json_path.exists():
         job_data = {
             "Titel": "Senior Developer",

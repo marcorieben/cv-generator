@@ -15,13 +15,14 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Dict, Any, Callable
 
 # Local imports
-from scripts.pdf_to_json import pdf_to_json
-from scripts.generate_cv import generate_cv, validate_json_structure
-from scripts.generate_matchmaking import generate_matchmaking_json
-from scripts.generate_cv_feedback import generate_cv_feedback_json
-from scripts.generate_angebot import generate_angebot_json
-from scripts.generate_angebot_word import generate_angebot_word
-from scripts.visualize_results import generate_dashboard
+from scripts._2_extraction_cv.cv_extractor import extract_cv
+from scripts._1_extraction_jobprofile.jobprofile_extractor import extract_jobprofile
+from scripts._2_extraction_cv.cv_word import generate_cv, validate_json_structure
+from scripts._3_analysis_matchmaking.matchmaking_generator import generate_matchmaking_json
+from scripts._4_analysis_feedback.feedback_generator import generate_cv_feedback_json
+from scripts._5_generation_offer.offer_generator import generate_angebot_json
+from scripts._5_generation_offer.offer_word import generate_angebot_word
+from scripts._6_output_dashboard.dashboard_generator import generate_dashboard
 from scripts.utils.translations import load_translations, get_text as _get_text
 
 class StreamlitCVGenerator:
@@ -131,11 +132,10 @@ class StreamlitCVGenerator:
             stellenprofil_data = None
             if job_file:
                 if progress_callback: progress_callback(10, get_text('ui', 'status_extract_job', language), "running")
-                job_schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
-                stellenprofil_data = pdf_to_json(job_file, None, job_schema_path, target_language=language)
+                stellenprofil_data = extract_jobprofile(job_file, output_path=None, target_language=language)
 
             if progress_callback: progress_callback(30, get_text('ui', 'status_extract_cv', language), "running")
-            cv_data = pdf_to_json(cv_file, output_path=None, job_profile_context=stellenprofil_data, target_language=language)
+            cv_data = extract_cv(cv_file, output_path=None, job_profile_context=stellenprofil_data, target_language=language)
             perf_times["PDF Extraction"] = round(time.time() - phase_1_start, 2)
             
             # Save JSONs
@@ -180,7 +180,7 @@ class StreamlitCVGenerator:
                 future_match = None
                 if stellenprofil_json_path:
                     matchmaking_json_path = os.path.join(output_dir, f"Match_{vorname}_{nachname}_{self.timestamp}.json")
-                    schema_path = os.path.join(self.base_dir, "scripts", "matchmaking_json_schema.json")
+                    schema_path = os.path.join(self.base_dir, "scripts", "_3_analysis_matchmaking", "matchmaking_schema.json")
                     future_match = executor.submit(
                         generate_matchmaking_json,
                         cv_json_path,
@@ -192,7 +192,7 @@ class StreamlitCVGenerator:
                 
                 # Feedback
                 feedback_json_path = os.path.join(output_dir, f"CV_Feedback_{vorname}_{nachname}_{self.timestamp}.json")
-                feedback_schema_path = os.path.join(self.base_dir, "scripts", "cv_feedback_json_schema.json")
+                feedback_schema_path = os.path.join(self.base_dir, "scripts", "_4_analysis_feedback", "feedback_schema.json")
                 future_feedback = executor.submit(
                     generate_cv_feedback_json,
                     cv_json_path,

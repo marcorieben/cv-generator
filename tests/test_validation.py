@@ -15,7 +15,7 @@ import pytest
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from scripts.generate_cv import validate_json_structure, is_valid_level, parse_level
+from scripts._2_extraction_cv.cv_word import validate_json_structure, is_valid_level, parse_level
 
 
 class TestValidateJsonStructure:
@@ -24,14 +24,14 @@ class TestValidateJsonStructure:
     @pytest.fixture
     def valid_cv_data(self):
         """Load valid CV fixture"""
-        fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'valid_cv.json')
+        fixture_path = os.path.join(os.path.dirname(__file__), '2_extraction_cv', 'fixtures', 'valid_cv.json')
         with open(fixture_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     
     @pytest.fixture
     def invalid_cv_data(self):
         """Load invalid CV fixture"""
-        fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'invalid_cv_missing_fields.json')
+        fixture_path = os.path.join(os.path.dirname(__file__), '2_extraction_cv', 'fixtures', 'invalid_cv_missing_fields.json')
         with open(fixture_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     

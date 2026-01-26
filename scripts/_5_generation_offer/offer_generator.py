@@ -19,9 +19,9 @@ except ImportError:
 
 
 def abs_path(relative_path):
-    """Gibt den absoluten Pfad relativ zum Skript-Verzeichnis zurück"""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(script_dir, relative_path)
+    """Gibt den absoluten Pfad relativ zum scripts/-Verzeichnis zurück"""
+    scripts_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(scripts_dir, relative_path)
 
 
 def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path, output_path, schema_path=None, language='de'):
@@ -31,7 +31,7 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
     translations = load_translations()
     # Load schema
     if not schema_path:
-        schema_path = abs_path("angebot_json_schema.json")
+        schema_path = os.path.join(os.path.dirname(__file__), "offer_schema.json")
         
     with open(schema_path, 'r', encoding='utf-8') as f:
         schema = json.load(f)

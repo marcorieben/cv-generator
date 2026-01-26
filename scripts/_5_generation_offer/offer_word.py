@@ -75,9 +75,10 @@ def get_default_validity_date():
     return end_of_month
 
 def abs_path(relative_path):
-    """Returns absolute path relative to this script's directory"""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(script_dir, relative_path)
+    """Returns absolute path relative to scripts/ directory"""
+    # scripts/ ist das Eltern-Verzeichnis von _5_generation_offer/
+    scripts_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(scripts_dir, relative_path)
 
 try:
     from scripts.utils.translations import load_translations, get_text

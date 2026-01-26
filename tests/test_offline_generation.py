@@ -16,8 +16,8 @@ from pathlib import Path
 # Add scripts directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from scripts.generate_cv import generate_cv
-from scripts.visualize_results import generate_dashboard
+from scripts._2_extraction_cv.cv_word import generate_cv
+from scripts._6_output_dashboard.dashboard_generator import generate_dashboard
 
 class TestOfflineGeneration:
     """

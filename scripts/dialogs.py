@@ -258,7 +258,7 @@ class SuccessDialog(ModernDialog):
 
         def generate_angebot_action():
             try:
-                from scripts.generate_angebot_word import generate_angebot_word
+                from scripts._5_generation_offer.offer_word import generate_angebot_word
                 output_path = self.angebot_json_path.replace(".json", ".docx")
                 generate_angebot_word(self.angebot_json_path, output_path)
                 

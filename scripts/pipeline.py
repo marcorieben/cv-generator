@@ -57,12 +57,13 @@ def check_dependencies():
 check_dependencies()
 
 # Local imports
-from scripts.pdf_to_json import pdf_to_json
-from scripts.generate_cv import generate_cv, validate_json_structure
-from scripts.generate_matchmaking import generate_matchmaking_json
-from scripts.generate_cv_feedback import generate_cv_feedback_json
-from scripts.generate_angebot import generate_angebot_json
-from scripts.visualize_results import generate_dashboard
+from scripts._2_extraction_cv.cv_extractor import extract_cv
+from scripts._1_extraction_jobprofile.jobprofile_extractor import extract_jobprofile
+from scripts._2_extraction_cv.cv_word import generate_cv, validate_json_structure
+from scripts._3_analysis_matchmaking.matchmaking_generator import generate_matchmaking_json
+from scripts._4_analysis_feedback.feedback_generator import generate_cv_feedback_json
+from scripts._5_generation_offer.offer_generator import generate_angebot_json
+from scripts._6_output_dashboard.dashboard_generator import generate_dashboard
 from scripts.dialogs import (
     show_success, show_error, show_warning, ask_yes_no,
     select_pdf_file, show_welcome, show_processing, ModernDialog
@@ -135,17 +136,15 @@ class CVPipeline:
         if job_profile_context:
             print("ℹ️  Mit Stellenprofil-Kontext für massgeschneiderte Extraktion")
         print("="*60)
-        return pdf_to_json(pdf_path, output_path=None, job_profile_context=job_profile_context, target_language=language)
+        return extract_cv(pdf_path, output_path=None, job_profile_context=job_profile_context, target_language=language)
 
     def process_job_profile_pdf(self, pdf_path: str, output_path: str, language: str = "de") -> Dict[str, Any]:
         print("\n" + "="*60)
         print("SCHRITT 1b: PDF -> JSON Konvertierung (Stellenprofil)")
         print("="*60)
-        schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
-        return pdf_to_json(
+        return extract_jobprofile(
             pdf_path,
             output_path=output_path,
-            schema_path=schema_path,
             target_language=language
         )
 
@@ -224,9 +223,8 @@ class CVPipeline:
                 print("\n" + "="*60)
                 print("SCHRITT 0: Stellenprofil extrahieren (für Kontext)")
                 print("="*60)
-                schema_path = os.path.join(self.base_dir, "scripts", "pdf_to_json_struktur_stellenprofil.json")
                 # Run synchronously to ensure we have data for CV extraction
-                stellenprofil_data = pdf_to_json(stellenprofil_path, None, schema_path, target_language=language)
+                stellenprofil_data = extract_jobprofile(stellenprofil_path, output_path=None, target_language=language)
                 self.update_progress(0, "completed")
             else:
                 self.update_progress(0, "skipped")
@@ -285,7 +283,7 @@ class CVPipeline:
                 future_match = None
                 if stellenprofil_json_path and os.path.exists(stellenprofil_json_path):
                     matchmaking_json_path = os.path.join(output_dir, f"Match_{vorname}_{nachname}_{self.timestamp}.json")
-                    schema_path = os.path.join(self.base_dir, "scripts", "matchmaking_json_schema.json")
+                    schema_path = os.path.join(self.base_dir, "scripts", "_3_analysis_matchmaking", "matchmaking_schema.json")
                     future_match = executor.submit(
                         generate_matchmaking_json,
                         cv_json_path,
@@ -297,7 +295,7 @@ class CVPipeline:
 
                 # 3. Feedback
                 feedback_json_path = os.path.join(output_dir, f"CV_Feedback_{vorname}_{nachname}_{self.timestamp}.json")
-                feedback_schema_path = os.path.join(self.base_dir, "scripts", "cv_feedback_json_schema.json")
+                feedback_schema_path = os.path.join(self.base_dir, "scripts", "_4_analysis_feedback", "feedback_schema.json")
                 future_feedback = executor.submit(
                     generate_cv_feedback_json,
                     cv_json_path,
@@ -332,7 +330,7 @@ class CVPipeline:
                 self.update_progress(6, "running") # Angebot
                 try:
                     angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
-                    schema_path = os.path.join(self.base_dir, "scripts", "angebot_json_schema.json")
+                    schema_path = os.path.join(self.base_dir, "scripts", "_5_generation_offer", "offer_schema.json")
                     generate_angebot_json(
                         cv_json_path,
                         stellenprofil_json_path,

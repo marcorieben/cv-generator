@@ -201,9 +201,10 @@ def is_valid_level(level):
 
 
 def abs_path(relative_path):
-    """Gibt den absoluten Pfad relativ zum Skript-Verzeichnis zurück"""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(script_dir, relative_path)
+    """Gibt den absoluten Pfad relativ zum scripts/-Verzeichnis zurück"""
+    # scripts/ ist das Eltern-Verzeichnis von _2_extraction_cv/
+    scripts_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(scripts_dir, relative_path)
 
 
 def remove_cell_borders(cell):

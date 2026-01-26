@@ -17,13 +17,13 @@ class TestDirectExecution:
     """Tests für direkte Ausführung von Scripts"""
     
     def test_generate_cv_imports_correctly(self):
-        """Test dass generate_cv.py ohne Import-Fehler startet"""
+        """Test dass cv_word.py ohne Import-Fehler startet"""
         # Test nur den Import, nicht die GUI
         code = """
 import sys
 sys.path.insert(0, '.')
 try:
-    from scripts import generate_cv
+    from scripts import generate_cv_word
     print('SUCCESS')
 except Exception as e:
     print(f'ERROR: {e}')
@@ -115,14 +115,15 @@ class TestModuleFunctions:
     
     def test_all_modules_have_required_functions(self):
         """Prüfe dass alle Module ihre Hauptfunktionen exportieren"""
-        from scripts.generate_cv import generate_cv, validate_json_structure
-        from scripts.pdf_to_json import pdf_to_json, extract_text_from_pdf
+        from scripts._2_extraction_cv.cv_word import generate_cv, validate_json_structure
+        from scripts._2_extraction_cv.cv_extractor import extract_cv
+        from scripts._shared.pdf_utils import extract_text_from_pdf
         from scripts.dialogs import show_success, show_error, select_json_file
         
         # Wenn dieser Test durchläuft, sind alle Imports valide
         assert callable(generate_cv)
         assert callable(validate_json_structure)
-        assert callable(pdf_to_json)
+        assert callable(extract_cv)
         assert callable(extract_text_from_pdf)
         assert callable(show_success)
         assert callable(show_error)
@@ -159,7 +160,7 @@ class TestPathResolution:
         import sys
         sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
         
-        from scripts.generate_cv import abs_path
+        from scripts._2_extraction_cv.cv_word import abs_path
         
         # abs_path sollte relativ zum scripts/ Verzeichnis auflösen
         styles_path = abs_path('styles.json')

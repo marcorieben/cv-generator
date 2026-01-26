@@ -19,8 +19,8 @@ from core.database.db import Database
 from core.database.translations import initialize_translations
 from core.utils.session import get_database, get_translations_manager, get_text
 from scripts.streamlit_pipeline import StreamlitCVGenerator
-from scripts.generate_angebot import generate_angebot_json
-from scripts.generate_angebot_word import generate_angebot_word
+from scripts._5_generation_offer.offer_generator import generate_angebot_json
+from scripts._5_generation_offer.offer_word import generate_angebot_word
 
 # Set current page for sidebar
 st.session_state.current_page = "pages/04_CV_Generator.py"
@@ -190,7 +190,7 @@ def show_results_content(results, lang):
                 if st.button("📄 " + get_text("ui", "generate_word_button", lang), use_container_width=True, key="generate_word_btn"):
                     with st.status(get_text("ui", "generating_word", lang), expanded=True) as status:
                         try:
-                            from scripts.visualize_results import generate_cv_word_on_demand
+                            from scripts._6_output_dashboard.dashboard_generator import generate_cv_word_on_demand
                             cv_json_path = results.get("cv_json_path") or results.get("cv_json")
                             output_dir = results.get("output_dir")
                             
@@ -284,7 +284,7 @@ def show_results_content(results, lang):
                                 base_name = os.path.basename(cv_json).replace("cv_", "").replace(".json", "")
                                 angebot_json_path = os.path.join(output_dir, f"Angebot_{base_name}.json")
                                 angebot_word_path = os.path.join(output_dir, f"Angebot_{base_name}.docx")
-                                schema_path = os.path.join(os.getcwd(), "scripts", "angebot_json_schema.json")
+                                schema_path = os.path.join(os.getcwd(), "scripts", "_5_generation_offer", "offer_schema.json")
                                 
                                 status.write("🧠 KI-Inhalte generieren...")
                                 generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path, language=lang)

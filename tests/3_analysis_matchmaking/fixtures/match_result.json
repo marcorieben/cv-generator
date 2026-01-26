@@ -1,0 +1,17 @@
+{
+  "match_score": {
+    "score_gesamt": 85,
+    "begruendung": "Gute \u00dcbereinstimmung"
+  },
+  "analyse": {
+    "starken": [
+      "Python"
+    ],
+    "schwachen": [
+      "Java"
+    ]
+  },
+  "empfehlungen": [
+    "Mehr Java lernen"
+  ]
+}

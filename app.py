@@ -16,8 +16,8 @@ import streamlit_authenticator as stauth
 from datetime import datetime
 from dotenv import load_dotenv
 from scripts.streamlit_pipeline import StreamlitCVGenerator
-from scripts.generate_angebot import generate_angebot_json
-from scripts.generate_angebot_word import generate_angebot_word
+from scripts._5_generation_offer.offer_generator import generate_angebot_json
+from scripts._5_generation_offer.offer_word import generate_angebot_word
 from core.database.db import Database
 from core.database.translations import initialize_translations
 from core.ui.sidebar_renderer import load_sidebar_config, render_sidebar

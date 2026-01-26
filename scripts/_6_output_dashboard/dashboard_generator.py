@@ -40,7 +40,7 @@ def generate_cv_word_on_demand(cv_json_path, output_dir, language="de"):
             raise ValueError(f"CV JSON Datei nicht gefunden: {cv_json_path}")
         
         # Import here to avoid circular imports
-        from scripts.generate_cv import generate_cv, validate_json_structure
+        from scripts._2_extraction_cv.cv_word import generate_cv, validate_json_structure
         
         print(f"📄 Starte Word-Generierung für: {os.path.basename(cv_json_path)}")
         
