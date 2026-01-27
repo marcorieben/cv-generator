@@ -198,10 +198,6 @@ def show_results_content(results, lang):
             else:
                 # Fallback message (shouldn't happen with F003)
                 st.info(get_text("ui", "cv_not_available", lang), icon="ℹ️")
-                            status.update(label=get_text('ui', 'error_label', lang), state="error")
-                            st.error(f"{get_text('ui', 'word_error', lang)}: {str(e)}")
-                            import traceback
-                            st.code(traceback.format_exc())
             
         with res_col2:
             # JSON Data Button
@@ -299,10 +295,8 @@ def show_results_content(results, lang):
                                 st.session_state.show_pipeline_dialog = True
                                 st.session_state.show_results_view = True
                                 status.update(label=get_text('ui', 'offer_ready_label', lang), state="complete")
-                                    st.success(get_text('ui', 'offer_success', lang))
-                                    st.rerun()
-                                else:
-                                    st.error(get_text('ui', 'file_not_found_on_disk', lang))
+                                st.success(get_text('ui', 'offer_success', lang))
+                                st.rerun()
                             except Exception as e:
                                 status.update(label=get_text('ui', 'error_label', lang), state="error")
                                 st.error(f"{get_text('ui', 'offer_error', lang)} {e}")

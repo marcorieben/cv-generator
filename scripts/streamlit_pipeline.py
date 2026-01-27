@@ -30,7 +30,8 @@ from core.storage.run_id import generate_run_id  # F003: Run ID generation
 class StreamlitCVGenerator:
     def __init__(self, base_dir: str):
         self.base_dir = base_dir
-        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.timestamp_dt = datetime.now()  # F003: Keep datetime object for run_id
+        self.timestamp = self.timestamp_dt.strftime("%Y%m%d_%H%M%S")  # String for file names
         self.workspace = None  # F003: Will be initialized with run_id
 
     def _update_styles(self, custom_styles, custom_logo_path):
@@ -176,7 +177,7 @@ class StreamlitCVGenerator:
             
             # F003: Initialize RunWorkspace with business-meaningful run_id
             jobprofile_title = stellenprofil_data.get("titel", "Unbekannte-Stelle") if stellenprofil_data else "Keine-Stelle"
-            run_id = generate_run_id(jobprofile_title, vorname, nachname, self.timestamp)
+            run_id = generate_run_id(jobprofile_title, vorname, nachname, self.timestamp_dt)
             self.workspace = RunWorkspace(run_id)
             
             # Generate CV Word document using bytes API
