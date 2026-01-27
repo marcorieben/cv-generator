@@ -5,7 +5,7 @@ Purpose: analyzed as source_code
 Expected Lifetime: permanent
 Category: SOURCE_CODE
 Created: 2025-12-24
-Last Updated: 2026-01-24
+Last Updated: 2026-01-27
 """
 import os
 import json
@@ -73,8 +73,27 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
                        cv_filename=None, job_filename=None, angebot_json_path=None,
                        language="de"):
     """
-    Generates a professional HTML dashboard visualizing the results of the CV processing,
-    matchmaking, and quality feedback.
+    Generates a professional HTML dashboard visualizing CV processing results.
+    
+    Args:
+        cv_json_path: Path to CV JSON file
+        match_json_path: Path to matchmaking JSON (optional)
+        feedback_json_path: Path to feedback JSON (optional)
+        output_dir: Output directory (used for relative paths in HTML)
+        validation_warnings: List of validation warnings
+        model_name: AI model name used
+        pipeline_mode: Pipeline mode ("Basic", "Full", etc.)
+        cv_filename: Original CV filename
+        job_filename: Original job profile filename
+        angebot_json_path: Path to offer JSON (optional)
+        language: Output language ("de", "en", "fr")
+        
+    Returns:
+        tuple: (html_bytes, filename) - HTML content as bytes and suggested filename
+        
+    Note:
+        F003: Storage Abstraction - Returns bytes for in-memory handling.
+        This function no longer writes to filesystem.
     """
     translations = load_translations()
     
@@ -954,12 +973,9 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     </html>
     """
 
-    # Save File
+    # F003: Generate filename suggestion
     filename = f"Dashboard_{vorname}_{nachname}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-    output_path = os.path.join(output_dir, filename)
     
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(html_content)
-        
-    print(f"✅ Dashboard generiert: {output_path}")
-    return output_path
+    # F003: Return HTML as bytes instead of writing to file
+    html_bytes = html_content.encode('utf-8')
+    return html_bytes, filename

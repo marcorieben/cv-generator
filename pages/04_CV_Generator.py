@@ -210,10 +210,17 @@ def show_results_content(results, lang):
                     st.download_button(get_text("ui", "json_data_btn", lang), f, os.path.basename(results["cv_json"]), "application/json", use_container_width=True)
                     
         with res_col3:
-            # Dashboard Button
-            if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
-                with open(results["dashboard_path"], "rb") as f:
-                    st.download_button(get_text("ui", "dashboard_btn", lang), f, os.path.basename(results["dashboard_path"]), "text/html", use_container_width=True)
+            # F003: Dashboard Button from bytes
+            dashboard_bytes = results.get("dashboard_bytes")
+            dashboard_filename = results.get("dashboard_filename", "Dashboard.html")
+            if dashboard_bytes:
+                st.download_button(
+                    get_text("ui", "dashboard_btn", lang), 
+                    dashboard_bytes, 
+                    dashboard_filename, 
+                    "text/html", 
+                    use_container_width=True
+                )
 
     if not results.get("stellenprofil_json") and results.get("cv_json"):
         output_dir = os.path.dirname(results["cv_json"])
@@ -309,10 +316,11 @@ def show_results_content(results, lang):
 
     st.markdown("<div style='margin-top: 40px; margin-bottom: 20px; border-top: 1px solid #ddd;'></div>", unsafe_allow_html=True)
 
-    if results.get("dashboard_path") and os.path.exists(results["dashboard_path"]):
-        with open(results["dashboard_path"], "r", encoding='utf-8') as f:
-            html_content = f.read()
-            st.components.v1.html(html_content, height=1200, scrolling=True)
+    # F003: Dashboard Preview from bytes
+    dashboard_bytes = results.get("dashboard_bytes")
+    if dashboard_bytes:
+        html_content = dashboard_bytes.decode('utf-8')
+        st.components.v1.html(html_content, height=1200, scrolling=True)
 
 # Helper function for custom upload UI
 def render_custom_uploader(label, key_prefix, file_type=["pdf"]):

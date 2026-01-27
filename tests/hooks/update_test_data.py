@@ -91,13 +91,18 @@ def update_test_data():
     # 5. Generate Dashboard
     print("   📊 Generating Dashboard...")
     try:
-        dashboard_path = generate_dashboard(
+        # F003: generate_dashboard now returns (bytes, filename) tuple
+        dashboard_bytes, dashboard_filename = generate_dashboard(
             cv_json_path=str(cv_json_path),
             match_json_path=str(match_json_path),
             feedback_json_path=str(feedback_json_path),
             output_dir=str(output_dir)
         )
-        print(f"      ✅ Created: {Path(dashboard_path).name}")
+        # Write bytes to file for test fixtures
+        dashboard_path = output_dir / dashboard_filename
+        with open(dashboard_path, 'wb') as f:
+            f.write(dashboard_bytes)
+        print(f"      ✅ Created: {dashboard_filename}")
     except Exception as e:
         print(f"      ❌ Failed: {e}")
         return False

@@ -64,17 +64,18 @@ class TestOfflineGeneration:
         match_json = next(test_data_dir.glob("Match_*.json"))
         feedback_json = next(test_data_dir.glob("CV_Feedback_*.json"))
         
-        # Run generation
-        dashboard_path = generate_dashboard(
+        # F003: generate_dashboard now returns (bytes, filename) tuple
+        dashboard_bytes, dashboard_filename = generate_dashboard(
             str(cv_json),
             str(match_json),
             str(feedback_json),
             str(output_dir)
         )
 
-        assert os.path.exists(dashboard_path)
-        assert os.path.getsize(dashboard_path) > 0
-        with open(dashboard_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-            assert "Dashboard" in content
-            assert "CV Analyse" in content
+        assert isinstance(dashboard_bytes, bytes)
+        assert len(dashboard_bytes) > 0
+        assert dashboard_filename.endswith(".html")
+        
+        content = dashboard_bytes.decode('utf-8')
+        assert "Dashboard" in content
+        assert "CV Analyse" in content

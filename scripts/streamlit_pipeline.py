@@ -254,7 +254,8 @@ class StreamlitCVGenerator:
             dashboard_start = time.time()
             if progress_callback: progress_callback(90, get_text('ui', 'status_dashboard', language), "running")
             
-            dashboard_path = generate_dashboard(
+            # F003: Generate Dashboard using bytes API
+            dashboard_bytes, dashboard_filename = generate_dashboard(
                 cv_json_path=cv_json_path,
                 match_json_path=matchmaking_json_path if matchmaking_json_path and os.path.exists(matchmaking_json_path) else None,
                 feedback_json_path=feedback_json_path,
@@ -267,7 +268,9 @@ class StreamlitCVGenerator:
                 angebot_json_path=angebot_json_path,
                 language=language
             )
-            results["dashboard_path"] = dashboard_path
+            self.workspace.save_primary(dashboard_filename, dashboard_bytes)
+            results["dashboard_bytes"] = dashboard_bytes
+            results["dashboard_filename"] = dashboard_filename
             perf_times["Dashboard Generation"] = round(time.time() - dashboard_start, 2)
             
             # Calculate total pipeline duration
