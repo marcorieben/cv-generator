@@ -357,7 +357,8 @@ class CVPipeline:
 
             # --- STEP 4: Dashboard ---
             self.update_progress(7, "running") # Dashboard
-            dashboard_path = generate_dashboard(
+            # F003: generate_dashboard now returns (bytes, filename) tuple
+            dashboard_bytes, dashboard_filename = generate_dashboard(
                 cv_json_path=cv_json_path,
                 match_json_path=matchmaking_json_path if stellenprofil_json_path and os.path.exists(stellenprofil_json_path) else None,
                 feedback_json_path=feedback_json_path,
@@ -369,6 +370,10 @@ class CVPipeline:
                 angebot_json_path=angebot_json_path,
                 language=language
             )
+            # Write bytes to file (legacy pipeline compatibility)
+            dashboard_path = os.path.join(output_dir, dashboard_filename)
+            with open(dashboard_path, 'wb') as f:
+                f.write(dashboard_bytes)
             self.update_progress(7, "completed")
 
             self.stop_processing_dialog()

@@ -46,7 +46,8 @@ def create_clean_test_data():
     warnings = []
     
     # Generate Dashboard
-    dashboard_path = generate_dashboard(
+    # F003: generate_dashboard now returns (bytes, filename) tuple
+    dashboard_bytes, dashboard_filename = generate_dashboard(
         cv_json_path=cv_json_path,
         match_json_path=None,
         feedback_json_path=None,
@@ -55,6 +56,10 @@ def create_clean_test_data():
         model_name="TEST-MODEL-GPT-4",
         pipeline_mode="Test Mode"
     )
+    # Write bytes to file
+    dashboard_path = output_dir / dashboard_filename
+    with open(dashboard_path, 'wb') as f:
+        f.write(dashboard_bytes)
     
     print(f"Dashboard created at: {dashboard_path}")
     
