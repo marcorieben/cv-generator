@@ -37,3 +37,4 @@
 2026-01-27 15:31:38 | FEATURE | Add generate_offer_bytes() for storage abstraction (F003)
 2026-01-27 15:36:42 | FEATURE | Integrate bytes-based generators into Streamlit pipeline (F003)
 2026-01-27 16:02:26 | FEATURE | Refactor Dashboard generator to bytes-based API (F003)
+2026-01-27 16:21:56 | BUGFIX | Update legacy pipeline and test scripts for Dashboard bytes API (F003)
