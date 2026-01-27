@@ -944,8 +944,241 @@ def add_header_with_logo(doc):
                 p_element.getparent().remove(p_element)
 
 
-def generate_cv(json_path, output_dir=None, interactive=True, language="de"):
+def _build_cv_document(data, language="de", translations=None, interactive=True):
+    """
+    Internal helper: Build CV document from JSON data.
+    
+    Args:
+        data: Parsed JSON data (dict)
+        language: Output language ("de", "en", "fr")
+        translations: Pre-loaded translations dict (optional, will load if None)
+        interactive: Whether to show validation warnings in dialogs
+        
+    Returns:
+        tuple: (Document object, firstname, lastname) or (None, None, None) if cancelled
+        
+    Purpose: Core CV document builder, separated for testability
+    Expected Lifetime: Stable
+    """
+    if translations is None:
+        translations = load_translations()
+    
+    # JSON-Struktur validieren
+    critical, info = validate_json_structure(data, language=language)
+    if (critical or info) and interactive:
+        # Build warning message with explanation
+        warning_msg = get_text(translations, 'validation', 'warning_msg', language)
+        
+        # Build details with better formatting and icons
+        details_parts = []
+        
+        if critical:
+            details_parts.append(get_text(translations, 'validation', 'critical_problems', language))
+            details_parts.append("─" * 40)
+            for err in critical:
+                # Add specific icons based on error type
+                if get_text(translations, 'validation', 'missing_field', language) in err:
+                    icon = "❌"
+                elif get_text(translations, 'validation', 'must_be_array', language) in err or get_text(translations, 'validation', 'must_be_object', language) in err:
+                    icon = "⚠️"
+                elif "Ungültig" in err or "ungültig" in err or "Invalid" in err or "non valide" in err:
+                    icon = "🚫"
+                else:
+                    icon = "🔴"
+                details_parts.append(f"  {icon} {err}")
+            
+        if info:
+            if critical:
+                details_parts.append("")  # Empty line separator
+            details_parts.append(get_text(translations, 'validation', 'info_problems', language))
+            details_parts.append("─" * 40)
+            for wrn in info:
+                # Add specific icons based on warning type
+                if "sollte" in wrn or "should" in wrn or "devrait" in wrn:
+                    icon = "💡"
+                elif "Typ" in wrn or "sein" in wrn or "string" in wrn or "chaîne" in wrn:
+                    icon = "ℹ️"
+                else:
+                    icon = "🟡"
+                details_parts.append(f"  {icon} {wrn}")
+        
+        details = "\n".join(details_parts)
+        
+        try:
+            proceed = show_warning(warning_msg, title=get_text(translations, 'validation', 'warning_title', language), details=details)
+            if not proceed:
+                print(f"❌ {get_text(translations, 'validation', 'user_cancelled', language)}")
+                return None, None, None
+        except Exception as e:
+            print(f"Warnung konnte nicht angezeigt werden: {e}")
+            print("Probleme gefunden:", "\n".join(critical + info))
+            user_input = input(get_text(translations, 'validation', 'proceed_anyway', language))
+            if user_input.lower() not in ['j', 'ja', 'y', 'yes', 'o', 'oui']:
+                return None, None, None
 
+    # Lade Template-Datei mit Header/Footer oder erstelle leeres Dokument
+    template_path = abs_path("../templates/cv_template.docx")
+    if os.path.exists(template_path):
+        doc = Document(template_path)
+        # Template bringt bereits Header, Footer und Seitenränder mit
+    else:
+        print(f"Warnung: {get_text(translations, 'validation', 'no_template', language)}")
+        doc = Document()
+        # Set page margins: 1.5 cm all sides and A4 size
+        from docx.shared import Cm
+        sections = doc.sections
+        for section in sections:
+            section.page_height = Cm(29.7)
+            section.page_width = Cm(21.0)
+            section.top_margin = Cm(1.5)
+            section.bottom_margin = Cm(1.5)
+            section.left_margin = Cm(1.5)
+            section.right_margin = Cm(1.5)
+        # Add header with logo
+        add_header_with_logo(doc)
+
+    firstname = str(data.get("Vorname", "Unbekannt"))
+    lastname = str(data.get("Nachname", "Unbekannt"))
+
+    # Remove default empty paragraph if it exists
+    if doc.paragraphs and not doc.paragraphs[0].text.strip():
+        p_element = doc.paragraphs[0]._element
+        p_element.getparent().remove(p_element)
+
+    # -----------------------------
+    # Überschrift 1 (Name)
+    # -----------------------------
+    add_heading_1(doc, f"{firstname} {lastname}")
+
+    # -----------------------------
+    # Basisinfos
+    # -----------------------------
+    hauptrolle = data.get("Hauptrolle", {})
+    rolle_desc = hauptrolle.get("Beschreibung", "") if isinstance(hauptrolle, dict) else str(hauptrolle)
+    add_basic_info_table(doc, 
+                         rolle_desc,
+                         str(data.get("Nationalität", "")),
+                         str(data.get("Ausbildung", "")),
+                         language=language,
+                         translations=translations)
+
+    # -----------------------------
+    # Kurzprofil
+    # -----------------------------
+    add_heading_1(doc, get_text(translations, 'cv', 'profile', language))
+    add_normal_text(doc, str(data.get("Kurzprofil", "")))
+
+    # -----------------------------
+    # Expertise & Fachwissen
+    # -----------------------------
+    add_heading_1(doc, get_text(translations, 'cv', 'expertise', language))
+    add_heading_2(doc, get_text(translations, 'cv', 'skills', language))
+    skills = data.get("Fachwissen_und_Schwerpunkte", [])
+    add_fachwissen_table(doc, skills)
+
+    # -----------------------------
+    # Aus- und Weiterbildung
+    # -----------------------------
+    add_heading_2(doc, get_text(translations, 'cv', 'education', language))
+    education = data.get("Aus_und_Weiterbildung", [])
+    add_education_table(doc, education)
+
+    # -----------------------------
+    # Trainings & Zertifizierungen
+    # -----------------------------
+    add_heading_2(doc, get_text(translations, 'cv', 'certifications', language))
+    trainings = data.get("Trainings_und_Zertifizierungen", [])
+    add_trainings_table(doc, trainings)
+
+    # -----------------------------
+    # Sprachen
+    # -----------------------------
+    add_heading_2(doc, get_text(translations, 'cv', 'languages', language))
+    sprachen = data.get("Sprachen", [])
+    add_sprachen_table(doc, sprachen, language=language, translations=translations)
+
+    # -----------------------------
+    # Referenzprojekte
+    # -----------------------------
+    doc.add_page_break()
+    add_heading_1(doc, get_text(translations, 'cv', 'projects', language))
+    referenzprojekte = data.get("Ausgewählte_Referenzprojekte", [])
+    for projekt in referenzprojekte:
+        add_referenzprojekt_section(doc, projekt, language=language, translations=translations)
+
+    # Vor dem Speichern: Highlight alle fehlenden Daten im gesamten Dokument
+    highlight_missing_data_in_document(doc, translations=translations, language=language)
+    
+    return doc, firstname, lastname
+
+
+def generate_cv_bytes(data: dict, language: str = "de") -> tuple[bytes, str]:
+    """
+    Generate CV Word document as bytes from JSON data.
+    
+    Args:
+        data: Parsed JSON CV data (dict)
+        language: Output language ("de", "en", "fr")
+        
+    Returns:
+        tuple: (document_bytes, filename_suggestion)
+            - document_bytes: Word document as bytes
+            - filename_suggestion: Suggested filename (e.g., "cv_Marco_Rieben.docx")
+            
+    Raises:
+        ValueError: If data validation fails
+        
+    Purpose: Storage-abstraction compatible CV generator (F003)
+    Expected Lifetime: Stable (new primary API)
+    """
+    from io import BytesIO
+    
+    translations = load_translations()
+    
+    # Non-interactive validation for bytes API
+    critical, info = validate_json_structure(data, language=language)
+    if critical:
+        error_details = "\n".join(critical)
+        raise ValueError(f"CV data validation failed:\n{error_details}")
+    
+    if info:
+        print("⚠️  CV data warnings:")
+        for warning in info:
+            print(f"   • {warning}")
+    
+    # Build document (non-interactive mode)
+    doc, firstname, lastname = _build_cv_document(data, language=language, translations=translations, interactive=False)
+    
+    if doc is None:
+        raise ValueError("Document generation failed")
+    
+    # Save to BytesIO instead of file
+    docx_bytes_io = BytesIO()
+    doc.save(docx_bytes_io)
+    docx_bytes = docx_bytes_io.getvalue()
+    
+    # Generate filename suggestion
+    filename = f"cv_{firstname}_{lastname}.docx"
+    
+    return docx_bytes, filename
+
+
+def generate_cv(json_path, output_dir=None, interactive=True, language="de"):
+    """
+    Generate CV Word document from JSON file (legacy API).
+    
+    Args:
+        json_path: Path to JSON file with CV data
+        output_dir: Output directory (optional, defaults to ../output/word/)
+        interactive: Show validation dialogs (default: True)
+        language: Output language ("de", "en", "fr")
+        
+    Returns:
+        str: Path to generated Word file or None if cancelled/failed
+        
+    Purpose: Legacy file-based CV generator (maintained for backwards compat)
+    Expected Lifetime: Deprecated (use generate_cv_bytes + RunWorkspace instead)
+    """
     json_path = abs_path(json_path)
     translations = load_translations()
 
@@ -953,7 +1186,25 @@ def generate_cv(json_path, output_dir=None, interactive=True, language="de"):
     with open(json_path, 'r', encoding="utf-8") as f:
         data = json.load(f)
     
-    # JSON-Struktur validieren
+    # Build document using helper
+    doc, firstname, lastname = _build_cv_document(data, language=language, translations=translations, interactive=interactive)
+    
+    if doc is None:
+        return None
+    
+    # -----------------------------
+    # Dateien speichern
+    # -----------------------------
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if output_dir is None:
+        # Fallback to old structure if not provided
+        out_docx = abs_path(f"../output/word/cv_{firstname}_{lastname}_{timestamp}.docx")
+    else:
+        out_docx = os.path.join(output_dir, f"cv_{firstname}_{lastname}_{timestamp}.docx")
+    
+    doc.save(out_docx)
+    print(f"✅ Word-Datei erstellt: {out_docx}")
+    return out_docx
     critical, info = validate_json_structure(data, language=language)
     if (critical or info) and interactive:
         # Build warning message with explanation
