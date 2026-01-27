@@ -41,6 +41,7 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+.claude/
 
 # Temporary files
 *.tmp
