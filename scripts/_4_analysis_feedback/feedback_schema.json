@@ -1,25 +1,8 @@
 {
-  "_extraction_control": {
-    "_hint_fields_note": "Alle Felder mit '_hint_' sind nur als Anweisung für die LLM zu verstehen und dürfen NICHT in der generierten JSON-Ausgabe erscheinen.",
-    "purpose": "Qualitäts- und Vollständigkeitsprüfung eines CVs basierend auf der definierten CV-Zielstruktur",
-    "missing_value_marker": "! bitte prüfen !",
-    "hard_rules": [
-      "Keine Inhalte erfinden oder ergänzen",
-      "Feedback ausschliesslich aus CV-JSON und Zielstruktur ableiten",
-      "Hinweise immer einem konkreten CV-Feld zuordnen",
-      "Struktur exakt einhalten"
-    ],
-    "feedback_types": [
-      "fehlend",
-      "unklar",
-      "regelverstoss",
-      "strukturabweichung"
-    ],
-    "quality_check": [
-      "Alle Hauptfelder der CV-Struktur geprüft",
-      "Feedback ist eindeutig und handlungsorientiert",
-      "Keine redundanten Hinweise"
-    ]
+  "_schema_info": {
+    "version": "2.0",
+    "type": "feedback",
+    "description": "Schema for CV feedback generation. Rules defined in feedback_prompt.py"
   },
   "feedback_metadata": {
     "cv_id": "",

@@ -1,26 +1,8 @@
 {
-  "_extraction_control": {
-    "_hint_fields_note": "Alle Felder mit '_hint_' sind nur als Anweisung für die LLM zu verstehen und dürfen NICHT in der generierten JSON-Ausgabe erscheinen.",
-    "purpose": "Vergleich und Matching zwischen Stellenprofil und Kandidaten-CV",
-    "missing_value_marker": "! bitte prüfen !",
-    "hard_rules": [
-      "Keine neuen Skills oder Anforderungen erfinden",
-      "Nur Stellenprofil-JSON und CV-JSON als Grundlage verwenden",
-      "Bewertung nachvollziehbar und erklärbar halten",
-      "Keine impliziten Annahmen treffen",
-      "Struktur exakt einhalten"
-    ],
-    "matching_principles": [
-      "Muss-Kriterien haben höchste Priorität",
-      "Nicht erfüllte Muss-Kriterien sind kritisch",
-      "Soll-Kriterien erhöhen den Match-Score",
-      "Fehlende Informationen explizit markieren"
-    ],
-    "quality_check": [
-      "Alle Muss-Kriterien bewertet",
-      "Alle Bewertungen begründet",
-      "Score konsistent zur Bewertung"
-    ]
+  "_schema_info": {
+    "version": "2.0",
+    "type": "matchmaking",
+    "description": "Schema for matchmaking analysis. Rules defined in matchmaking_prompt.py"
   },
   "match_metadata": {
     "stellenprofil_vorhanden": "",

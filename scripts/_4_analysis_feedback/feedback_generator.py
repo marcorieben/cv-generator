@@ -17,6 +17,11 @@ try:
 except ImportError:
     from utils.translations import load_translations, get_text
 
+from scripts._4_analysis_feedback.feedback_prompt import (
+    build_feedback_system_prompt,
+    build_feedback_user_prompt,
+)
+
 
 def generate_cv_feedback_json(cv_json_path, output_path, schema_path, stellenprofil_json_path=None, language='de'):
     """
@@ -35,24 +40,9 @@ def generate_cv_feedback_json(cv_json_path, output_path, schema_path, stellenpro
         with open(stellenprofil_json_path, 'r', encoding='utf-8') as f:
             stellenprofil_data = json.load(f)
 
-    # Prepare prompt for OpenAI
-    language_map = {
-        'de': 'Deutsch (Schweizer Rechtschreibung)',
-        'en': 'English',
-        'fr': 'Français'
-    }
-    target_language = language_map.get(language, language)
-
-    prompt_template = get_text(translations, 'system', 'feedback_prompt', language)
-    system_prompt = prompt_template.replace("{target_language}", target_language) + "\n" + (
-        "Schema (nur als Vorgabe, nicht ausgeben):\n" +
-        json.dumps(schema, ensure_ascii=False, indent=2)
-    )
-    user_prompt = (
-        "CV JSON:\n" + json.dumps(cv_data, ensure_ascii=False, indent=2)
-    )
-    if stellenprofil_data:
-        user_prompt += "\n\nStellenprofil JSON:\n" + json.dumps(stellenprofil_data, ensure_ascii=False, indent=2)
+    # Build prompts using dedicated module
+    system_prompt = build_feedback_system_prompt(schema, language)
+    user_prompt = build_feedback_user_prompt(cv_data, stellenprofil_data)
 
     model_name = os.environ.get("MODEL_NAME", "gpt-4o-mini")
     

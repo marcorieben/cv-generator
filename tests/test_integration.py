@@ -86,13 +86,13 @@ except Exception as e:
         assert 'SUCCESS' in result.stdout, f"Import failed: {result.stderr}"
         assert result.returncode == 0
     
-    def test_pdf_to_json_imports_correctly(self):
-        """Test dass pdf_to_json.py ohne Import-Fehler startet"""
+    def test_extraction_modules_import_correctly(self):
+        """Test dass extract_cv und extract_jobprofile ohne Import-Fehler starten"""
         code = """
 import sys
 sys.path.insert(0, '.')
 try:
-    from scripts import pdf_to_json
+    from scripts import extract_cv, extract_jobprofile
     print('SUCCESS')
 except Exception as e:
     print(f'ERROR: {e}')
@@ -105,7 +105,7 @@ except Exception as e:
             timeout=5,
             cwd=os.path.dirname(os.path.dirname(__file__))
         )
-        
+
         assert 'SUCCESS' in result.stdout, f"Import failed: {result.stderr}"
         assert result.returncode == 0
 

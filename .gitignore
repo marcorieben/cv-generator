@@ -29,6 +29,7 @@ venv/
 .pytest_cache/
 htmlcov/
 .tox/
+tests/fixtures/output/
 
 # OS
 .DS_Store

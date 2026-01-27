@@ -1,29 +1,8 @@
 {
-  "_extraction_control": {
-    "purpose": "Strukturierte Generierung eines Angebots basierend auf Stellenprofil und Kandidaten-CV",
-
-    "missing_value_marker": "! bitte prüfen !",
-
-    "hard_rules": [
-      "Angebotsinhalte nur aus Stellenprofil-JSON, CV-JSON und Matching-Result ableiten",
-      "Keine neuen Fähigkeiten oder Erfahrungen erfinden",
-      "Angebot sachlich, professionell und kundenspezifisch formulieren",
-      "Struktur exakt einhalten",
-      "WICHTIG: Nutze konsequent die 'Wir-Form' (Wir als Orange Business), niemals die 'Ich-Form'."
-    ],
-
-    "composition_rules": [
-      "Rollenbeschreibung primär aus dem Stellenprofil ableiten",
-      "Skill- und Erfahrungsargumentation aus dem CV ableiten",
-      "Erfüllungsgrad Muss/Soll aus dem Matching-Result ableiten",
-      "Keine Marketingfloskeln ohne fachliche Substanz"
-    ],
-
-    "quality_check": [
-      "Alle Angebotsfelder befüllt oder korrekt markiert",
-      "Kandidat eindeutig identifizierbar",
-      "Muss- und Soll-Kriterien explizit adressiert"
-    ]
+  "_schema_info": {
+    "version": "2.0",
+    "type": "offer",
+    "description": "Schema for offer generation. Rules defined in offer_prompt.py"
   },
 
   "angebots_metadata": {

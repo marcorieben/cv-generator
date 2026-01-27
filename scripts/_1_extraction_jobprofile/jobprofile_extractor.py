@@ -15,6 +15,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 from scripts._shared.pdf_utils import extract_text_from_pdf
+from scripts._1_extraction_jobprofile.jobprofile_prompt import build_jobprofile_system_prompt, build_jobprofile_user_prompt
 from scripts.utils.translations import load_translations, get_text
 
 
@@ -106,28 +107,8 @@ def extract_jobprofile(pdf_path, output_path=None, schema_path=None, target_lang
     translations = load_translations()
     missing_marker = get_text(translations, "system", "missing_data_marker", target_language)
 
-    system_prompt = f"""Du bist ein Experte für die Analyse von IT-Projektangeboten und Stellenprofilen und arbeitest für eine IT-Beratungsfirma.
-
-Deine Aufgabe: Extrahiere alle Anforderungen und Rahmendaten aus dem bereitgestellten Stellenprofil und erstelle ein strukturiertes JSON gemäss dem folgenden Schema.
-Zielsprache für die Extraktion ist: {target_language.upper()} (de=Deutsch, en=Englisch, fr=Französisch).
-
-WICHTIGE REGELN:
-1. Verwende NUR Felder, die im Schema definiert sind - KEINE zusätzlichen Felder
-2. Bei fehlenden Informationen: Markiere mit "{missing_marker}"
-3. Keine Informationen erfinden oder raten
-4. Halte dich strikt an die Feldnamen und Struktur des Schemas
-5. ANFORDERUNGEN: Jedes Kriterium als SEPARATEN Eintrag. Keine Zusammenfassungen.
-6. PRIORISIERUNG: Rollenbeschreibungen und Aufgaben über Marketingtext.
-7. LISTEN: Dokumentgranularität beibehalten, nicht konsolidieren.
-8. SCHWEIZER RECHTSCHREIBUNG: Ersetze jedes 'ss' statt 'ß'.
-9. ZIELSPRACHE: Alle Inhalte konsequent in {target_language.upper()} extrahieren/übersetzen. Fachbegriffe bleiben in Fachsprache.
-
-SCHEMA:
-{json.dumps(schema, ensure_ascii=False, indent=2)}
-
-Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
-
-    user_content = f"Extrahiere die Stellenprofil-Daten (Zielsprache: {target_language.upper()}) aus folgendem Text:\n\n{text}"
+    system_prompt = build_jobprofile_system_prompt(schema, target_language, missing_marker)
+    user_content = build_jobprofile_user_prompt(text, target_language)
 
     try:
         response = client.chat.completions.create(

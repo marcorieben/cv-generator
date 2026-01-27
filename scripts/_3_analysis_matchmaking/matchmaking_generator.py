@@ -17,6 +17,11 @@ try:
 except ImportError:
     from utils.translations import load_translations, get_text
 
+from scripts._3_analysis_matchmaking.matchmaking_prompt import (
+    build_matchmaking_system_prompt,
+    build_matchmaking_user_prompt,
+)
+
 
 def normalize_matching_values(data, language="de"):
     """
@@ -147,28 +152,9 @@ def generate_matchmaking_json(cv_json_path, stellenprofil_json_path, output_path
     with open(stellenprofil_json_path, 'r', encoding='utf-8') as f:
         stellenprofil_data = json.load(f)
 
-    # Dictionary for language names
-    lang_names = {
-        "de": "Deutsch (Schweizer Rechtschreibung)",
-        "en": "English",
-        "fr": "Français"
-    }
-    lang_name = lang_names.get(language, "Deutsch")
-
-    # Prepare prompt for OpenAI
-    prompt_template = get_text(translations, 'system', 'matchmaking_prompt', language)
-    system_prompt = prompt_template.replace("{lang_name}", lang_name) + "\n\n" + (
-        "Schema (nur als Vorgabe, nicht ausgeben):\n" +
-        json.dumps(schema, ensure_ascii=False, indent=2)
-    )
-    user_prompt = (
-        "Stellenprofil JSON:\n" + json.dumps(stellenprofil_data, ensure_ascii=False, indent=2) +
-        "\n\nCV JSON:\n" + json.dumps(cv_data, ensure_ascii=False, indent=2)
-    )
-    user_prompt = (
-        "Stellenprofil JSON:\n" + json.dumps(stellenprofil_data, ensure_ascii=False, indent=2) +
-        "\n\nCV JSON:\n" + json.dumps(cv_data, ensure_ascii=False, indent=2)
-    )
+    # Build prompts using dedicated module
+    system_prompt = build_matchmaking_system_prompt(schema, language)
+    user_prompt = build_matchmaking_user_prompt(stellenprofil_data, cv_data)
 
     model_name = os.environ.get("MODEL_NAME", "gpt-4o-mini")
     

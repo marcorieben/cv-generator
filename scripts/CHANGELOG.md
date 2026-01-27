@@ -28,3 +28,4 @@
 2026-01-23 07:57:16 | REFACTOR | Move cleanup runs into scripts/cleanup directory
 2026-01-24 12:40:26 | UPDATE | Add extended file metadata headers with Created and Last Updated dates
 2026-01-24 13:24:27 | REFACTOR | Major codebase cleanup and consolidation
+2026-01-26 18:55:36 | REFACTOR | Phase 0 - Prozess-orientierte Ordnerstruktur

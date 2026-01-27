@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 from scripts._shared.pdf_utils import extract_text_from_pdf
 from scripts._shared.date_utils import normalize_date_format
+from scripts._2_extraction_cv.cv_prompt import build_cv_system_prompt, build_cv_user_prompt
 from scripts.utils.translations import load_translations, get_text
 
 
@@ -264,55 +265,8 @@ def extract_cv(pdf_path, output_path=None, schema_path=None, job_profile_context
     translations = load_translations()
     missing_marker = get_text(translations, "system", "missing_data_marker", target_language)
 
-    system_prompt = f"""Du bist ein Experte für CV-Extraktion und arbeitest für eine IT-Beratungsfirma.
-
-Deine Aufgabe: Extrahiere alle Informationen aus dem bereitgestellten CV-Text und erstelle ein strukturiertes JSON gemäss dem folgenden Schema.
-Zielsprache für die Extraktion ist: {target_language.upper()} (de=Deutsch, en=Englisch, fr=Französisch).
-
-WICHTIGE REGELN:
-1. Verwende NUR Felder, die im Schema definiert sind - KEINE zusätzlichen Felder
-2. Bei fehlenden Informationen: Markiere mit "{missing_marker}"
-3. Keine Informationen erfinden oder raten
-4. Halte dich strikt an die Feldnamen und Struktur des Schemas
-5. Sprachen: Level 1-5 numerisch. Normalisiere unterschiedliche Skalen auf 1-5:
-   - WICHTIG: Wenn grafische Elemente (Sterne, Punkte, Balken) vorhanden sind, haben diese VORRANG vor Textbeschreibungen.
-   - Zähle die vollen Sterne/Punkte.
-   - 5er-Skala (Standard): 1=1, ..., 5=5
-   - 3er-Skala: 1=1 (Grundkenntnisse), 2=3 (Gut), 3=5 (Exzellent/Muttersprache)
-   - 4er-Skala: 1=1, 2=2, 3=4, 4=5
-   - Text (A1-C2): A1/A2=1, B1=2, B2=3, C1=4, C2=5
-   Sortiere absteigend nach Level.
-6. REFERENZPROJEKTE: Erfasse VOLLSTÄNDIG ALLE beruflichen Stationen aus dem gesamten Lebenslauf.
-   - 'Ausgewählte_Referenzprojekte' muss ALLE Stationen enthalten (nicht nur eine Auswahl).
-   - Jede Station als eigenes Objekt.
-   - TÄTIGKEITEN: Erfasse WÖRTLICH und VOLLSTÄNDIG, keine Kürzungen.
-7. WICHTIG: Verwende "Inhalt" (NICHT "BulletList") für Fachwissen_und_Schwerpunkte
-8. WICHTIG: Fachwissen_und_Schwerpunkte ist direkt auf oberster Ebene (NICHT in "Expertise" verschachtelt)
-9. WICHTIG: Fachwissen_und_Schwerpunkte hat IMMER genau 3 Kategorien:
-   - 1. "Projektmethodik"
-   - 2. "Tech Stack"
-   - 3. "Weitere Skills"
-10. ZEITFORMATE: MM/YYYY. Ausnahme: "Aus_und_Weiterbildung" sowie "Trainings_und_Zertifizierungen" nur YYYY.
-11. ALLE ZERTIFIKATE ERFASSEN: Ausnahmslos JEDES Zertifikat und Training.
-12. KURZPROFIL: Vornamen verwenden, 3. Person, sachlich. 50-100 Wörter.
-13. ROLLE in Referenzprojekten: Maximal 8 Wörter.
-14. SCHWEIZER RECHTSCHREIBUNG: Ersetze jedes 'ss' statt 'ß'.
-15. ZIELSPRACHE: Alle Inhalte konsequent in {target_language.upper()} extrahieren/übersetzen. Fachbegriffe bleiben in Fachsprache.
-
-SCHEMA:
-{json.dumps(schema, ensure_ascii=False, indent=2)}
-
-Antworte ausschliesslich mit dem validen JSON-Objekt gemäss diesem Schema."""
-
-    user_content = f"Extrahiere die CV-Daten (Zielsprache: {target_language.upper()}) aus folgendem Text:\n\n{cv_text}"
-
-    if job_profile_context:
-        user_content = (
-            f"KONTEXT (Ziel-Stellenprofil):\n{json.dumps(job_profile_context, ensure_ascii=False)}\n\n"
-            f"Nutze diesen Kontext, um im CV besonders auf relevante Erfahrungen, Zertifikate und Skills zu achten, "
-            f"die für dieses Profil gefordert sind. Die Extraktion bleibt faktenbasiert auf dem CV-Text.\n\n"
-            f"{user_content}"
-        )
+    system_prompt = build_cv_system_prompt(schema, target_language, missing_marker)
+    user_content = build_cv_user_prompt(cv_text, target_language, job_profile_context)
 
     try:
         response = client.chat.completions.create(

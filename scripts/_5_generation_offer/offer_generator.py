@@ -17,6 +17,11 @@ try:
 except ImportError:
     from utils.translations import load_translations, get_text
 
+from scripts._5_generation_offer.offer_prompt import (
+    build_offer_system_prompt,
+    build_offer_user_prompt,
+)
+
 
 def abs_path(relative_path):
     """Gibt den absoluten Pfad relativ zum scripts/-Verzeichnis zurück"""
@@ -129,20 +134,6 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
             if "erfüllt" in s.get("bewertung", "").lower():
                 top_matches.append(f"Soll: {s.get('kriterium')} -> {s.get('kommentar') or s.get('cv_evidenz')}")
 
-    # Extract hints from schema for prompt injection
-    def get_hints(obj, prefix="_hint_"):
-        hints = {}
-        if isinstance(obj, dict):
-            for k, v in obj.items():
-                if k.startswith(prefix):
-                    hints[k[len(prefix):]] = v
-                elif isinstance(v, (dict, list)):
-                    nested = get_hints(v, prefix)
-                    if nested: hints[k] = nested
-        return hints
-    
-    schema_hints = get_hints(schema)
-
     llm_context = {
         "kandidat": {
             "name": f"{cv_data.get('Vorname', '')} {cv_data.get('Nachname', '')}",
@@ -164,44 +155,9 @@ def generate_angebot_json(cv_json_path, stellenprofil_json_path, match_json_path
         "ausgabesprache": language
     }
 
-    # Select language name for the prompt
-    lang_map = {
-        "de": "Deutsch",
-        "en": "Englisch",
-        "fr": "Französisch"
-    }
-    lang_name = lang_map.get(language, "Deutsch")
-
-    system_prompt = (
-        f"Du bist ein Experte für die Erstellung von professionellen IT-Dienstleistungsangeboten in **{lang_name}**. "
-        f"Erstelle die qualitativen Abschnitte eines Angebots basierend auf dem bereitgestellten Kontext in **{lang_name}**.\n\n"
-        "WICHTIGE REGELN:\n"
-        f"1. SPRACHE: Generiere alle Texte (Werte im JSON) konsequent in **{lang_name}**.\n"
-        "2. TONALITÄT: Professionell, empathisch, überzeugend. Falls die Ausgabe in Deutsch erfolgt: Nutze Schweizer Rechtschreibung (ss statt ß).\n"
-        "3. WIR-FORM: Verwende konsequent die 'Wir-Form' (Wir als Orange Business), niemals die 'Ich-Form'.\n"
-        "4. STRIKT POSITIV: Alle Kriterien gelten als erfüllt. Weise NIEMALS auf Lücken, fehlende Erfahrung oder Defizite hin (NICHT: 'Trotz fehlender...', 'Obwohl XY nicht...'). Formuliere ausschliesslich Stärken und Übereinstimmungen.\n"
-        "5. STRUKTUR: Gib ein JSON-Objekt mit exakt diesen Feldern zurück. Beachte dabei unbedingt die HINWEISE (Hints) für jedes Feld:\n"
-    )
-
-    # Inject hints into system prompt
-    prompt_hints = {
-        "kurzkontext": schema_hints.get("stellenbezug", {}).get("kurzkontext", "Persönliche Einleitung."),
-        "eignungs_summary": schema_hints.get("kandidatenvorschlag", {}).get("eignungs_summary", "Zusammenfassung der Eignung."),
-        "methoden_technologien": schema_hints.get("profil_und_kompetenzen", {}).get("methoden_und_technologien", "Relevante Skills."),
-        "erfahrung_ops_führung": schema_hints.get("profil_und_kompetenzen", {}).get("operative_und_fuehrungserfahrung", "Erfahrung in Betrieb/Führung."),
-        "zusammenfassung": schema_hints.get("gesamtbeurteilung", {}).get("zusammenfassung", "Detaillierte Argumentation."),
-        "mehrwert": schema_hints.get("gesamtbeurteilung", {}).get("mehrwert_fuer_kunden", "Impact-Punkte."),
-        "empfehlung": schema_hints.get("gesamtbeurteilung", {}).get("empfehlung", "Kurze Empfehlung."),
-        "verfuegbarkeit_gespraech": schema_hints.get("abschluss", {}).get("verfuegbarkeit_gespraech", "Gesprächsbereitschaft."),
-        "kontakt_hinweis": schema_hints.get("abschluss", {}).get("kontakt_hinweis", "Rückmeldung.")
-    }
-
-    for field, hint in prompt_hints.items():
-        system_prompt += f"   - '{field}': {hint}\n"
-    
-    system_prompt += "\nWICHTIG: Nutze für Schlagworte, Technologien und wichtige Begriffe konsequent **Fettschrift**. Besonders im 'kurzkontext' sollen der Kundenname, die Rolle und 2-3 Kernkompetenzen fett markiert werden.\n"
-    
-    user_prompt = f"Kontext für die Angebotserstellung:\n{json.dumps(llm_context, ensure_ascii=False, indent=2)}"
+    # Build prompts using dedicated module
+    system_prompt = build_offer_system_prompt(schema, language)
+    user_prompt = build_offer_user_prompt(llm_context)
 
     model_name = os.environ.get("MODEL_NAME", "gpt-4o-mini")
     

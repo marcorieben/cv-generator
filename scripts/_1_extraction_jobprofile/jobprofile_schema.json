@@ -1,42 +1,8 @@
 {
-  "_extraction_control": {
-    "_hint_fields_note": "Alle Felder mit '_hint_' sind nur als Anweisung für die LLM zu verstehen und dürfen NICHT in der generierten JSON-Ausgabe erscheinen.",
-    "purpose": "Strukturierte, vergleichbare Extraktion von Projektangeboten und Rollenprofilen",
-
-    "missing_value_marker": "! bitte prüfen !",
-
-    "hard_rules": [
-      "Keine Inhalte erfinden oder interpretieren",
-      "Nur explizit im Dokument enthaltene Informationen verwenden",
-      "Bei fehlenden oder unklaren Informationen exakt '! bitte prüfen !' setzen",
-      "JSON-Struktur exakt einhalten",
-      "Keine zusätzlichen Felder hinzufügen oder entfernen",
-      "WICHTIG: Alle Felder mit '_hint_' Präfix sind NUR Anweisungen für dich und dürfen NICHT in der finalen JSON-Ausgabe erscheinen. Nur die eigentlichen Datenfelder (ohne '_hint_') befüllen!"
-    ],
-
-    "language_handling": [
-      "Originalsprache des Dokuments beibehalten",
-      "Keine Umformulierungen oder inhaltlichen Bewertungen",
-      "Begriffe nur vereinheitlichen, wenn sie im Dokument synonym verwendet werden"
-    ],
-
-    "list_handling": [
-      "Listen nur verwenden, wenn sie im Dokument vorhanden sind",
-      "Keine Zusammenfassung mehrerer Punkte in einem Listeneintrag",
-      "Granularität des Dokuments beibehalten"
-    ],
-
-    "prioritisation": [
-      "Rollenbeschreibungen und Aufgaben höher priorisieren als Marketingtexte",
-      "Wiederholungen nur einmal erfassen",
-      "Operative Inhalte höher priorisieren als werbliche Aussagen"
-    ],
-
-    "quality_check": [
-      "Alle Felder befüllt oder korrekt mit '! bitte prüfen !' markiert",
-      "Keine impliziten Annahmen enthalten",
-      "Struktur vollständig und konsistent"
-    ]
+  "_schema_info": {
+    "version": "2.0",
+    "type": "jobprofile",
+    "description": "Schema for jobprofile extraction. Rules defined in jobprofile_prompt.py"
   },
 
   "metadata": {
