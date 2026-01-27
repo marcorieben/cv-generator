@@ -31,3 +31,4 @@
 2026-01-26 18:55:36 | REFACTOR | Phase 0 - Prozess-orientierte Ordnerstruktur
 2026-01-27 06:30:01 | REFACTOR | Prompt-Konsolidierung (Phases 2-5)
 2026-01-27 07:04:53 | CHORE | Add .claude/ to gitignore
+2026-01-27 14:56:32 | DOCS | Add F003 Storage Abstraction feature requirements and development guidelines
