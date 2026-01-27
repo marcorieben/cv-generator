@@ -5,7 +5,7 @@ Purpose: analyzed as source_code
 Expected Lifetime: permanent
 Category: SOURCE_CODE
 Created: 2026-01-12
-Last Updated: 2026-01-24
+Last Updated: 2026-01-27
 """
 import os
 import json
@@ -17,18 +17,21 @@ from typing import Optional, Dict, Any, Callable
 # Local imports
 from scripts._2_extraction_cv.cv_extractor import extract_cv
 from scripts._1_extraction_jobprofile.jobprofile_extractor import extract_jobprofile
-from scripts._2_extraction_cv.cv_word import generate_cv, validate_json_structure
+from scripts._2_extraction_cv.cv_word import generate_cv_bytes, validate_json_structure  # F003: Use bytes API
 from scripts._3_analysis_matchmaking.matchmaking_generator import generate_matchmaking_json
 from scripts._4_analysis_feedback.feedback_generator import generate_cv_feedback_json
 from scripts._5_generation_offer.offer_generator import generate_angebot_json
-from scripts._5_generation_offer.offer_word import generate_angebot_word
+from scripts._5_generation_offer.offer_word import generate_offer_bytes  # F003: Use bytes API
 from scripts._6_output_dashboard.dashboard_generator import generate_dashboard
 from scripts.utils.translations import load_translations, get_text as _get_text
+from core.storage.workspace import RunWorkspace  # F003: Storage abstraction
+from core.storage.run_id import generate_run_id  # F003: Run ID generation
 
 class StreamlitCVGenerator:
     def __init__(self, base_dir: str):
         self.base_dir = base_dir
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.workspace = None  # F003: Will be initialized with run_id
 
     def _update_styles(self, custom_styles, custom_logo_path):
         """Updates the styles.json file with custom values."""
@@ -167,11 +170,21 @@ class StreamlitCVGenerator:
                 raise ValueError(f"{val_error_prefix}: {'; '.join(critical)}")
             perf_times["Validation"] = round(time.time() - validation_start, 2)
 
-            # --- STEP 4: Generation (Match, Feedback) - Word wird ausgelagert ---
+            # --- STEP 4: Generation (Match, Feedback, CV Word) ---
             generation_start = time.time()
             if progress_callback: progress_callback(70, get_text('ui', 'status_generate', language), "running")
             
-            word_path = None  # Wird später on-demand generiert
+            # F003: Initialize RunWorkspace with business-meaningful run_id
+            jobprofile_title = stellenprofil_data.get("titel", "Unbekannte-Stelle") if stellenprofil_data else "Keine-Stelle"
+            run_id = generate_run_id(jobprofile_title, vorname, nachname, self.timestamp)
+            self.workspace = RunWorkspace(run_id)
+            
+            # Generate CV Word document using bytes API
+            cv_bytes, cv_filename = generate_cv_bytes(cv_data, language=language)
+            self.workspace.save_primary(cv_filename, cv_bytes)
+            results["cv_word_bytes"] = cv_bytes
+            results["cv_word_filename"] = cv_filename
+            
             matchmaking_json_path = None
             feedback_json_path = None
             
@@ -221,19 +234,21 @@ class StreamlitCVGenerator:
                     # Generate JSON
                     generate_angebot_json(cv_json_path, stellenprofil_json_path, matchmaking_json_path, angebot_json_path, language=language)
                     
-                    # Generate Word
-                    angebot_word_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.docx")
-                    generate_angebot_word(angebot_json_path, angebot_word_path, language=language)
-                    
-                    results["offer_word_path"] = angebot_word_path
+                    # F003: Load Offer JSON and generate Word using bytes API
+                    with open(angebot_json_path, 'r', encoding='utf-8') as f:
+                        offer_data = json.load(f)
+                    offer_bytes, offer_filename = generate_offer_bytes(offer_data, language=language)
+                    self.workspace.save_primary(offer_filename, offer_bytes)
+                    results["offer_word_bytes"] = offer_bytes
+                    results["offer_word_filename"] = offer_filename
                 except Exception as e:
                     print(f"⚠️ Fehler bei Angebotserstellung: {str(e)}")
             
             perf_times["Offer Generation"] = round(time.time() - offer_start, 2)
 
-            results["word_path"] = word_path  # None, wird später on-demand generiert
             results["match_json"] = matchmaking_json_path
-            results["word_generation_pending"] = True  # Flag für UI
+            results["workspace"] = self.workspace  # F003: Provide workspace for ZIP download
+            results["run_id"] = run_id  # F003: Business-meaningful run identifier
 
             # --- STEP 5: Dashboard ---
             dashboard_start = time.time()

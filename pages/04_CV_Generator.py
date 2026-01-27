@@ -1,6 +1,12 @@
 """
 Streamlit page for CV Generation Hub
 Central location for managing CV generation across the application
+
+Purpose: analyzed as source_code
+Expected Lifetime: permanent
+Category: SOURCE_CODE
+Created: 2026-01-21
+Last Updated: 2026-01-27
 """
 
 import streamlit as st
@@ -19,8 +25,7 @@ from core.database.db import Database
 from core.database.translations import initialize_translations
 from core.utils.session import get_database, get_translations_manager, get_text
 from scripts.streamlit_pipeline import StreamlitCVGenerator
-from scripts._5_generation_offer.offer_generator import generate_angebot_json
-from scripts._5_generation_offer.offer_word import generate_angebot_word
+# F003: Imports updated in Offer generation on-demand section (no longer at top level)
 
 # Set current page for sidebar
 st.session_state.current_page = "pages/04_CV_Generator.py"
@@ -177,47 +182,22 @@ def show_results_content(results, lang):
     with st.success(get_text("ui", "downloads_title", lang), icon="📥"):
         res_col1, res_col2, res_col3 = st.columns(3)
         with res_col1:
-            # Word CV Generation or Download
-            word_path = results.get("word_path")
-            word_pending = results.get("word_generation_pending", False)
+            # F003: CV Word Download from bytes (no more file paths)
+            cv_word_bytes = results.get("cv_word_bytes")
+            cv_word_filename = results.get("cv_word_filename", "CV.docx")
             
-            if word_path and os.path.exists(word_path):
-                # Word already generated - show download
-                with open(word_path, "rb") as f:
-                    st.download_button(cv_btn_label, f, os.path.basename(word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
-            elif word_pending:
-                # Show button to generate Word on demand
-                if st.button("📄 " + get_text("ui", "generate_word_button", lang), use_container_width=True, key="generate_word_btn"):
-                    with st.status(get_text("ui", "generating_word", lang), expanded=True) as status:
-                        try:
-                            from scripts._6_output_dashboard.dashboard_generator import generate_cv_word_on_demand
-                            cv_json_path = results.get("cv_json_path") or results.get("cv_json")
-                            output_dir = results.get("output_dir")
-                            
-                            # Fallback to derive output_dir from cv_json_path if not available
-                            if not output_dir and cv_json_path:
-                                output_dir = os.path.dirname(cv_json_path)
-                            
-                            # Validation
-                            if not cv_json_path:
-                                raise ValueError("CV JSON Pfad nicht verfügbar. Bitte führen Sie die Pipeline erneut aus.")
-                            if not output_dir:
-                                raise ValueError("Output Directory nicht verfügbar. Bitte führen Sie die Pipeline erneut aus.")
-                            
-                            status.write("⏳ Generiere Word Document...")
-                            word_path = generate_cv_word_on_demand(cv_json_path, output_dir, language=lang)
-                            
-                            if word_path and os.path.exists(word_path):
-                                results["word_path"] = word_path
-                                results["word_generation_pending"] = False
-                                st.session_state.generation_results = results
-                                status.update(label=get_text('ui', 'word_ready', lang), state="complete", expanded=False)
-                                st.success(get_text('ui', 'word_success', lang))
-                                st.rerun()
-                            else:
-                                status.update(label=get_text('ui', 'error_label', lang), state="error")
-                                st.error(get_text('ui', 'word_generation_failed', lang))
-                        except Exception as e:
+            if cv_word_bytes:
+                # CV Word already generated - show download
+                st.download_button(
+                    cv_btn_label, 
+                    cv_word_bytes, 
+                    cv_word_filename, 
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+                    use_container_width=True
+                )
+            else:
+                # Fallback message (shouldn't happen with F003)
+                st.info(get_text("ui", "cv_not_available", lang), icon="ℹ️")
                             status.update(label=get_text('ui', 'error_label', lang), state="error")
                             st.error(f"{get_text('ui', 'word_error', lang)}: {str(e)}")
                             import traceback
@@ -258,8 +238,10 @@ def show_results_content(results, lang):
     if results.get("stellenprofil_json") and os.path.exists(results["stellenprofil_json"]):
         st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
         
-        offer_word_path = results.get("offer_word_path")
-        is_offer_ready = offer_word_path and os.path.exists(offer_word_path)
+        # F003: Check for Offer bytes from workspace
+        offer_word_bytes = results.get("offer_word_bytes")
+        offer_word_filename = results.get("offer_word_filename", "Offer.docx")
+        is_offer_ready = offer_word_bytes is not None
         
         if is_offer_ready:
             offer_container = st.success(get_text("ui", "offer_ready", lang), icon="✅")
@@ -270,34 +252,46 @@ def show_results_content(results, lang):
             off_col1, off_col2, off_col3 = st.columns(3)
             with off_col1:
                 if is_offer_ready:
-                     with open(offer_word_path, "rb") as f:
-                        st.download_button(get_text("ui", "offer_download_btn", lang), f, os.path.basename(offer_word_path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, type="primary")
+                    st.download_button(
+                        get_text("ui", "offer_download_btn", lang), 
+                        offer_word_bytes, 
+                        offer_word_filename, 
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+                        use_container_width=True, 
+                        type="primary"
+                    )
                 else:
                     off_btn_key = f"gen_offer_btn_{results.get('cv_json', '')}"
                     if st.button(get_text("ui", "offer_create_btn", lang), use_container_width=True, key=off_btn_key):
                         with st.status(get_text("ui", "status_offer", lang), expanded=True) as status:
                             try:
+                                from scripts._5_generation_offer.offer_generator import generate_angebot_json
+                                from scripts._5_generation_offer.offer_word import generate_offer_bytes
+                                
                                 cv_json = results["cv_json"]
                                 stellenprofil_json = results["stellenprofil_json"]
                                 match_json = results.get("match_json")
                                 output_dir = os.path.dirname(cv_json)
                                 base_name = os.path.basename(cv_json).replace("cv_", "").replace(".json", "")
                                 angebot_json_path = os.path.join(output_dir, f"Angebot_{base_name}.json")
-                                angebot_word_path = os.path.join(output_dir, f"Angebot_{base_name}.docx")
                                 schema_path = os.path.join(os.getcwd(), "scripts", "_5_generation_offer", "offer_schema.json")
                                 
                                 status.write("🧠 KI-Inhalte generieren...")
                                 generate_angebot_json(cv_json, stellenprofil_json, match_json, angebot_json_path, schema_path, language=lang)
                                 
+                                # F003: Generate Offer Word using bytes API
                                 status.write("📝 Word-Dokument formatieren...")
-                                generate_angebot_word(angebot_json_path, angebot_word_path)
+                                with open(angebot_json_path, 'r', encoding='utf-8') as f:
+                                    offer_data = json.load(f)
+                                offer_bytes, offer_filename = generate_offer_bytes(offer_data, language=lang)
                                 
-                                if os.path.exists(angebot_word_path):
-                                    results["offer_word_path"] = angebot_word_path
-                                    st.session_state.generation_results = results
-                                    st.session_state.show_pipeline_dialog = True
-                                    st.session_state.show_results_view = True
-                                    status.update(label=get_text('ui', 'offer_ready_label', lang), state="complete")
+                                # Store in results for download
+                                results["offer_word_bytes"] = offer_bytes
+                                results["offer_word_filename"] = offer_filename
+                                st.session_state.generation_results = results
+                                st.session_state.show_pipeline_dialog = True
+                                st.session_state.show_results_view = True
+                                status.update(label=get_text('ui', 'offer_ready_label', lang), state="complete")
                                     st.success(get_text('ui', 'offer_success', lang))
                                     st.rerun()
                                 else:
