@@ -33,3 +33,4 @@
 2026-01-27 07:04:53 | CHORE | Add .claude/ to gitignore
 2026-01-27 14:56:32 | DOCS | Add F003 Storage Abstraction feature requirements and development guidelines
 2026-01-27 15:04:07 | FEATURE | Add RunWorkspace and generate_run_id with tests
+2026-01-27 15:11:40 | FEATURE | Add generate_cv_bytes() for storage abstraction (F003)

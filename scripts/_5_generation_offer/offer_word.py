@@ -293,17 +293,27 @@ def add_criteria_table(doc, title, criteria_list, language="de", translations=No
         run_hint.font.name = f_name
         run_hint.font.size = Pt(f_size)
 
-def generate_angebot_word(json_path, output_path, language="de"):
+def _build_offer_document(data, language="de", translations=None, styles_cfg=None):
     """
-    Generates a Word document for the Offer based on the JSON data.
+    Internal helper: Build Offer document from JSON data.
+    
+    Args:
+        data: Parsed JSON data (dict)
+        language: Output language ("de", "en", "fr")
+        translations: Pre-loaded translations dict (optional, will load if None)
+        styles_cfg: Pre-loaded styles config (optional, will load if None)
+        
+    Returns:
+        Document object
+        
+    Purpose: Core Offer document builder, separated for testability
+    Expected Lifetime: Stable
     """
-    # Load Data
-    with open(json_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    # Load External Styles and Translations
-    styles_cfg = load_styles()
-    translations = load_translations()
+    # Load External Styles and Translations if not provided
+    if styles_cfg is None:
+        styles_cfg = load_styles()
+    if translations is None:
+        translations = load_translations()
     
     def get_color(cfg_section, key="color"):
         rgb_list = cfg_section.get(key, [0, 0, 0])
@@ -600,6 +610,66 @@ def generate_angebot_word(json_path, output_path, language="de"):
     p_closing = doc.add_paragraph()
     p_closing.add_run(get_text(translations, 'offer', 'sender_name', language)).bold = True
 
+    return doc
+
+
+def generate_offer_bytes(data: dict, language: str = "de") -> tuple[bytes, str]:
+    """
+    Generate Offer Word document as bytes from JSON data.
+    
+    Args:
+        data: Parsed JSON Offer data (dict)
+        language: Output language ("de", "en", "fr")
+        
+    Returns:
+        tuple: (document_bytes, filename_suggestion)
+            - document_bytes: Word document as bytes
+            - filename_suggestion: Suggested filename (e.g., "offer_John_Doe.docx")
+            
+    Purpose: Storage-abstraction compatible Offer generator (F003)
+    Expected Lifetime: Stable (new primary API)
+    """
+    from io import BytesIO
+    
+    # Build document
+    doc = _build_offer_document(data, language=language)
+    
+    # Save to BytesIO instead of file
+    docx_bytes_io = BytesIO()
+    doc.save(docx_bytes_io)
+    docx_bytes = docx_bytes_io.getvalue()
+    
+    # Generate filename suggestion from data
+    candidate_data = data.get("cv_daten", {})
+    firstname = candidate_data.get("Vorname", "Candidate")
+    lastname = candidate_data.get("Nachname", "")
+    filename = f"offer_{firstname}_{lastname}.docx".replace(" ", "_")
+    
+    return docx_bytes, filename
+
+
+def generate_angebot_word(json_path, output_path, language="de"):
+    """
+    Generate Offer Word document from JSON file (legacy API).
+    
+    Args:
+        json_path: Path to JSON file with Offer data
+        output_path: Output file path
+        language: Output language ("de", "en", "fr")
+        
+    Returns:
+        str: Path to generated Word file
+        
+    Purpose: Legacy file-based Offer generator (maintained for backwards compat)
+    Expected Lifetime: Deprecated (use generate_offer_bytes + RunWorkspace instead)
+    """
+    # Load Data
+    with open(json_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    
+    # Build document using helper
+    doc = _build_offer_document(data, language=language)
+    
     # Save
     doc.save(output_path)
     print(f"✅ Angebot Word generiert: {output_path}")
