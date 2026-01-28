@@ -136,6 +136,9 @@ class StreamlitCVGenerator:
         # Performance tracking
         perf_start = time.time()
         perf_times = {}
+        
+        # F003: Initialize temp_dir variable for cleanup in finally block
+        temp_dir = None
 
         try:
             # --- PHASE 1: PDF Extraction ---
@@ -318,13 +321,6 @@ class StreamlitCVGenerator:
 
             results["workspace"] = self.workspace  # F003: Provide workspace for ZIP download
             results["run_id"] = run_id  # F003: Business-meaningful run identifier
-            
-            # F003: Cleanup temp directory after pipeline completion
-            import shutil
-            try:
-                shutil.rmtree(temp_dir)
-            except Exception:
-                pass  # Best effort cleanup
 
             # --- STEP 5: Dashboard ---
             dashboard_start = time.time()
@@ -390,5 +386,14 @@ class StreamlitCVGenerator:
         except Exception as e:
             results["error"] = str(e)
             if progress_callback: progress_callback(100, f"{get_text('ui', 'error_status', language)}: {str(e)}", "error")
+            
+        finally:
+            # F003: Cleanup temp directory after ALL operations (success or error)
+            if temp_dir:
+                import shutil
+                try:
+                    shutil.rmtree(temp_dir)
+                except Exception:
+                    pass  # Best effort cleanup
             
         return results

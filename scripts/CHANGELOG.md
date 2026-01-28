@@ -42,3 +42,4 @@
 2026-01-27 21:18:48 | FEATURE | Add comprehensive UI testing infrastructure and pre-commit improvements (F003)
 2026-01-28 07:11:53 | FEATURE | Implement unified naming conventions and cloud-deployment readiness
 2026-01-28 07:12:49 | TEST | Remove obsolete admin sidebar manager test
+2026-01-28 07:45:47 | BUGFIX | Use FileType.CV instead of string literal for CV JSON filename
