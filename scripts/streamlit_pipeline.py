@@ -179,7 +179,7 @@ class StreamlitCVGenerator:
             temp_dir = tempfile.mkdtemp(prefix="cv_pipeline_")
             
             # Use new naming convention for CV JSON (temp storage for legacy functions)
-            cv_json_filename = generate_filename(jobprofile_slug, candidate_name, "cv_extracted", self.timestamp, "json")
+            cv_json_filename = generate_filename(jobprofile_slug, candidate_name, FileType.CV, self.timestamp, "json")
             cv_json_path = os.path.join(temp_dir, cv_json_filename)
             with open(cv_json_path, 'w', encoding='utf-8') as f:
                 json.dump(cv_data, f, ensure_ascii=False, indent=2)
