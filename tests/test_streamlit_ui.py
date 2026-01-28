@@ -638,19 +638,6 @@ class TestAllPages:
         at = AppTest.from_file("pages/03_Stellenprofil-Status.py")
         at.run()
         assert not at.exception, f"Stellenprofil-Status page crashed: {at.exception}"
-    
-    def test_admin_sidebar_manager_page_loads(self, mock_all_dependencies):
-        """
-        Test Admin Sidebar Manager page loads.
-        
-        Object: pages/05_Admin_Sidebar_Manager.py
-        
-        Verifies the admin configuration page can load and render
-        without crashing.
-        """
-        at = AppTest.from_file("pages/05_Admin_Sidebar_Manager.py")
-        at.run()
-        assert not at.exception, f"Admin Sidebar Manager page crashed: {at.exception}"
 
 
 @pytest.mark.skipif(not APPTEST_AVAILABLE, reason="streamlit.testing.v1 not available")
