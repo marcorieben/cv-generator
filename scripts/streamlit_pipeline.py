@@ -26,6 +26,13 @@ from scripts._6_output_dashboard.dashboard_generator import generate_dashboard
 from scripts.utils.translations import load_translations, get_text as _get_text
 from core.storage.workspace import RunWorkspace  # F003: Storage abstraction
 from core.storage.run_id import generate_run_id  # F003: Run ID generation
+from core.utils.naming import (  # New naming conventions
+    generate_jobprofile_slug,
+    generate_candidate_name,
+    generate_filename,
+    generate_folder_name,
+    FileType
+)
 
 class StreamlitCVGenerator:
     def __init__(self, base_dir: str):
@@ -145,22 +152,63 @@ class StreamlitCVGenerator:
             # Save JSONs
             vorname = cv_data.get("Vorname", get_text('ui', 'history_unknown', language))
             nachname = cv_data.get("Nachname", "")
-            output_dir = os.path.join(self.base_dir, "output", f"{vorname}_{nachname}_{self.timestamp}")
-            os.makedirs(output_dir, exist_ok=True)
             
-            cv_json_path = os.path.join(output_dir, f"cv_{vorname}_{nachname}_{self.timestamp}.json")
+            # Extract jobprofile metadata for naming (new naming convention)
+            jobprofile_id = None
+            jobprofile_title = "Unbekannte-Stelle"
+            if stellenprofil_data:
+                # Try to get document_id from metadata
+                jobprofile_id = stellenprofil_data.get("metadata", {}).get("document_id")
+                jobprofile_title = stellenprofil_data.get("titel", "Unbekannte-Stelle")
+                # Clean document_id if it's the missing marker
+                if jobprofile_id and ("bitte prüfen" in str(jobprofile_id) or jobprofile_id == ""):
+                    jobprofile_id = None
+            
+            # Generate naming components using new convention
+            jobprofile_slug = generate_jobprofile_slug(jobprofile_id, jobprofile_title)
+            candidate_name = generate_candidate_name(vorname, nachname)
+            folder_name = generate_folder_name(jobprofile_slug, candidate_name, self.timestamp)
+            
+            # F003: Initialize RunWorkspace early for artifact storage
+            run_id = generate_run_id(jobprofile_title, vorname, nachname, self.timestamp_dt)
+            self.workspace = RunWorkspace(run_id)
+            
+            # F003: Use temp directory for intermediate JSON files (needed by legacy functions)
+            # These are only used during pipeline execution, not persisted
+            import tempfile
+            temp_dir = tempfile.mkdtemp(prefix="cv_pipeline_")
+            
+            # Use new naming convention for CV JSON (temp storage for legacy functions)
+            cv_json_filename = generate_filename(jobprofile_slug, candidate_name, "cv_extracted", self.timestamp, "json")
+            cv_json_path = os.path.join(temp_dir, cv_json_filename)
             with open(cv_json_path, 'w', encoding='utf-8') as f:
                 json.dump(cv_data, f, ensure_ascii=False, indent=2)
-            results["cv_json"] = cv_json_path
+            
+            # Store CV JSON in workspace as artifact (persistent)
+            cv_json_bytes = json.dumps(cv_data, ensure_ascii=False, indent=2).encode('utf-8')
+            self.workspace.save_artifact(cv_json_filename, cv_json_bytes)
+            
+            results["cv_json"] = cv_json_path  # Temp path for legacy compatibility
+            results["cv_data"] = cv_data  # Store data directly
             results["vorname"] = vorname
             results["nachname"] = nachname
+            results["jobprofile_slug"] = jobprofile_slug
+            results["candidate_name"] = candidate_name
                 
             stellenprofil_json_path = None
             if stellenprofil_data:
-                stellenprofil_json_path = os.path.join(output_dir, f"stellenprofil_{self.timestamp}.json")
+                # Use new naming convention for Stellenprofil JSON (temp storage)
+                jobprofile_json_filename = generate_filename(jobprofile_slug, candidate_name, FileType.JOBPROFILE, self.timestamp, "json")
+                stellenprofil_json_path = os.path.join(temp_dir, jobprofile_json_filename)
                 with open(stellenprofil_json_path, 'w', encoding='utf-8') as f:
                     json.dump(stellenprofil_data, f, ensure_ascii=False, indent=2)
-                results["stellenprofil_json"] = stellenprofil_json_path
+                
+                # Store in workspace as artifact
+                jobprofile_json_bytes = json.dumps(stellenprofil_data, ensure_ascii=False, indent=2).encode('utf-8')
+                self.workspace.save_artifact(jobprofile_json_filename, jobprofile_json_bytes)
+                
+                results["stellenprofil_json"] = stellenprofil_json_path  # Temp path
+                results["stellenprofil_data"] = stellenprofil_data  # Store data directly
 
             # --- STEP 3: Validation ---
             validation_start = time.time()
@@ -175,13 +223,13 @@ class StreamlitCVGenerator:
             generation_start = time.time()
             if progress_callback: progress_callback(70, get_text('ui', 'status_generate', language), "running")
             
-            # F003: Initialize RunWorkspace with business-meaningful run_id
-            jobprofile_title = stellenprofil_data.get("titel", "Unbekannte-Stelle") if stellenprofil_data else "Keine-Stelle"
-            run_id = generate_run_id(jobprofile_title, vorname, nachname, self.timestamp_dt)
-            self.workspace = RunWorkspace(run_id)
-            
-            # Generate CV Word document using bytes API
-            cv_bytes, cv_filename = generate_cv_bytes(cv_data, language=language)
+            # Generate CV Word document using bytes API with naming conventions
+            cv_bytes, cv_filename = generate_cv_bytes(
+                cv_data, 
+                language=language,
+                jobprofile_slug=jobprofile_slug,
+                timestamp=self.timestamp
+            )
             self.workspace.save_primary(cv_filename, cv_bytes)
             results["cv_word_bytes"] = cv_bytes
             results["cv_word_filename"] = cv_filename
@@ -193,7 +241,9 @@ class StreamlitCVGenerator:
                 # Match
                 future_match = None
                 if stellenprofil_json_path:
-                    matchmaking_json_path = os.path.join(output_dir, f"Match_{vorname}_{nachname}_{self.timestamp}.json")
+                    # Use new naming convention for Match JSON (temp storage)
+                    match_json_filename = generate_filename(jobprofile_slug, candidate_name, FileType.MATCH, self.timestamp, "json")
+                    matchmaking_json_path = os.path.join(temp_dir, match_json_filename)
                     schema_path = os.path.join(self.base_dir, "scripts", "_3_analysis_matchmaking", "matchmaking_schema.json")
                     future_match = executor.submit(
                         generate_matchmaking_json,
@@ -204,8 +254,9 @@ class StreamlitCVGenerator:
                         language=language
                     )
                 
-                # Feedback
-                feedback_json_path = os.path.join(output_dir, f"CV_Feedback_{vorname}_{nachname}_{self.timestamp}.json")
+                # Feedback - use new naming convention (temp storage)
+                feedback_json_filename = generate_filename(jobprofile_slug, candidate_name, FileType.FEEDBACK, self.timestamp, "json")
+                feedback_json_path = os.path.join(temp_dir, feedback_json_filename)
                 feedback_schema_path = os.path.join(self.base_dir, "scripts", "_4_analysis_feedback", "feedback_schema.json")
                 future_feedback = executor.submit(
                     generate_cv_feedback_json,
@@ -216,14 +267,21 @@ class StreamlitCVGenerator:
                     language=language
                 )
                 
-                if future_match: future_match.result()
+                if future_match: 
+                    future_match.result()
+                    # Save Match JSON to workspace as artifact
+                    if os.path.exists(matchmaking_json_path):
+                        with open(matchmaking_json_path, 'rb') as f:
+                            self.workspace.save_artifact(match_json_filename, f.read())
+                        results["match_json"] = matchmaking_json_path
+                
                 future_feedback.result()
+                # Save Feedback JSON to workspace as artifact
+                if os.path.exists(feedback_json_path):
+                    with open(feedback_json_path, 'rb') as f:
+                        self.workspace.save_artifact(feedback_json_filename, f.read())
             
             perf_times["Match & Feedback Generation"] = round(time.time() - generation_start, 2)
-            
-            # Speichere Infos für spätere Word-Generierung
-            results["cv_json_path"] = cv_json_path
-            results["output_dir"] = output_dir
 
             # --- STEP 4.5: Offer (Background) ---
             offer_start = time.time()
@@ -231,14 +289,25 @@ class StreamlitCVGenerator:
             if pipeline_mode == "Full" and stellenprofil_json_path and matchmaking_json_path:
                 if progress_callback: progress_callback(85, get_text('ui', 'status_offer', language), "running")
                 try:
-                    angebot_json_path = os.path.join(output_dir, f"Angebot_{vorname}_{nachname}_{self.timestamp}.json")
+                    # Use new naming convention for Angebot JSON (temp storage)
+                    angebot_json_filename = generate_filename(jobprofile_slug, candidate_name, "angebot", self.timestamp, "json")
+                    angebot_json_path = os.path.join(temp_dir, angebot_json_filename)
                     # Generate JSON
                     generate_angebot_json(cv_json_path, stellenprofil_json_path, matchmaking_json_path, angebot_json_path, language=language)
                     
-                    # F003: Load Offer JSON and generate Word using bytes API
+                    # F003: Save Angebot JSON to workspace and load for Word generation
+                    with open(angebot_json_path, 'rb') as f:
+                        angebot_json_bytes = f.read()
+                        self.workspace.save_artifact(angebot_json_filename, angebot_json_bytes)
+                    
                     with open(angebot_json_path, 'r', encoding='utf-8') as f:
                         offer_data = json.load(f)
-                    offer_bytes, offer_filename = generate_offer_bytes(offer_data, language=language)
+                    offer_bytes, offer_filename = generate_offer_bytes(
+                        offer_data, 
+                        language=language,
+                        jobprofile_slug=jobprofile_slug,
+                        timestamp=self.timestamp
+                    )
                     self.workspace.save_primary(offer_filename, offer_bytes)
                     results["offer_word_bytes"] = offer_bytes
                     results["offer_word_filename"] = offer_filename
@@ -247,27 +316,35 @@ class StreamlitCVGenerator:
             
             perf_times["Offer Generation"] = round(time.time() - offer_start, 2)
 
-            results["match_json"] = matchmaking_json_path
             results["workspace"] = self.workspace  # F003: Provide workspace for ZIP download
             results["run_id"] = run_id  # F003: Business-meaningful run identifier
+            
+            # F003: Cleanup temp directory after pipeline completion
+            import shutil
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception:
+                pass  # Best effort cleanup
 
             # --- STEP 5: Dashboard ---
             dashboard_start = time.time()
             if progress_callback: progress_callback(90, get_text('ui', 'status_dashboard', language), "running")
             
-            # F003: Generate Dashboard using bytes API
+            # F003: Generate Dashboard using bytes API (with temp paths)
             dashboard_bytes, dashboard_filename = generate_dashboard(
                 cv_json_path=cv_json_path,
                 match_json_path=matchmaking_json_path if matchmaking_json_path and os.path.exists(matchmaking_json_path) else None,
                 feedback_json_path=feedback_json_path,
-                output_dir=output_dir,
+                output_dir=temp_dir,  # Use temp_dir instead of persistent output_dir
                 validation_warnings=info,
                 model_name=os.environ.get("MODEL_NAME", "gpt-4o"),
                 pipeline_mode=pipeline_mode,
                 cv_filename=cv_file.name if hasattr(cv_file, 'name') else os.path.basename(str(cv_file)),
                 job_filename=job_file.name if job_file and hasattr(job_file, 'name') else (os.path.basename(str(job_file)) if job_file else None),
                 angebot_json_path=angebot_json_path,
-                language=language
+                language=language,
+                jobprofile_slug=jobprofile_slug,
+                timestamp=self.timestamp
             )
             self.workspace.save_primary(dashboard_filename, dashboard_bytes)
             results["dashboard_bytes"] = dashboard_bytes
@@ -308,6 +385,7 @@ class StreamlitCVGenerator:
                     pass
 
             results["success"] = True
+            results["timestamp"] = self.timestamp  # Store for ZIP filename generation
             
         except Exception as e:
             results["error"] = str(e)

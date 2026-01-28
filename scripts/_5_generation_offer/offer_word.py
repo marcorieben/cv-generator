@@ -613,23 +613,35 @@ def _build_offer_document(data, language="de", translations=None, styles_cfg=Non
     return doc
 
 
-def generate_offer_bytes(data: dict, language: str = "de") -> tuple[bytes, str]:
+def generate_offer_bytes(
+    data: dict, 
+    language: str = "de",
+    jobprofile_slug: str = None,
+    timestamp: str = None
+) -> tuple[bytes, str]:
     """
     Generate Offer Word document as bytes from JSON data.
     
     Args:
         data: Parsed JSON Offer data (dict)
         language: Output language ("de", "en", "fr")
+        jobprofile_slug: Job profile slug for filename (optional, from naming conventions)
+        timestamp: Timestamp for filename (optional, format: YYYYMMdd_HHMMSS)
         
     Returns:
         tuple: (document_bytes, filename_suggestion)
             - document_bytes: Word document as bytes
-            - filename_suggestion: Suggested filename (e.g., "offer_John_Doe.docx")
+            - filename_suggestion: Suggested filename following naming conventions
             
     Purpose: Storage-abstraction compatible Offer generator (F003)
     Expected Lifetime: Stable (new primary API)
+    
+    Note: If jobprofile_slug and timestamp are provided, filename follows new naming convention:
+          {jobprofile}_{candidate}_{filetype}_{timestamp}.docx
+          Otherwise falls back to legacy format: offer_{firstname}_{lastname}.docx
     """
     from io import BytesIO
+    from core.utils.naming import generate_filename, generate_candidate_name, FileType
     
     # Build document
     doc = _build_offer_document(data, language=language)
@@ -639,11 +651,17 @@ def generate_offer_bytes(data: dict, language: str = "de") -> tuple[bytes, str]:
     doc.save(docx_bytes_io)
     docx_bytes = docx_bytes_io.getvalue()
     
-    # Generate filename suggestion from data
+    # Generate filename using naming conventions if parameters provided
     candidate_data = data.get("cv_daten", {})
     firstname = candidate_data.get("Vorname", "Candidate")
     lastname = candidate_data.get("Nachname", "")
-    filename = f"offer_{firstname}_{lastname}.docx".replace(" ", "_")
+    
+    if jobprofile_slug and timestamp:
+        candidate_name = generate_candidate_name(firstname, lastname)
+        filename = generate_filename(jobprofile_slug, candidate_name, FileType.OFFER, timestamp, "docx")
+    else:
+        # Fallback to legacy format
+        filename = f"offer_{firstname}_{lastname}.docx".replace(" ", "_")
     
     return docx_bytes, filename
 

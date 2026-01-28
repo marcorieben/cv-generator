@@ -180,7 +180,7 @@ def show_results_content(results, lang):
         cv_btn_label = cv_btn_label[:27] + "..."
     
     with st.success(get_text("ui", "downloads_title", lang), icon="📥"):
-        res_col1, res_col2, res_col3 = st.columns(3)
+        res_col1, res_col2, res_col3, res_col4 = st.columns(4)
         with res_col1:
             # F003: CV Word Download from bytes (no more file paths)
             cv_word_bytes = results.get("cv_word_bytes")
@@ -217,12 +217,39 @@ def show_results_content(results, lang):
                     "text/html", 
                     use_container_width=True
                 )
+        
+        with res_col4:
+            # F003: ZIP Bundle Download from workspace
+            workspace = results.get("workspace")
+            run_id = results.get("run_id", "download")
+            if workspace:
+                try:
+                    zip_bytes = workspace.bundle_as_zip()
+                    # Use new naming convention for ZIP filename
+                    jobprofile_slug = results.get("jobprofile_slug", "gdjob_unknown")
+                    candidate_name = results.get("candidate_name", f"{results.get('vorname', 'Unknown')}_{results.get('nachname', '')}")
+                    timestamp = results.get("timestamp", datetime.now().strftime("%Y%m%d_%H%M%S"))
+                    zip_filename = f"{jobprofile_slug}_{candidate_name}_{timestamp}.zip"
+                    
+                    st.download_button(
+                        "📦 ZIP Bundle",
+                        zip_bytes,
+                        zip_filename,
+                        "application/zip",
+                        use_container_width=True,
+                        help="Alle Dateien als ZIP"
+                    )
+                except Exception as e:
+                    st.caption(f"ZIP: {str(e)[:30]}")
+            else:
+                st.caption("ZIP nicht verfügbar")
 
     if not results.get("stellenprofil_json") and results.get("cv_json"):
         output_dir = os.path.dirname(results["cv_json"])
         try:
             for f in os.listdir(output_dir):
-                if f.startswith("stellenprofil_") and f.endswith(".json"):
+                # Support both old naming (stellenprofil_*) and new naming (*_jobprofile_*)
+                if (f.startswith("stellenprofil_") or "_jobprofile_" in f) and f.endswith(".json"):
                     results["stellenprofil_json"] = os.path.join(output_dir, f)
                     break
         except OSError:
@@ -232,7 +259,8 @@ def show_results_content(results, lang):
         output_dir = os.path.dirname(results["cv_json"])
         try:
             for f in os.listdir(output_dir):
-                if f.startswith("Match_") and f.endswith(".json"):
+                # Support both old naming (Match_*) and new naming (*_match_*)
+                if (f.startswith("Match_") or "_match_" in f) and f.endswith(".json"):
                     results["match_json"] = os.path.join(output_dir, f)
                     break
         except OSError:

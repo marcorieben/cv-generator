@@ -1112,26 +1112,38 @@ def _build_cv_document(data, language="de", translations=None, interactive=True)
     return doc, firstname, lastname
 
 
-def generate_cv_bytes(data: dict, language: str = "de") -> tuple[bytes, str]:
+def generate_cv_bytes(
+    data: dict, 
+    language: str = "de",
+    jobprofile_slug: str = None,
+    timestamp: str = None
+) -> tuple[bytes, str]:
     """
     Generate CV Word document as bytes from JSON data.
     
     Args:
         data: Parsed JSON CV data (dict)
         language: Output language ("de", "en", "fr")
+        jobprofile_slug: Job profile slug for filename (optional, from naming conventions)
+        timestamp: Timestamp for filename (optional, format: YYYYMMdd_HHMMSS)
         
     Returns:
         tuple: (document_bytes, filename_suggestion)
             - document_bytes: Word document as bytes
-            - filename_suggestion: Suggested filename (e.g., "cv_Marco_Rieben.docx")
+            - filename_suggestion: Suggested filename following naming conventions
             
     Raises:
         ValueError: If data validation fails
         
     Purpose: Storage-abstraction compatible CV generator (F003)
     Expected Lifetime: Stable (new primary API)
+    
+    Note: If jobprofile_slug and timestamp are provided, filename follows new naming convention:
+          {jobprofile}_{candidate}_{filetype}_{timestamp}.docx
+          Otherwise falls back to legacy format: cv_{firstname}_{lastname}.docx
     """
     from io import BytesIO
+    from core.utils.naming import generate_filename, generate_candidate_name, FileType
     
     translations = load_translations()
     
@@ -1157,8 +1169,13 @@ def generate_cv_bytes(data: dict, language: str = "de") -> tuple[bytes, str]:
     doc.save(docx_bytes_io)
     docx_bytes = docx_bytes_io.getvalue()
     
-    # Generate filename suggestion
-    filename = f"cv_{firstname}_{lastname}.docx"
+    # Generate filename using naming conventions if parameters provided
+    if jobprofile_slug and timestamp:
+        candidate_name = generate_candidate_name(firstname, lastname)
+        filename = generate_filename(jobprofile_slug, candidate_name, FileType.CV, timestamp, "docx")
+    else:
+        # Fallback to legacy format
+        filename = f"cv_{firstname}_{lastname}.docx"
     
     return docx_bytes, filename
 

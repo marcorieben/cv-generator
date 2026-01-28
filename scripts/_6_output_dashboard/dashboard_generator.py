@@ -71,7 +71,7 @@ def generate_cv_word_on_demand(cv_json_path, output_dir, language="de"):
 def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output_dir, 
                        validation_warnings=None, model_name=None, pipeline_mode=None, 
                        cv_filename=None, job_filename=None, angebot_json_path=None,
-                       language="de"):
+                       language="de", jobprofile_slug=None, timestamp=None):
     """
     Generates a professional HTML dashboard visualizing CV processing results.
     
@@ -87,6 +87,8 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
         job_filename: Original job profile filename
         angebot_json_path: Path to offer JSON (optional)
         language: Output language ("de", "en", "fr")
+        jobprofile_slug: Job profile slug for filename (optional, from naming conventions)
+        timestamp: Timestamp for filename (optional, format: YYYYMMdd_HHMMSS)
         
     Returns:
         tuple: (html_bytes, filename) - HTML content as bytes and suggested filename
@@ -94,6 +96,9 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     Note:
         F003: Storage Abstraction - Returns bytes for in-memory handling.
         This function no longer writes to filesystem.
+        If jobprofile_slug and timestamp are provided, filename follows new naming convention:
+        {jobprofile}_{candidate}_{filetype}_{timestamp}.html
+        Otherwise falls back to legacy format: Dashboard_{vorname}_{nachname}_{datetime}.html
     """
     translations = load_translations()
     
@@ -973,8 +978,14 @@ def generate_dashboard(cv_json_path, match_json_path, feedback_json_path, output
     </html>
     """
 
-    # F003: Generate filename suggestion
-    filename = f"Dashboard_{vorname}_{nachname}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+    # F003: Generate filename using naming conventions if parameters provided
+    if jobprofile_slug and timestamp:
+        from core.utils.naming import generate_filename, generate_candidate_name, FileType
+        candidate_name = generate_candidate_name(vorname, nachname)
+        filename = generate_filename(jobprofile_slug, candidate_name, FileType.DASHBOARD, timestamp, "html")
+    else:
+        # Fallback to legacy format
+        filename = f"Dashboard_{vorname}_{nachname}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
     
     # F003: Return HTML as bytes instead of writing to file
     html_bytes = html_content.encode('utf-8')
